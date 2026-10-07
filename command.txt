@@ -1,0 +1,13 @@
+npx create-next-app@latest erp-frontend --typescript --eslint --app --src-dir --import-alias "@/*"
+npm install bootstrap react-bootstrap
+npm install styled-components
+npm install -D @types/styled-components
+npm install @js-temporal/polyfill
+npm install korean-lunar-calendar
+
+ORACLE DB 명령
+ALTER SESSION SET "_ORACLE_SCRIPT"=TRUE;
+CREATE USER "ERP_USR" IDENTIFIED BY "1234";
+GRANT CONNECT TO "ERP_USR";
+GRANT RESOURCE TO "ERP_USR";
+ALTER USER ERP_USR DEFAULT TABLESPACE USERS QUOTA UNLIMITED ON USERS;
