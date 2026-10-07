@@ -91,7 +91,7 @@ export default function Member() {
     };
 
     try {
-      const response = await axios.post("/api/signup", formData);
+      const response = await axios.post("/api/members/register", formData);
       if (response.status === 200 || response.status === 201) {
         console.log("등록 성공: ", response.data);
         alert("회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.");

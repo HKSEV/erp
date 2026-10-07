@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 import * as S from "@/assets/css/Common.style";
 
 export const Header = () => {
@@ -10,6 +11,13 @@ export const Header = () => {
 
   const toggleMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    delete axios.defaults.headers.common["Authorization"];
+    alert("로그아웃 되었습니다.");
+    router.push("/")
   };
 
   return (
@@ -27,7 +35,9 @@ export const Header = () => {
       {/* 데스크탑 유저 섹션 */}
       <S.UserSection>
         <span>관리자님 환영합니다</span>
-        <S.LogoutButton onClick={() => router.push("/")}>로그아웃</S.LogoutButton>
+        <S.LogoutButton onClick={handleLogout}>
+          로그아웃
+        </S.LogoutButton>
       </S.UserSection>
 
       {/* 모바일 햄버거 버튼 */}
@@ -47,3 +57,7 @@ export const Header = () => {
     </S.HeaderContainer>
   );
 };
+/**
+ * jwt 방식은 로그아웃을 백엔드를 거칠 필요가 없이 프론트엔드(브라우저)에
+ * 
+ */

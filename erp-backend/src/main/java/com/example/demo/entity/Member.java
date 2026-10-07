@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 // 오라클에서는 'MEMBER'가 예약어로 쓰이는 경우가 있어 보통 'MEMBERS'로 명명합니다.
 @Table(name = "MEMBERS")
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // 기본 생성자 무분별한 사용 방지
 @AllArgsConstructor
 @Builder
