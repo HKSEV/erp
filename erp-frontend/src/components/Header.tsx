@@ -51,7 +51,7 @@ export const Header = () => {
         <a href="/material">자재관리</a>
         <a href="/quality">품질관리</a>
         <a href="/equipment">설비관리</a>
-        <a href="/profile">내 정보</a>
+        <a href="/dashboard/mypage">내 정보</a>
         <a href="/">로그아웃</a>
       </S.MobileNav>
     </S.HeaderContainer>
