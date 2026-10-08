@@ -7,7 +7,7 @@ import { Top } from "./Top";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { SideBar } from "./SideBar";
-import * as S from "@/assets/css/Layout.style";
+import * as S from "@/assets/css/Style.styles";
 
 export default function ConditionalLayout({children}: {
   children: React.ReactNode

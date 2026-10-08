@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Temporal } from "@js-temporal/polyfill";
 import { Holiday } from "@/app/types/Holiday";
 import { fetchHolidays } from "@/app/api/holidays";
-import * as S from "@/assets/css/Style.style";
+import * as S from "@/assets/css/Style.styles";
 import ScheduleModal from "./modal/ScheduleModal";
 
 // 일정 타입 정의 추가
@@ -70,7 +70,7 @@ export default function Calendar({
 
   // 달력 빈칸 만들기
   for (let i = 0; i < firstDayIndex; i++)
-    days.push(<S.DayCell key={`empty-${i}`} $isEmpty/>);
+    days.push(<S.CalDayCell key={`empty-${i}`} $isEmpty/>);
 
   // 실제 날짜 채우기
   for (let d = 1; d <= daysInMonth; d++) {
@@ -82,7 +82,7 @@ export default function Calendar({
     const hasSchedule = schedules.some((sch) => sch.date === d);
 
     days.push(
-      <S.DayCell
+      <S.CalDayCell
       key={d}
       $isToday={isThisMonth && today.day === d}
       $isHoliday={!!holiday}
@@ -90,11 +90,11 @@ export default function Calendar({
       $isSaturday={isSaturday}
       onClick={() => handleDayClick(d)}>
         <span>{d}</span>
-        {holiday && <S.Tooltip>{holiday.name}</S.Tooltip>}
+        {holiday && <S.CalTooltip>{holiday.name}</S.CalTooltip>}
         {holiday?.name === "성탄절" && <span>🎄</span>}
         {holiday?.name.includes("추석") && <span>🌕</span>}
         {hasSchedule && <S.ScheduleDot/>}
-      </S.DayCell>
+      </S.CalDayCell>
     );
   };
 
@@ -103,22 +103,24 @@ export default function Calendar({
       <S.CalTopMargin>
         <S.CalendarWrapper>
           <S.CalHeader>
-            <S.EventArrowBtn onClick={() => handleChangeMonth("prev")}>
+            <S.CalEventArrowBtn
+            onClick={() => handleChangeMonth("prev")}>
               &lt;
-            </S.EventArrowBtn>
+            </S.CalEventArrowBtn>
             {currentYear}년 {currentMonth}월
-            <S.EventArrowBtn onClick={() => handleChangeMonth("next")}>
+            <S.CalEventArrowBtn
+            onClick={() => handleChangeMonth("next")}>
               &gt;
-            </S.EventArrowBtn>
+            </S.CalEventArrowBtn>
           </S.CalHeader>
-          <S.Grid>
+          <S.CalGrid>
             {["일", "월", "화", "수", "목", "금", "토"].map((day) => (
-              <S.DayName key={day}>
+              <S.CalDayName key={day}>
                 {day}
-              </S.DayName>
+              </S.CalDayName>
             ))}
             {days}
-          </S.Grid>
+          </S.CalGrid>
         </S.CalendarWrapper>
       </S.CalTopMargin>
 

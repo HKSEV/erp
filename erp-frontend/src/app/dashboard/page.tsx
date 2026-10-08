@@ -2,7 +2,7 @@
 
 import SmallCalendar from "@/components/SmallCalendar";
 import Calendar from "@/components/Calendar";
-import * as S from "@/assets/css/Style.style";
+import * as S from "@/assets/css/Style.styles";
 
 export default function Dashboard() {
   return (

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Temporal } from "@js-temporal/polyfill";
-import * as S from "@/assets/css/Style.style";
+import * as S from "@/assets/css/Style.styles";
 import ModalLayout from "./ModalLayout";
 
 export interface Schedule {
@@ -118,12 +118,12 @@ export default function ScheduleModal({
       </S.FormGroup>
 
       <S.ButtonGroup>
-        <S.Button onClick={handleSave}>
+        <S.MemberButton onClick={handleSave}>
           {editingId ? "수정" : "등록"}
-        </S.Button>
-        <S.SearchButton onClick={onClose}>
+        </S.MemberButton>
+        <S.MemberSearchButton onClick={onClose}>
           닫기
-        </S.SearchButton>
+        </S.MemberSearchButton>
       </S.ButtonGroup>
 
       <S.ScheduleList>

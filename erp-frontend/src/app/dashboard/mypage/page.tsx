@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import * as S from "@/assets/css/Style.style";
+import * as S from "@/assets/css/Style.styles";
 
 export default function MyPage() {
   const router = useRouter();
@@ -35,60 +35,57 @@ export default function MyPage() {
   };
 
   return (
-    // <S.Container>
-    //   <S.Card>
-    //     <S.ImageColumn/>
-    //     <S.FormColumn>
-    //       <S.Title>Forgot Your Password?</S.Title>
-
-    //       <S.Description>
-    //         We get it, stuff happens. Just enter your email address below 
-    //         and we'll send you a link to reset your password!
-    //       </S.Description>
-
-    //       <S.Form>
-    //         <S.Input
-    //         type="email"
-    //         id=""
-    //         placeholder="Enter Email Address..."/>
-    //         <S.Button type="submit">
-    //           Reset Password
-    //         </S.Button>
-    //       </S.Form>
-
-    //       <S.Divider/>
-
-    //       <S.StyledLink href="/member">
-    //         Create an Account!
-    //       </S.StyledLink>
-
-    //       <S.StyledLink href="/">
-    //         Already have an account? Login!
-    //       </S.StyledLink>
-    //     </S.FormColumn>
-    //   </S.Card>
-    // </S.Container>
-    <div style={{ padding: "50px" }}>
-      <h2>마이페이지 - 비밀번호 변경</h2>
-      <form onSubmit={handleChangePassword}>
-        <div style={{ marginBottom: "15px" }}>
-          <label>기존(또는 임시) 비밀번호: </label>
-          <input 
-          type="password" 
-          value={oldPassword} 
-          onChange={(e) => setOldPassword(e.target.value)} 
-          required/>
+    <S.MyPageWrapper>
+      <S.MyPageHeader>
+        <div>
+          <S.MyPageTitle>마이페이지</S.MyPageTitle>
+          <S.MyPageSubtitle>
+            계정 정보를 관리하고 비밀번호를 변경할 수 있습니다.
+          </S.MyPageSubtitle>
         </div>
-        <div style={{ marginBottom: "15px" }}>
-          <label>새 비밀번호: </label>
-          <input 
-          type="password" 
-          value={newPassword} 
-          onChange={(e) => setNewPassword(e.target.value)} 
-          required/>
-        </div>
-        <button type="submit">비밀번호 변경하기</button>
-      </form>
-    </div>
+      </S.MyPageHeader>
+      <S.MyPageCard>
+        <S.MyPageCardHeader>
+          <S.MyPageCardTitle>비밀번호 변경</S.MyPageCardTitle>
+          <S.MyPageCardDescription>
+            현재 비밀번호를 확인한 후 새로운 비밀번호로 변경합니다.
+          </S.MyPageCardDescription>
+        </S.MyPageCardHeader>
+        <S.MyPageForm onSubmit={handleChangePassword}>
+          <S.MyPageFormGroup>
+            <S.MyPageLabel htmlFor="oldPassword">
+              기존(또는 임시) 비밀번호
+            </S.MyPageLabel>
+            <S.MyPageInput
+            id="oldPassword"
+            type="password"
+            placeholder="기존 비밀번호를 입력하세요."
+            value={oldPassword}
+            onChange={(e) => setOldPassword(e.target.value)}
+            autoComplete="current-password"
+            required/>
+          </S.MyPageFormGroup>
+          <S.MyPageFormGroup>
+            <S.MyPageLabel htmlFor="newPassword">
+              새 비밀번호
+            </S.MyPageLabel>
+            <S.MyPageInput
+            id="newPassword"
+            type="password"
+            placeholder="새 비밀번호를 입력하세요."
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            autoComplete="new-password"
+            required/>
+            <S.MyPageHint>
+              보안을 위해 기존 비밀번호와 다른 비밀번호를 사용해주세요.
+            </S.MyPageHint>
+          </S.MyPageFormGroup>
+          <S.MyPageButton type="submit">
+            비밀번호 변경
+          </S.MyPageButton>
+        </S.MyPageForm>
+      </S.MyPageCard>
+    </S.MyPageWrapper>
   );
 };

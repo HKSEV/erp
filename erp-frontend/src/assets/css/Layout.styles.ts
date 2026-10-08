@@ -5,18 +5,15 @@ export const PageWrapper = styled.div`
   flex-direction: column;
   min-height: 100vh;
 `;
-
 export const TopArea = styled.div`
   position: sticky;
   top: 0;
   z-index: 100;
 `;
-
 export const MainContent = styled.div<{$isHidden: boolean}>`
   ${(props) => (props.$isHidden ? "width: 100%" : "display: flex")};
   flex: 1;
 `;
-
 export const LnbWrapper = styled.aside`
   width: 250px;
   background-color: #FFF;
@@ -27,7 +24,6 @@ export const LnbWrapper = styled.aside`
     display: none;
   }
 `;
-
 export const ContentArea = styled.main`
   flex: 1;
   padding: 32px;

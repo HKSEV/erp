@@ -4,7 +4,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
-import * as S from "@/assets/css/Style.style";
+import * as S from "@/assets/css/Style.styles";
 
 const handleInstargramLogin = () => {
 
@@ -109,71 +109,71 @@ export default function Member() {
   };
 
   return (
-    <S.Container>
+    <S.MemberContainer>
       {/* Next.js Script 컴포넌트를 사용한 비동기 로드 */}
       <Script
       src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"
       strategy="lazyOnload"/>
-      <S.Card>
-        <S.ImageColumn/>
-        <S.FormColumn>
-          <S.Title>
+      <S.MemberCard>
+        <S.MemberImageColumn/>
+        <S.MemberFormColumn>
+          <S.MemberTitle>
             Create an Account!
-          </S.Title>
+          </S.MemberTitle>
 
-          <S.Form onSubmit={handleSubmit}>
-            <S.Row>
-              <S.Col>
-                <S.Input
+          <S.MemberForm onSubmit={handleSubmit}>
+            <S.MemberRow>
+              <S.MemberCol>
+                <S.MemberInput
                 type="text"
                 placeholder="이름"
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
                 required/>
-              </S.Col>
-              <S.Col>
-                <S.Input
+              </S.MemberCol>
+              <S.MemberCol>
+                <S.MemberInput
                 type="text"
                 placeholder="성"
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
                 required/>
-              </S.Col>
-            </S.Row>
+              </S.MemberCol>
+            </S.MemberRow>
 
-            <S.Input
+            <S.MemberInput
             type="email"
             placeholder="이메일"
             name="email"
             value={formData.email}
             onChange={handleChange}/>
 
-            <S.Row>
-              <S.Col>
-                <S.Input
+            <S.MemberRow>
+              <S.MemberCol>
+                <S.MemberInput
                 type="password"
                 placeholder="비밀번호"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 required/>
-              </S.Col>
-              <S.Col>
-                <S.Input
+              </S.MemberCol>
+              <S.MemberCol>
+                <S.MemberInput
                 type="password"
                 placeholder="비밀번호 확인"
                 name="repeatPassword"
                 value={formData.repeatPassword}
                 onChange={handleChange}
                 required/>
-              </S.Col>
-            </S.Row>
+              </S.MemberCol>
+            </S.MemberRow>
 
-            <S.RadioGroup>
+            <S.MemberRadioGroup>
               <span>성별 :</span>
-              <S.RadioLabel>
+              <S.MemberRadioLabel>
                 <input
                 type="radio"
                 name="gender"
@@ -181,8 +181,8 @@ export default function Member() {
                 checked={formData.gender === "male"}
                 onChange={handleChange}/>
                 남성
-              </S.RadioLabel>
-              <S.RadioLabel>
+              </S.MemberRadioLabel>
+              <S.MemberRadioLabel>
                 <input
                 type="radio"
                 name="gender"
@@ -190,8 +190,8 @@ export default function Member() {
                 checked={formData.gender === "female"}
                 onChange={handleChange}/>
                 여성
-              </S.RadioLabel>
-              <S.RadioLabel>
+              </S.MemberRadioLabel>
+              <S.MemberRadioLabel>
                 <input
                 type="radio"
                 name="gender"
@@ -199,50 +199,55 @@ export default function Member() {
                 checked={formData.gender === "other"}
                 onChange={handleChange}/>
                 기타
-              </S.RadioLabel>
-            </S.RadioGroup>
+              </S.MemberRadioLabel>
+            </S.MemberRadioGroup>
 
-            <S.Row>
-              <S.Col>
-                <S.Input
+            <S.MemberRow>
+              <S.MemberCol>
+                <S.MemberInput
                 type="text"
                 placeholder="회사명"
                 name="companyName"
                 value={formData.companyName}
                 onChange={handleChange}/>
-              </S.Col>
-              <S.Col>
-                <S.Input
+              </S.MemberCol>
+              <S.MemberCol>
+                <S.MemberInput
                 type="text"
                 placeholder="직급"
                 name="position"
                 value={formData.position}
                 onChange={handleChange}/>
-              </S.Col>
-              <S.Col>
-                <S.Input
+              </S.MemberCol>
+              <S.MemberCol>
+                <S.MemberInput
                 type="text"
                 placeholder="전화번호"
                 name="tel"
                 value={formData.tel}
                 onChange={handleChange}/>
-              </S.Col>
-            </S.Row>
+              </S.MemberCol>
+            </S.MemberRow>
 
-            <S.AddressWrapper>
-              <S.Input
+            <S.MemberAddressWrapper>
+              <S.MemberInput
               type="text"
               placeholder="주소"
               name="address"
               value={formData.address}
               onChange={handleChange}
               readOnly/>
-              <S.SearchButton type="button" onClick={handleAddressSearch}>
+              <S.Button
+              $variant="grey"
+              $size="medium"
+              $width="auto"
+              type="button"
+              onClick={handleAddressSearch}>
                 주소검색
-              </S.SearchButton>
-            </S.AddressWrapper>
+              </S.Button>
+            </S.MemberAddressWrapper>
 
-            <S.Input
+            <S.MemberInput
             type="text"
             placeholder="상세주소"
             name="detailAddress"
@@ -250,36 +255,44 @@ export default function Member() {
             onChange={handleChange}
             disabled={formData.address === ""}/>
 
-            <S.Button type="submit">
+            <S.Button
+            $variant="primary"
+            $size="medium"
+            $fullWidth
+            type="submit">
               Register Account
             </S.Button>
 
-            <S.Divider/>
+            <S.MemberDivider/>
 
-            <S.SocialButton
-            $provider="insta"
+            <S.Button
+            $variant="insta"
+            $size="medium"
+            $fullWidth
             onClick={handleInstargramLogin}>
               Register with Instargram
-            </S.SocialButton>
+            </S.Button>
 
-            <S.SocialButton
-            $provider="kakao"
+            <S.Button
+            $variant="kakao"
+            $size="medium"
+            $fullWidth
             onClick={handleKakaoLogin}>
               Register with Kakao
-            </S.SocialButton>
-          </S.Form>
+            </S.Button>
+          </S.MemberForm>
 
-          <S.Divider/>
+          <S.MemberDivider/>
 
-          <S.StyledLink href="/forgot">
+          <S.MemberStyledLink href="/forgot">
             Forgot password?
-          </S.StyledLink>
+          </S.MemberStyledLink>
 
-          <S.StyledLink href="/">
+          <S.MemberStyledLink href="/">
             Already have an account? Login!
-          </S.StyledLink>
-        </S.FormColumn>
-      </S.Card>
-    </S.Container>
+          </S.MemberStyledLink>
+        </S.MemberFormColumn>
+      </S.MemberCard>
+    </S.MemberContainer>
   );
 };

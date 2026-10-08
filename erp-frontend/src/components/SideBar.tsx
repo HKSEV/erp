@@ -1,6 +1,6 @@
 "use client";
 
-import * as S from "@/assets/css/Style.style";
+import * as S from "@/assets/css/Style.styles";
 
 export const SideBar = () => {
   return (
@@ -9,16 +9,24 @@ export const SideBar = () => {
         <S.SectionTitle>ERP 업무</S.SectionTitle>
         <S.MenuList>
           <li>
-            <S.MenuItem href="/production">생산관리</S.MenuItem>
+            <S.MenuItem href="/dashboard/production">
+              생산관리
+            </S.MenuItem>
           </li>
           <li>
-            <S.MenuItem href="/material">자재관리</S.MenuItem>
+            <S.MenuItem href="/dashboard/material">
+              자재관리
+            </S.MenuItem>
           </li>
           <li>
-            <S.MenuItem href="/quality">품질관리</S.MenuItem>
+            <S.MenuItem href="/dashboard/quality">
+              품질관리
+            </S.MenuItem>
           </li>
           <li>
-            <S.MenuItem href="/equipment">설비관리</S.MenuItem>
+            <S.MenuItem href="/dashboard/equipment">
+              설비관리
+            </S.MenuItem>
           </li>
         </S.MenuList>
       </S.MenuSection>
@@ -27,13 +35,19 @@ export const SideBar = () => {
         <S.SectionTitle>시스템관리</S.SectionTitle>
         <S.MenuList>
           <li>
-            <S.MenuItem href="/master-data">기준 정보 관리</S.MenuItem>
+            <S.MenuItem href="/dashboard/master-data">
+              기준 정보 관리
+            </S.MenuItem>
           </li>
           <li>
-            <S.MenuItem href="/users">사용자 권한 관리</S.MenuItem>
+            <S.MenuItem href="/dashboard/users">
+              사용자 권한 관리
+            </S.MenuItem>
           </li>
           <li>
-            <S.MenuItem href="/settings">시스템 환경설정</S.MenuItem>
+            <S.MenuItem href="/dashboard/settings">
+              시스템 환경설정
+            </S.MenuItem>
           </li>
         </S.MenuList>
       </S.MenuSection>

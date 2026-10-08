@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import * as S from "@/assets/css/Style.style";
+import * as S from "@/assets/css/Style.styles";
 
 export default function ForgotPassword() {
   const router = useRouter();
@@ -22,40 +22,44 @@ export default function ForgotPassword() {
   };
 
   return (
-    <S.Container>
-      <S.Card>
-        <S.ImageColumn/>
-        <S.FormColumn>
-          <S.Title>Forgot Your Password?</S.Title>
+    <S.MemberContainer>
+      <S.MemberCard>
+        <S.MemberImageColumn/>
+        <S.MemberFormColumn>
+          <S.MemberTitle>Forgot Your Password?</S.MemberTitle>
 
-          <S.Description>
+          <S.MemberDescription>
             We get it, stuff happens. Just enter your email address below 
             and we'll send you a link to reset your password!
-          </S.Description>
+          </S.MemberDescription>
 
-          <S.Form onSubmit={handleResetPassword}>
-            <S.Input
+          <S.MemberForm onSubmit={handleResetPassword}>
+            <S.MemberInput
             type="email"
             placeholder="Enter Email Address..."
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required/>
-            <S.Button type="submit">
+            <S.Button
+            $variant="primary"
+            $size="medium"
+            $fullWidth
+            type="submit">
               Reset Password
             </S.Button>
-          </S.Form>
+          </S.MemberForm>
 
-          <S.Divider/>
+          <S.MemberDivider/>
 
-          <S.StyledLink href="/member">
+          <S.MemberStyledLink href="/member">
             Create an Account!
-          </S.StyledLink>
+          </S.MemberStyledLink>
 
-          <S.StyledLink href="/">
+          <S.MemberStyledLink href="/">
             Already have an account? Login!
-          </S.StyledLink>
-        </S.FormColumn>
-      </S.Card>
-    </S.Container>
+          </S.MemberStyledLink>
+        </S.MemberFormColumn>
+      </S.MemberCard>
+    </S.MemberContainer>
   );
 };
