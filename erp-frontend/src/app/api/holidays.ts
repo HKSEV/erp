@@ -10,21 +10,27 @@ export const fetchHolidays = async (year: number, month: number): Promise<Holida
 
   if (month === seollal.month)
     return [
-      {date: seollal.day-1, name: "설날 연휴"},
-      {date: seollal.day, name: "설날"},
-      {date: seollal.day+1, name: "설날 연휴"},
+      {date: seollal.day-1, name: "설날 연휴", icon: "🎊"},
+      {date: seollal.day, name: "설날", icon: "🎊"},
+      {date: seollal.day+1, name: "설날 연휴", icon: "🎊"},
     ];
 
   if (month === chuseok.month)
     return [
-      {date: chuseok.day-1, name: "추석 연휴"},
-      {date: chuseok.day, name: "추석"},
-      {date: chuseok.day+1, name: "추석 연휴"},
+      {date: chuseok.day-1, name: "추석 연휴", icon: "🌕"},
+      {date: chuseok.day, name: "추석", icon: "🌕"},
+      {date: chuseok.day+1, name: "추석 연휴", icon: "🌕"},
+    ];
+
+  if (month === 10)
+    return [
+      {date: 3, name: "개천절", icon: "☀️"},
+      {date: 9, name: "한글날", icon: "✍️"},
     ];
 
   if (month === 12)
     return [
-      {date: 25, name: "성탄절"},
+      {date: 25, name: "성탄절", icon: "🎄"},
     ];
   
   return [];

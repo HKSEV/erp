@@ -5,7 +5,7 @@ export const CalTopMargin = styled.div`
   margin-top: 2rem;
 `;
 export const CalendarWrapper = styled.div`
-  max-width: 1000px;
+  max-width: 700px;
   margin: 0 auto;
   background-color: #FFF;
   border: 1px solid #E0E0E0;
@@ -16,7 +16,7 @@ export const CalHeader = styled.h2`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 32px;
+  font-size: 30px;
   font-weight: 700;
   margin: 1.5rem 2rem;
   color: #333;
@@ -35,15 +35,14 @@ export const CalDayName = styled.div`
   &:nth-child(7) { color: #1890FF; }
 `;
 export const CalTooltip = styled.div`
-  visibility: hidden;
   position: absolute;
-  bottom: 110%;
+  bottom: 10%;
   left: 50%;
   transform: translateX(-50%);
   background-color: rgba(0, 0, 0, 0.7);
   color: white;
   text-align: center;
-  padding: 4px 8px;
+  padding: 4px;
   border-radius: 4px;
   font-size: 0.75rem;
   white-space: nowrap;
@@ -65,7 +64,7 @@ export const CalDayCell = styled.div<DayCellProps>`
   align-items: center;
   height: 80px;
   border-radius: 8px;
-  font-size: 1.2rem;
+  font-size: 0.95rem;
   background-color: ${({$isEmpty}) => (
     $isEmpty ? "transparent" : "#FAFAFA"
   )};
@@ -89,6 +88,10 @@ export const CalDayCell = styled.div<DayCellProps>`
     background-color: ${({$isEmpty}) => (
       $isEmpty ? "transparent" : "#F0F0F0"
     )};
+
+    & > div {
+      opacity: 1;
+    }
   }
 `;
 export const CalEventArrowBtn = styled.button`

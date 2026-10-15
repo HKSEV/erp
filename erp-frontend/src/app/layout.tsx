@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "./globals.css";
 import StyledComponentsRegistry from "./lib/registry";
 import ThemeProviderWrapper from "@/components/ThemeProviderWrapper";
 import ConditionalLayout from "@/components/ConditionalLayout";
@@ -14,7 +15,13 @@ export const metadata: Metadata = {
 export default function RootLayout({children}: Readonly<{children: React.ReactNode}>) {
   return (
     <html lang="ko">
-      <body>
+      <head>
+        {/* 부트스트랩 CDN 추가 */}
+        <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+        rel="stylesheet"/>
+      </head>
+      <body className="h-full m-0 bg-gray-50 text-gray-900 antialiased">
         <StyledComponentsRegistry>
           <ThemeProviderWrapper>
             <ConditionalLayout>

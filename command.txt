@@ -1,9 +1,11 @@
 npx create-next-app@latest erp-frontend --typescript --eslint --app --src-dir --import-alias "@/*"
-npm install bootstrap react-bootstrap
+npm install bootstrap react-bootstrap sass
 npm install styled-components
 npm install -D @types/styled-components
 npm install @js-temporal/polyfill
 npm install korean-lunar-calendar
+npm install -D tailwindcss postcss autoprefixer
+npm install -D @tailwindcss/postcss tailwindcss
 
 ORACLE DB 명령
 ALTER SESSION SET "_ORACLE_SCRIPT"=TRUE;

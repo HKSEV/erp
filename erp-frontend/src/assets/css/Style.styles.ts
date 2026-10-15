@@ -1,6 +1,6 @@
 export * from "./Layout.styles";
 
-export * from "./Common.styles"; 
+export * from "./NavButton"; 
 
 export * from "./Member.styles";
 

@@ -5,7 +5,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import { Holiday } from "@/app/types/Holiday";
 import { fetchHolidays } from "@/app/api/holidays";
 import * as S from "@/assets/css/Style.styles";
-import ScheduleModal from "./modal/ScheduleModal";
+import useModal from "./contexts/ModalContext";
 
 // 일정 타입 정의 추가
 interface Schedule {
@@ -23,6 +23,7 @@ export default function Calendar({
   year?: number;
   month?: number;
 }) {
+  const {openScheduleModal, updateScheduleModal} = useModal();
   const [currentYear, setCurrentYear] = useState(year);
   const [currentMonth, setCurrentMonth] = useState(month);
   // 입력받은 연/월을 기준으로 Temporal 객체 생성
@@ -50,12 +51,14 @@ export default function Calendar({
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   // 모달과 관련된 추가
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [selectedDate, setSelectedDate] = useState<number | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchHolidays(currentYear, currentMonth).then(setHolidays);
   }, [currentYear, currentMonth]);
+
+  useEffect(() => {
+    updateScheduleModal(schedules);
+  }, [schedules]);
 
   // 오늘 날짜 정보
   const today = Temporal.Now.plainDateISO();
@@ -64,8 +67,7 @@ export default function Calendar({
   const days = [];
 
   const handleDayClick = (day: number) => {
-    setSelectedDate(day);
-    setIsModalOpen(true);
+    openScheduleModal(currentMonth, day, schedules, setSchedules);
   };
 
   // 달력 빈칸 만들기
@@ -90,48 +92,38 @@ export default function Calendar({
       $isSaturday={isSaturday}
       onClick={() => handleDayClick(d)}>
         <span>{d}</span>
-        {holiday && <S.CalTooltip>{holiday.name}</S.CalTooltip>}
-        {holiday?.name === "성탄절" && <span>🎄</span>}
-        {holiday?.name.includes("추석") && <span>🌕</span>}
+        {holiday && (
+          <>
+            <S.CalTooltip>{holiday.name}</S.CalTooltip>
+            <span>{holiday.icon}</span>
+          </>
+        )}
         {hasSchedule && <S.ScheduleDot/>}
       </S.CalDayCell>
     );
   };
 
   return (
-    <>
-      <S.CalTopMargin>
-        <S.CalendarWrapper>
-          <S.CalHeader>
-            <S.CalEventArrowBtn
-            onClick={() => handleChangeMonth("prev")}>
-              &lt;
-            </S.CalEventArrowBtn>
-            {currentYear}년 {currentMonth}월
-            <S.CalEventArrowBtn
-            onClick={() => handleChangeMonth("next")}>
-              &gt;
-            </S.CalEventArrowBtn>
-          </S.CalHeader>
-          <S.CalGrid>
-            {["일", "월", "화", "수", "목", "금", "토"].map((day) => (
-              <S.CalDayName key={day}>
-                {day}
-              </S.CalDayName>
-            ))}
-            {days}
-          </S.CalGrid>
-        </S.CalendarWrapper>
-      </S.CalTopMargin>
-
-      {/* 분리한 스케줄 모달 컴포넌트 렌더링 */}
-      <ScheduleModal
-      isOpen={isModalOpen}
-      onClose={() => setIsModalOpen(false)}
-      month={currentMonth}
-      selectedDate={selectedDate}
-      schedules={schedules}
-      setSchedules={setSchedules}/>
-    </>
+    <S.CalTopMargin>
+      <S.CalendarWrapper>
+        <S.CalHeader>
+          <S.CalEventArrowBtn onClick={() => handleChangeMonth("prev")}>
+            &lt;
+          </S.CalEventArrowBtn>
+          {currentYear}년 {currentMonth}월
+          <S.CalEventArrowBtn onClick={() => handleChangeMonth("next")}>
+            &gt;
+          </S.CalEventArrowBtn>
+        </S.CalHeader>
+        <S.CalGrid>
+          {["일", "월", "화", "수", "목", "금", "토"].map((day) => (
+            <S.CalDayName key={day}>
+              {day}
+            </S.CalDayName>
+          ))}
+          {days}
+        </S.CalGrid>
+      </S.CalendarWrapper>
+    </S.CalTopMargin>
   );
 };

@@ -1,12 +1,16 @@
 "use client"
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import axios from "axios";
+import useModal from "./contexts/ModalContext";
 import * as S from "@/assets/css/Style.styles";
 
 export const Header = () => {
   const router = useRouter();
+  const pathname = usePathname();
+  const {openAlertModal} = useModal();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -14,25 +18,29 @@ export const Header = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    delete axios.defaults.headers.common["Authorization"];
-    document.cookie = "login_token=true; path=/; max-age=0;";
-    alert("로그아웃 되었습니다.");
-    router.push("/")
+    openAlertModal("로그아웃 하시겠습니까?", () => {
+      localStorage.removeItem("token");
+      delete axios.defaults.headers.common["Authorization"];
+      document.cookie = "login_token=true; path=/; max-age=0;";
+      setTimeout(() => {
+        openAlertModal("로그아웃 되었습니다.", () => router.push("/"));
+      }, 100);
+    });
   };
 
   return (
     <S.HeaderContainer>
       <S.HeaderLogo onClick={() => router.push("/dashboard")}>
-        Smart ERP
+         Apple iPhone Smart ERP
       </S.HeaderLogo>
 
       {/* 데스크탑 네비게이션 */}
       <S.HeaderDesktopNav>
-        <S.HeaderNavLink href="/production">생산관리</S.HeaderNavLink>
-        <S.HeaderNavLink href="/material">자재관리</S.HeaderNavLink>
-        <S.HeaderNavLink href="/quality">품질관리</S.HeaderNavLink>
-        <S.HeaderNavLink href="/equipment">설비관리</S.HeaderNavLink>
+        <S.HeaderNavLink href="/dashboard">대시보드</S.HeaderNavLink>
+        <S.HeaderNavLink href="/dashboard/production">생산관리</S.HeaderNavLink>
+        <S.HeaderNavLink href="/dashboard/inventory">재고관리</S.HeaderNavLink>
+        <S.HeaderNavLink href="/dashboard/hr">인사관리</S.HeaderNavLink>
+        <S.HeaderNavLink href="/dashboard/settings">기준정보</S.HeaderNavLink>
       </S.HeaderDesktopNav>
 
       {/* 데스크탑 유저 섹션 */}
@@ -50,12 +58,44 @@ export const Header = () => {
 
       {/* 모바일 드롭다운 메뉴 */}
       <S.HeaderMobileNav $isOpen={isMobileMenuOpen}>
-        <a href="/production">생산관리</a>
-        <a href="/material">자재관리</a>
-        <a href="/quality">품질관리</a>
-        <a href="/equipment">설비관리</a>
-        <a href="/dashboard/mypage">내 정보</a>
-        <a href="/">로그아웃</a>
+        <Link
+        href="/dashboard"
+        onClick={() => setIsMobileMenuOpen(false)}>
+          대시보드
+        </Link>
+        <Link
+        href="/dashboard/production"
+        onClick={() => setIsMobileMenuOpen(false)}>
+          생산관리
+        </Link>
+        <Link
+        href="/dashboard/inventory"
+        onClick={() => setIsMobileMenuOpen(false)}>
+          재고관리
+        </Link>
+        <Link
+        href="/dashboard/hr"
+        onClick={() => setIsMobileMenuOpen(false)}>
+          인사관리
+        </Link>
+        <Link
+        href="/dashboard/settings"
+        onClick={() => setIsMobileMenuOpen(false)}>
+          기준정보
+        </Link>
+        <Link
+        href="/admin/mypage"
+        onClick={() => setIsMobileMenuOpen(false)}>
+          내 정보
+        </Link>
+        <Link
+        href="/"
+        onClick={(e) => {
+          e.preventDefault();
+          handleLogout();
+        }}>
+          로그아웃
+        </Link>
       </S.HeaderMobileNav>
     </S.HeaderContainer>
   );

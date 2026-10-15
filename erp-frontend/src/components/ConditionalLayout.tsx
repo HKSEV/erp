@@ -7,6 +7,7 @@ import { Top } from "./Top";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { SideBar } from "./SideBar";
+import { ModalProvider } from "./contexts/ModalContext";
 import * as S from "@/assets/css/Style.styles";
 
 export default function ConditionalLayout({children}: {
@@ -19,29 +20,31 @@ export default function ConditionalLayout({children}: {
   const isHidden = hiddenPaths.includes(pathname);
 
   return (
-    <S.PageWrapper>
-      {/* isHidden이 false일 때만 헤더 푸터 표시 */}
-      {!isHidden ? (
-        <>
-          <S.TopArea>
-            <Top/>
-            <Header/>
-          </S.TopArea>
+    <ModalProvider>
+      <S.PageWrapper>
+        {/* isHidden이 false일 때만 헤더 푸터 표시 */}
+        {!isHidden ? (
+          <>
+            <S.TopArea>
+              <Top/>
+              <Header/>
+            </S.TopArea>
+            <S.MainContent $isHidden={isHidden}>
+              <S.LnbWrapper>
+                <SideBar/>
+              </S.LnbWrapper>
+              <S.ContentArea>
+                {children}
+              </S.ContentArea>
+            </S.MainContent>
+            <Footer/>
+          </>
+        ) : (
           <S.MainContent $isHidden={isHidden}>
-            <S.LnbWrapper>
-              <SideBar/>
-            </S.LnbWrapper>
-            <S.ContentArea>
-              {children}
-            </S.ContentArea>
+            {children}
           </S.MainContent>
-          <Footer/>
-        </>
-      ) : (
-        <S.MainContent $isHidden={isHidden}>
-          {children}
-        </S.MainContent>
-      )}
-    </S.PageWrapper>
+        )}
+      </S.PageWrapper>
+    </ModalProvider>
   );
 };
