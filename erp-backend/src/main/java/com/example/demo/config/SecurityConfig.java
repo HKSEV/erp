@@ -31,7 +31,7 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable) // 로컬 API 테스트를 위해 CSRF 토큰 비활성화
             .cors(cors -> cors.configure(http))
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/api/members/**").permitAll() // 회원가입 API 등 /api/members 하위 모두 허용
+                    .requestMatchers("/api/members/**", "/api/production/**").permitAll() // 회원가입 API 등 /api/members 하위 모두 허용
                     .anyRequest().authenticated()
             );
     return http.build();

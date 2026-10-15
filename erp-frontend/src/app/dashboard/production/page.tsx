@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import useModal from "@/components/contexts/ModalContext";
 import * as S from "@/assets/css/Style.styles";
 import "@/assets/sass/styles.scss"; // 일반
 import styles from "@/assets/sass/Production.module.scss";
@@ -15,40 +17,58 @@ interface ProductionOrder {
 };
 
 export default function Production() {
+  const {openAlertModal} = useModal();
   const [orders, setOrders] = useState<ProductionOrder[]>([
-    {
-      id: "PRD-2023-001",
-      productName: "알루미늄 프레임 A형",
-      quantity: 500,
-      status: "progress",
-      progress: 65,
-      dueDate: "2023-11-20"
-    },
-    {
-      id: "PRD-2023-002",
-      productName: "공업용 모터 250W",
-      quantity: 120,
-      status: "planning",
-      progress: 0,
-      dueDate: "2023-11-25"
-    },
-    {
-      id: "PRD-2023-003",
-      productName: "제어용 메인보드 v2",
-      quantity: 300,
-      status: "completed",
-      progress: 100,
-      dueDate: "2023-11-15"
-    },
-    {
-      id: "PRD-2023-004",
-      productName: "스틸 하우징 케이스",
-      quantity: 1000,
-      status: "progress",
-      progress: 30,
-      dueDate: "2023-12-01"
-    },
+    // {
+    //   id: "PRD-2023-001",
+    //   productName: "알루미늄 프레임 A형",
+    //   quantity: 500,
+    //   status: "progress",
+    //   progress: 65,
+    //   dueDate: "2023-11-20"
+    // },
+    // {
+    //   id: "PRD-2023-002",
+    //   productName: "공업용 모터 250W",
+    //   quantity: 120,
+    //   status: "planning",
+    //   progress: 0,
+    //   dueDate: "2023-11-25"
+    // },
+    // {
+    //   id: "PRD-2023-003",
+    //   productName: "제어용 메인보드 v2",
+    //   quantity: 300,
+    //   status: "completed",
+    //   progress: 100,
+    //   dueDate: "2023-11-15"
+    // },
+    // {
+    //   id: "PRD-2023-004",
+    //   productName: "스틸 하우징 케이스",
+    //   quantity: 1000,
+    //   status: "progress",
+    //   progress: 30,
+    //   dueDate: "2023-12-01"
+    // },
   ]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const response = await axios.get("/api/production/orders");
+      if (response.status === 200)
+        setOrders(response.data);
+    } catch (err) {
+      console.error("오더 목록을 불러오는 중 오류 발생: ", err);
+    } finally {
+      setIsLoading(false);
+    };
+  };
 
   const getBadgeStyle = (status: string) => {
     switch (status) {
@@ -62,10 +82,43 @@ export default function Production() {
     };
   };
 
+  const handleAddOrder = async () => {
+    // 일단 테스트용 임시 데이터를 만듭니다 (나중에는 입력 폼 데이터로 교체)
+    const newOrderData = {
+      id: `PRD-2023-999`, // 테스트용 임시 ID
+      productName: "테스트 신규 모터",
+      quantity: 100,
+      status: "planning",
+      progress: 0,
+      dueDate: "2023-12-31"
+    };
+
+    try {
+      const response = await axios.post("/api/production/orders", newOrderData);
+      if (response.status === 200) {
+        openAlertModal("신규 오더가 성공적으로 DB에 저장되었습니다!");
+        fetchData();
+      };
+    } catch (err) {
+      console.error("등록 중 오류 발생: ", err);
+      openAlertModal("등록에 실패했습니다.");
+    };
+  };
+
+  if (isLoading)
+    return null;
+
   return (
     // <div className="container-fluid mw1200">
     <div className="container-fluid mw1400">
-      <h2 className="mb-4 fw-bold text-dark">생산관리</h2>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="mb-4 fw-bold text-dark">생산관리</h2>
+        <button
+        className="btn btn-primary fw-bold"
+        onClick={handleAddOrder}>
+          + 신규 오더 등록
+        </button>
+      </div>
       <div className="row mb-4 g-3">
         <div className="col-md-4">
           <div className="card border-0 shadow-sm h-100">
