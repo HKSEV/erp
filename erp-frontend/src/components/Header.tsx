@@ -84,7 +84,7 @@ export const Header = () => {
           기준정보
         </Link>
         <Link
-        href="/admin/mypage"
+        href="/dashboard/mypage"
         onClick={() => setIsMobileMenuOpen(false)}>
           내 정보
         </Link>
