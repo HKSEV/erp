@@ -32,9 +32,9 @@ export default function ForgotPassword() {
     <S.MemberContainer>
       <S.MemberCard aria-labelledby="forgot-password-title">
         <S.MemberHeader>
-          <S.MemberLogoIcon aria-hidden="true">
+          <S.MemberIcon aria-hidden="true">
             <FiLock/>
-          </S.MemberLogoIcon>
+          </S.MemberIcon>
           <S.MemberTitle id="forgot-password-title">
             Forgot Your Password?
           </S.MemberTitle>

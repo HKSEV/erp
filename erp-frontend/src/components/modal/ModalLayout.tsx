@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { FiX } from "react-icons/fi";
 import * as S from "@/assets/css/Style.styles";
 
 interface ModalLayoutProps {
@@ -21,7 +22,9 @@ export default function ModalLayout(
       <S.ModalContainer onClick={(e) => e.stopPropagation()}>
         <S.ModalHeader>
           <S.ModalTitle>{title}</S.ModalTitle>
-          <S.CloseButton onClick={onClose}>×</S.CloseButton>
+          <S.CloseButton onClick={onClose}>
+            <FiX aria-hidden="true"/>
+          </S.CloseButton>
         </S.ModalHeader>
         <S.ModalBody>
           {children}
