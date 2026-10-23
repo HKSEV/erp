@@ -6,55 +6,71 @@ import * as C from "./common/Common.styles";
 export const HeaderContainer = styled.header`
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 1rem;
   padding: 0 1.5rem;
   height: 4rem;
   background-color: #1E293B;
   color: #FFF;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: relative;
+
+  @media (max-width: 768px) {
+    padding: 0 1rem;
+    gap: 0.75rem;
+  }
 `;
-export const HeaderLogo = styled.nav`
+export const HeaderLogo = styled(Link)`
+  margin-right: auto;
+  color: #FFF;
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: 0.5px;
-  cursor: pointer;
-`;
-export const HeaderDesktopNav = styled.nav`
-  display: flex;
-  gap: 2.285rem;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 
   @media (max-width: 768px) {
-    display: none;
+    font-size: 1rem;
   }
-`;
-export const HeaderNavLink = styled(Link)`
-  color: #CBD5E1;
-  font-weight: 500;
-  transition: color 0.2s ease-in-out;
-  &:hover { color: #FFF; }
 `;
 export const HeaderUserSection = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 1rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+
+  @media (max-width: 768px) {
+    gap: 0.75rem;
+  }
+`;
+export const HeaderUserName = styled.span`
+  color: #CBD5E1;
 
   @media (max-width: 768px) {
     display: none;
   }
 `;
+export const HeaderUserLink = styled(Link)`
+  color: #CBD5E1;
+  font-weight: 500;
+  text-decoration: none;
+  &:hover { color: #FFF; }
+`;
 export const HeaderLogoutButton = styled.button`
-  background-color: #EF4444;
-  color: #FFF;
-  border: none;
-  padding: 6px 16px;
+  background-color: transparent;
+  color: #E2E8F0;
+  border: 1px solid #475569;
+  padding: 6px 14px;
   border-radius: 4px;
   font-size: 0.875rem;
   cursor: pointer;
-  font-weight: bold;
   transition: background-color 0.2s ease-in-out;
-  &:hover { background-color: #DC2626; }
+  &:hover { background-color: #334155; }
 `;
+// 모바일에서만 보이는 메뉴 버튼 (사이드바 서랍 열기/닫기)
 export const HeaderMobileMenuToggle = styled.button`
   display: none;
   background-color: transparent;
@@ -66,41 +82,6 @@ export const HeaderMobileMenuToggle = styled.button`
   @media (max-width: 768px) {
     display: block;
   }
-`;
-export const HeaderMobileNav = styled.nav<{$isOpen: boolean}>`
-  display: flex;
-  flex-direction: column;
-  position: absolute;
-  top: 56px;
-  left: 0;
-  width: 100%;
-  background-color: #334155;
-  padding: ${({$isOpen}) => ($isOpen ? "16px 24px" : "0 24px")};
-  max-height: ${({$isOpen}) => ($isOpen ? "300px" : "0")};
-  overflow: hidden;
-  transition: all 0.3s ease-in-out;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 9999999;
-
-  & > a {
-    padding: 12px 0;
-    border-bottom: 1px solid #475569;
-    color: #FFF;
-    text-decoration: none;
-    font-weight: 500;
-  }
-
-  & > a:last-child {
-    border-bottom: none;
-    color: #FCA5A5
-  }
-
-  @media (min-width: 768px) {
-    display: none;
-  }
-`;
-export const HeaderStyledLink = styled(Link)`
-  
 `;
 
 // 푸터
@@ -145,9 +126,11 @@ export const FooterLinks = styled.div`
 `;
 
 // sidebar
-export const AsideContainer = styled.div`
-  width: 100%;
-  height: 100%;
+export const AsideContainer = styled.nav`
+  position: sticky;
+  top: 4rem;
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
   padding: 24px 0;
   display: flex;
   flex-direction: column;
@@ -156,7 +139,7 @@ export const AsideContainer = styled.div`
 export const MenuSection = styled.div`
   margin-bottom: 24px;
 `;
-export const SectionTitle = styled.h3`
+export const SectionTitle = styled.p`
   padding: 0 24px;
   font-size: 0.75rem;
   font-weight: 700;
@@ -169,19 +152,20 @@ export const MenuList = styled.ul`
   padding: 0;
   margin: 0;
 `;
-export const MenuItem = styled(Link)`
+export const MenuItem = styled(Link)<{$isActive?: boolean}>`
   display: block;
   padding: 10px 24px;
-  color: #475569;
+  color: ${({$isActive}) => ($isActive ? "#2563EB" : "#475569")};
+  background-color: ${({$isActive}) => ($isActive ? "#EFF6FF" : "transparent")};
+  border-right: 3px solid ${({$isActive}) => ($isActive ? "#2563EB" : "transparent")};
+  font-weight: ${({$isActive}) => ($isActive ? 700 : 500)};
   text-decoration: none;
   font-size: 0.95rem;
-  font-weight: 500;
   transition: background-color 0.2s ease, color 0.2s ease;
 
   &:hover {
     background-color: #F1F5F9;
     color: #2563EB;
-    border-right: 3px solid #2563EB;
   }
 `;
 

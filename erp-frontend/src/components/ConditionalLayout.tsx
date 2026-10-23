@@ -1,7 +1,7 @@
 // 현재 URL을 읽어와서 숨겨야 할 목록에 포함되어 헤더 푸터를 온/오프
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Top } from "./Top";
 import { Header } from "./Header";
@@ -18,6 +18,21 @@ export default function ConditionalLayout({children}: {
   // 헤더와 푸터를 숨기고 싶은 URL 배열 작성
   const hiddenPaths = ["/", "/register", "/find-id", "/forgot"];
   const isHidden = hiddenPaths.includes(pathname);
+  // 모바일 사이드바 서랍 열림 상태 (헤더 버튼과 사이드바가 함께 사용)
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const closeMenu = () => setIsMenuOpen(false);
+
+  // 서랍이 열려 있을 때 Esc 키로 닫기
+  useEffect(() => {
+    if (!isMenuOpen)
+      return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape")
+        setIsMenuOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isMenuOpen]);
 
   return (
     <ModalProvider>
@@ -27,12 +42,16 @@ export default function ConditionalLayout({children}: {
           <>
             <S.TopArea>
               <Top/>
-              <Header/>
+              <Header
+              isMenuOpen={isMenuOpen}
+              onToggleMenu={() => setIsMenuOpen((prev) => !prev)}
+              onCloseMenu={closeMenu}/>
             </S.TopArea>
             <S.MainContent $isHidden={isHidden}>
-              <S.LnbWrapper>
-                <SideBar/>
+              <S.LnbWrapper $isOpen={isMenuOpen}>
+                <SideBar onNavigate={closeMenu}/>
               </S.LnbWrapper>
+              {isMenuOpen && <S.DrawerBackdrop onClick={closeMenu}/>}
               <S.ContentArea>
                 {children}
               </S.ContentArea>
