@@ -90,10 +90,6 @@ export const HeaderMobileNav = styled.nav<{$isOpen: boolean}>`
     font-weight: 500;
   }
 
-  & > a:nth-child(5) {
-    color: #93C5FD
-  }
-
   & > a:last-child {
     border-bottom: none;
     color: #FCA5A5
@@ -102,7 +98,6 @@ export const HeaderMobileNav = styled.nav<{$isOpen: boolean}>`
   @media (min-width: 768px) {
     display: none;
   }
-}
 `;
 export const HeaderStyledLink = styled(Link)`
   

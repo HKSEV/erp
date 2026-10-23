@@ -1,3 +1,5 @@
+"use client";
+
 import React, { createContext, useState, useContext, ReactNode } from "react";
 import ScheduleModal, { Schedule } from "../modal/ScheduleModal";
 import AlertModal from "../modal/AlertModal";
@@ -15,6 +17,7 @@ interface ScheduleModalConfig {
 // 2. AlertModal 설정 타입
 interface AlertModalConfig {
   isOpen: boolean;
+  type: "alert" | "confirm";
   message: string;
   onConfirm?: () => void;
 };
@@ -35,6 +38,10 @@ interface ModalContextType {
     message: string,
     onConfirm?: () => void,
   ) => void;
+  openConfirmModal: (
+    message: string,
+    onConfirm: () => void
+  ) => void;
 };
 
 // 3. Context 생성
@@ -54,6 +61,7 @@ export function ModalProvider({children}: {children: ReactNode}) {
   // AlertModal 상태
   const [alertModalConfig, setAlertModalConfig] = useState<AlertModalConfig>({
     isOpen: false,
+    type: "alert",
     message: "",
   });
 
@@ -79,7 +87,13 @@ export function ModalProvider({children}: {children: ReactNode}) {
     message: string,
     onConfirm?: () => void,
   ) => {
-    setAlertModalConfig({isOpen: true, message, onConfirm});
+    setAlertModalConfig({isOpen: true, type: "alert", message, onConfirm});
+  };
+  const openConfirmModal = (
+    message: string,
+    onConfirm: () => void,
+  ) => {
+    setAlertModalConfig({isOpen: true, type: "confirm", message, onConfirm});
   };
 
   return (
@@ -89,11 +103,13 @@ export function ModalProvider({children}: {children: ReactNode}) {
       alertModalConfig,
       updateScheduleModal,
       openScheduleModal,
-      openAlertModal
+      openAlertModal,
+      openConfirmModal
     }}>
       {children}
       {/* 커스텀 모달 렌더링 */}
       <ScheduleModal
+      key={`${scheduleModalConfig.year}-${scheduleModalConfig.month}-${scheduleModalConfig.selectedDate}-${scheduleModalConfig.isOpen}`}
       isOpen={scheduleModalConfig.isOpen}
       year={scheduleModalConfig.year}
       month={scheduleModalConfig.month}
@@ -105,7 +121,7 @@ export function ModalProvider({children}: {children: ReactNode}) {
       )}/>
       <AlertModal
       isOpen={alertModalConfig.isOpen}
-      isOn={alertModalConfig.message.endsWith("?") ? true : false}
+      isOn={alertModalConfig.type === "confirm"}
       message={alertModalConfig.message}
       onClose={() => setAlertModalConfig(
         (prev) => ({...prev, isOpen: false})

@@ -10,21 +10,19 @@ import * as S from "@/assets/css/Style.styles";
 export const Header = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const {openAlertModal} = useModal();
+  const {openAlertModal, openConfirmModal} = useModal();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
-
   const handleLogout = () => {
-    openAlertModal("로그아웃 하시겠습니까?", () => {
+    setIsMobileMenuOpen(false);
+    openConfirmModal("로그아웃 하시겠습니까?", () => {
       localStorage.removeItem("token");
       delete axios.defaults.headers.common["Authorization"];
       document.cookie = "login_token=true; path=/; max-age=0;";
-      setTimeout(() => {
-        openAlertModal("로그아웃 되었습니다.", () => router.push("/"));
-      }, 100);
+      openAlertModal("로그아웃 되었습니다.", () => router.push("/"));
     });
   };
 

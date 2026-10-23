@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Temporal } from "@js-temporal/polyfill";
 import * as S from "@/assets/css/Style.styles";
 import ModalLayout from "./ModalLayout";
+import useModal from "../contexts/ModalContext";
 
 export interface Schedule {
   id: string;
@@ -33,16 +34,7 @@ export default function ScheduleModal({
   const [editingId, setEditingId] = useState<string | null>(null);
   // 커스텀 셀렉스 박스 열림/닫힘 상태
   const [isSelectOpen, setIsSelectOpen] = useState(false);
-
-  // 모달이 열리거나 날짜가 바뀔 때 입력창 초기화
-  useEffect(() => {
-    if (isOpen) {
-      setFormContent("");
-      setFormStatus("대기");
-      setEditingId(null);
-      setIsSelectOpen(false);
-    };
-  }, [isOpen, selectedDate]);
+  const {openConfirmModal} = useModal();
 
   if (!isOpen || selectedDate === null)
     return null;
@@ -80,13 +72,13 @@ export default function ScheduleModal({
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("일정을 삭제하시겠습니까?")) {
+    openConfirmModal("일정을 삭제하시겠습니까?", () => {
       setSchedules((prev) => prev.filter((sch) => sch.id !== id));
       if (editingId === id) {
         setFormContent("");
         setEditingId(null);
       };
-    };
+    });
   };
 
   return (
