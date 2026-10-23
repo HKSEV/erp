@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode } from "react";
 import ScheduleModal, { Schedule } from "../modal/ScheduleModal";
-import AlertModal from "../modal/AlertModal";
+import AlertModal, { AlertModalOptions } from "../modal/AlertModal";
 
 // 1. ScheduleModal 설정 타입
 interface ScheduleModalConfig {
@@ -13,7 +13,7 @@ interface ScheduleModalConfig {
 };
 
 // 2. AlertModal 설정 타입
-interface AlertModalConfig {
+interface AlertModalConfig extends AlertModalOptions {
   isOpen: boolean;
   message: string;
   onConfirm?: () => void;
@@ -34,6 +34,7 @@ interface ModalContextType {
   openAlertModal: (
     message: string,
     onConfirm?: () => void,
+    options?: AlertModalOptions,
   ) => void;
 };
 
@@ -78,8 +79,9 @@ export function ModalProvider({children}: {children: ReactNode}) {
   const openAlertModal = (
     message: string,
     onConfirm?: () => void,
+    options: AlertModalOptions = {},
   ) => {
-    setAlertModalConfig({isOpen: true, message, onConfirm});
+    setAlertModalConfig({...options, isOpen: true, message, onConfirm});
   };
 
   return (
@@ -105,8 +107,12 @@ export function ModalProvider({children}: {children: ReactNode}) {
       )}/>
       <AlertModal
       isOpen={alertModalConfig.isOpen}
-      isOn={alertModalConfig.message.endsWith("?") ? true : false}
+      isOn={alertModalConfig.message.endsWith("?")}
       message={alertModalConfig.message}
+      variant={alertModalConfig.variant}
+      description={alertModalConfig.description}
+      confirmText={alertModalConfig.confirmText}
+      cancelText={alertModalConfig.cancelText}
       onClose={() => setAlertModalConfig(
         (prev) => ({...prev, isOpen: false})
       )}
