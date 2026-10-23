@@ -13,11 +13,11 @@ interface HeaderProps {
 
 export const Header = ({isMenuOpen, onToggleMenu, onCloseMenu}: HeaderProps) => {
   const router = useRouter();
-  const {openAlertModal, openConfirmModal} = useModal();
+  const {openAlertModal} = useModal();
 
   const handleLogout = () => {
     onCloseMenu();
-    openConfirmModal(
+    openAlertModal(
       "로그아웃 하시겠습니까?",
       () => {
         sessionStorage.removeItem("token");
@@ -32,8 +32,7 @@ export const Header = ({isMenuOpen, onToggleMenu, onCloseMenu}: HeaderProps) => 
       },
       {
         variant: "confirm",
-        description:
-          "로그아웃 후에는 다시 로그인해야\n서비스를 이용할 수 있습니다.",
+        description: "로그아웃 후에는 다시 로그인해야\n서비스를 이용할 수 있습니다.",
         confirmText: "로그아웃",
         cancelText: "취소",
       },

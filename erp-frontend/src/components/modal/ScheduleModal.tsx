@@ -83,8 +83,7 @@ export default function ScheduleModal({
       },
       {
         variant: "confirm",
-        description:
-          "되돌릴 수 없습니다.",
+        description: "되돌릴 수 없습니다.",
         confirmText: "삭제",
         cancelText: "취소",
       },

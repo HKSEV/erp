@@ -17,7 +17,6 @@ interface ScheduleModalConfig {
 // 2. AlertModal 설정 타입
 interface AlertModalConfig extends AlertModalOptions {
   isOpen: boolean;
-  type: "alert" | "confirm";
   message: string;
   onConfirm?: () => void;
 };
@@ -39,11 +38,6 @@ interface ModalContextType {
     onConfirm?: () => void,
     options?: AlertModalOptions,
   ) => void;
-  openConfirmModal: (
-    message: string,
-    onConfirm: () => void,
-    options?: AlertModalOptions,
-  ) => void;
 };
 
 // 3. Context 생성
@@ -63,7 +57,6 @@ export function ModalProvider({children}: {children: ReactNode}) {
   // AlertModal 상태
   const [alertModalConfig, setAlertModalConfig] = useState<AlertModalConfig>({
     isOpen: false,
-    type: "alert",
     message: "",
   });
 
@@ -90,15 +83,7 @@ export function ModalProvider({children}: {children: ReactNode}) {
     onConfirm?: () => void,
     options: AlertModalOptions = {},
   ) => {
-    setAlertModalConfig({...options, isOpen: true, type: "alert", message, onConfirm});
-  };
-  // 확인/취소 모달 열기 함수 (메시지 문구와 관계없이 취소 버튼 표시)
-  const openConfirmModal = (
-    message: string,
-    onConfirm: () => void,
-    options: AlertModalOptions = {},
-  ) => {
-    setAlertModalConfig({...options, isOpen: true, type: "confirm", message, onConfirm});
+    setAlertModalConfig({...options, isOpen: true, message, onConfirm});
   };
 
   return (
@@ -109,7 +94,6 @@ export function ModalProvider({children}: {children: ReactNode}) {
       updateScheduleModal,
       openScheduleModal,
       openAlertModal,
-      openConfirmModal
     }}>
       {children}
       {/* 커스텀 모달 렌더링 */}
@@ -126,7 +110,7 @@ export function ModalProvider({children}: {children: ReactNode}) {
       )}/>
       <AlertModal
       isOpen={alertModalConfig.isOpen}
-      isOn={alertModalConfig.type === "confirm"}
+      isOn={alertModalConfig.variant === "confirm"}
       message={alertModalConfig.message}
       variant={alertModalConfig.variant}
       description={alertModalConfig.description}
