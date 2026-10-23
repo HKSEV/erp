@@ -27,7 +27,7 @@ const MENU_GROUPS: MenuGroup[] = [
   {
     title: "시스템관리",
     items: [
-      { label: "사용자 권한 관리", href: "/dashboard/system/users", hidden: true },
+      { label: "사용자 권한 관리", href: "/dashboard/system/users" },
       { label: "회사 기본 정보", href: "/dashboard/system/company" },
     ],
   },
