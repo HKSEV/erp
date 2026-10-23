@@ -1,3 +1,5 @@
+"use client";
+
 import React, { createContext, useState, useContext, ReactNode } from "react";
 import ScheduleModal, { Schedule } from "../modal/ScheduleModal";
 import AlertModal, { AlertModalOptions } from "../modal/AlertModal";
@@ -15,6 +17,7 @@ interface ScheduleModalConfig {
 // 2. AlertModal 설정 타입
 interface AlertModalConfig extends AlertModalOptions {
   isOpen: boolean;
+  type: "alert" | "confirm";
   message: string;
   onConfirm?: () => void;
 };
@@ -36,6 +39,11 @@ interface ModalContextType {
     onConfirm?: () => void,
     options?: AlertModalOptions,
   ) => void;
+  openConfirmModal: (
+    message: string,
+    onConfirm: () => void,
+    options?: AlertModalOptions,
+  ) => void;
 };
 
 // 3. Context 생성
@@ -55,6 +63,7 @@ export function ModalProvider({children}: {children: ReactNode}) {
   // AlertModal 상태
   const [alertModalConfig, setAlertModalConfig] = useState<AlertModalConfig>({
     isOpen: false,
+    type: "alert",
     message: "",
   });
 
@@ -81,7 +90,15 @@ export function ModalProvider({children}: {children: ReactNode}) {
     onConfirm?: () => void,
     options: AlertModalOptions = {},
   ) => {
-    setAlertModalConfig({...options, isOpen: true, message, onConfirm});
+    setAlertModalConfig({...options, isOpen: true, type: "alert", message, onConfirm});
+  };
+  // 확인/취소 모달 열기 함수 (메시지 문구와 관계없이 취소 버튼 표시)
+  const openConfirmModal = (
+    message: string,
+    onConfirm: () => void,
+    options: AlertModalOptions = {},
+  ) => {
+    setAlertModalConfig({...options, isOpen: true, type: "confirm", message, onConfirm});
   };
 
   return (
@@ -91,17 +108,13 @@ export function ModalProvider({children}: {children: ReactNode}) {
       alertModalConfig,
       updateScheduleModal,
       openScheduleModal,
-      openAlertModal
+      openAlertModal,
+      openConfirmModal
     }}>
       {children}
       {/* 커스텀 모달 렌더링 */}
       <ScheduleModal
-      key={`
-        ${scheduleModalConfig.year}-
-        ${scheduleModalConfig.month}-
-        ${scheduleModalConfig.selectedDate}-
-        ${scheduleModalConfig.isOpen}
-      `}
+      key={`${scheduleModalConfig.year}-${scheduleModalConfig.month}-${scheduleModalConfig.selectedDate}-${scheduleModalConfig.isOpen}`}
       isOpen={scheduleModalConfig.isOpen}
       year={scheduleModalConfig.year}
       month={scheduleModalConfig.month}
@@ -113,7 +126,7 @@ export function ModalProvider({children}: {children: ReactNode}) {
       )}/>
       <AlertModal
       isOpen={alertModalConfig.isOpen}
-      isOn={alertModalConfig.message.endsWith("?")}
+      isOn={alertModalConfig.type === "confirm"}
       message={alertModalConfig.message}
       variant={alertModalConfig.variant}
       description={alertModalConfig.description}
