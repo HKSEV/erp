@@ -56,7 +56,7 @@ export const MemberHeader = styled.header`
   margin-bottom: 2rem;
   text-align: center;
 `;
-export const MemberLogoIcon = styled.div`
+export const MemberIcon = styled.div`
   ${C.FlexCenter}
   width: 3.25rem;
   height: 3.25rem;
@@ -303,7 +303,7 @@ export const MemberSearchButton = styled.button`
   ${C.ButtonBase}
   width: auto;
   padding-inline: 1rem;
-  color: #2563Eb;
+  color: #2563EB;
   border: 1px solid #3278F6;
   white-space: nowrap;
 

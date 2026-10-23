@@ -55,9 +55,9 @@ export default function Home() {
     <S.MemberContainer>
       <S.MemberCard aria-labelledby="login-title">
         <S.MemberHeader>
-          <S.MemberLogoIcon aria-hidden="true">
+          <S.MemberIcon aria-hidden="true">
             <FaUser/>
-          </S.MemberLogoIcon>
+          </S.MemberIcon>
           <S.MemberTitle id="login-title">
             Welcome Back!
           </S.MemberTitle>

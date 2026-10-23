@@ -139,9 +139,9 @@ export default function Member() {
       strategy="lazyOnload"/>
       <S.MemberCard aria-labelledby="register-title">
         <S.MemberHeader>
-          <S.MemberLogoIcon aria-hidden="true">
+          <S.MemberIcon aria-hidden="true">
             <FiUserPlus/>
-          </S.MemberLogoIcon>
+          </S.MemberIcon>
           <S.MemberTitle id="register-title">
             Create an Account!
           </S.MemberTitle>

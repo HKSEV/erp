@@ -12,31 +12,37 @@ const fadeOut = keyframes`
 const slideUp = keyframes`
   from {
     opacity: 0;
-    transform: translateY(1.25rem);
+    transform: translateY(8px) scale(0.98);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 `;
 const slideDown = keyframes`
   from {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 
   to {
     opacity: 0;
-    transform: translateY(1.25rem);
+    transform: translateY(8px) scale(0.98);
   }
 `;
+
+export type AlertModalVariant =
+  | "info"
+  | "success"
+  | "error"
+  | "confirm";
 
 interface ModalProps {
   $isClosing?: boolean;
 };
 
-// 일정모달
+// layout
 export const ModalOverlay = styled.div<ModalProps>`
   position: fixed;
   top: 0;
@@ -46,7 +52,9 @@ export const ModalOverlay = styled.div<ModalProps>`
   height: 100%;
   z-index: 99999;
   ${C.FlexCenter}
-  animation: ${({$isClosing}) => ($isClosing ? fadeOut : fadeIn)} 0.3s ease-out forwards;
+  animation: ${({$isClosing}) => (
+    $isClosing ? fadeOut : fadeIn
+  )} 0.3s ease-out forwards;
 `;
 export const ModalContainer = styled.div`
   background-color: #FFF;
@@ -54,24 +62,6 @@ export const ModalContainer = styled.div`
   padding: 24px;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-`;
-export const ModalBox = styled.div<ModalProps>`
-  background-color: #1E293B;
-  padding: 2rem;
-  border-radius: 0.75rem;
-  min-width: 18.75rem;
-  max-width: 90%;
-  gap: 1.5rem;
-  ${C.FlexColumn}
-  ${C.BoxShadow}
-  animation: ${({$isClosing}) => ($isClosing ? slideDown : slideUp)} 0.3s ease-out forwards;
-`;
-export const ModalText = styled.p`
-  font-size: 1.125rem;
-  color: #FFF;
-  text-align: center;
-  margin: 0;
-  line-height: 1.5;
 `;
 export const ModalHeader = styled.div`
   display: flex;
@@ -85,25 +75,37 @@ export const ModalTitle = styled.h3`
   margin: 0;
 `;
 export const CloseButton = styled.button`
-  background-color: transparent;
-  border: none;
-  font-size: 2rem;
-  font-weight: 300;
-  line-height: 1;
+  ${C.FlexCenter}
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  flex-shrink: 0;
+  color: #8590A5;
+  background: transparent;
+  border: 0;
+  border-radius: 0.5rem;
   cursor: pointer;
-  color: #666;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.2s ease, color 0.2s ease;
+
+  svg {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
   &:hover {
-    color: #000;
-    transform: rotate(90deg);
+    color: #3278F6;
+    background: #F1F6FF;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #3278F6;
+    outline-offset: 2px;
   }
 `;
 export const ModalBody = styled.div`
   
 `;
+
+// schedule
 export const FormGroup = styled.div`
   display: flex;
   flex-direction: column;
@@ -186,7 +188,6 @@ export const ScheduleDot = styled.div`
   border-radius: 50%;
   margin-top: 4px;
 `;
-
 // 커스텀 셀렉트 박스 컨테이너
 export const CustomSelectContainer = styled.div`
   position: relative;
@@ -240,4 +241,139 @@ export const SelectItem = styled.li<SelectItemProps>`
   )};
   font-weight: ${({$isSelected}) => ($isSelected ? "bold" : "normal")};
   &:hover { background-color: #F1F5F9; }
+`;
+
+// alert
+export const AlertBox = styled.dialog<ModalProps>`
+  width: calc(100% - 2rem);
+  max-width: 25rem;
+  max-height: calc(100dvh - 2rem);
+  min-width: 18.75rem;
+  margin: auto;
+  padding: 2rem 1.75rem 1.75rem;
+  color: #172033;
+  background-color: #FFF;
+  border: 1px solid #EEF2F7;
+  border-radius: 1.25rem;
+  outline: none;
+  box-shadow:
+    0 24px 64px rgba(15, 23, 42, 0.16),
+    0 8px 24px rgba(15, 23, 42, 0.06);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-family: inherit;
+  font-size: 1rem;
+  text-align: center;
+
+  &,
+  & * {
+    box-sizing: border-box;
+  }
+
+  button {
+    font-family: inherit;
+  }
+
+  &[open] {
+    animation: ${({$isClosing}) => (
+      $isClosing ? slideDown : slideUp
+    )} 0.18s ease-out both;
+  }
+
+  &::backdrop {
+    background: rgba(15, 23, 42, 0.32);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  @media (max-width: 480px) {
+    padding: 1.75rem 1.25rem 1.25rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &[open] {
+      animation: none;
+    }
+  }
+`;
+export const AlertText = styled.h2`
+  margin: 0;
+  color: #172033;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
+
+  @media (max-width: 480px) {
+    font-size: 1.125rem;
+  }
+`;
+export const AlertIcon = styled.div<{$variant: AlertModalVariant}>`
+  ${C.FlexCenter}
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: 0 auto 1.25rem;
+  color: ${({$variant}) => (
+    $variant === "error" ? "#DC2626" : "#2563EB"
+  )};
+
+  background-color: ${({$variant}) => (
+    $variant === "error" ? "#FEF2F2" : "#EAF2FF"
+  )};
+  border-radius: 1rem;
+
+  svg {
+    width: 1.75rem;
+    height: 1.75rem;
+    stroke-width: 2.5;
+  }
+`;
+export const AlertDescription = styled.p`
+  margin: 0.5rem 0 0;
+  color: #7B8498;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  letter-spacing: -0.3px;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+`;
+export const AlertButtonWrapper = styled.div<{$double: boolean}>`
+  margin-top: 1.75rem;
+  display: grid;
+  grid-template-columns: ${({$double}) => (
+    $double ? "repeat(2, minmax(0, 1fr))" : "minmax(0, 1fr)"
+  )};
+  gap: 0.75rem;
+`;
+export const AlertButton = styled.button<{$isCancel?: boolean}>`
+  ${C.ButtonBase}
+  color: ${({$isCancel}) => ($isCancel ? "#536078" : "#FFF")};
+  background-color: ${({$isCancel}) => (
+    $isCancel ? "#F8FAFC" : "#2563EB"
+  )};
+  border: 1px solid ${({$isCancel}) => (
+    $isCancel ? "#DCE1EB" : "#2563EB"
+  )};
+  min-height: 2.75rem;
+  padding: 0.625rem 1rem;
+  gap: 0.5rem;
+
+  &:not(:disabled):hover {
+    background-color: ${({$isCancel}) => (
+      $isCancel ? "#EEF2F7" : "#1D4ED8"
+    )};
+    border-color: ${({$isCancel}) => (
+      $isCancel ? "#CBD5E1" : "#1D4ED8"
+    )};
+    box-shadow: ${({$isCancel}) => (
+      $isCancel ? "none" : "0 4px 12px rgba(37, 99, 235, 0.16)"
+    )};
+  }
+
+  &:not(:disabled):active {
+    background-color:  ${({$isCancel}) => (
+      $isCancel ? "#E2E8F0" : "#1E40AF"
+    )};
+  }
 `;
