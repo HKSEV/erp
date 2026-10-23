@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import * as S from "@/assets/css/Style.styles";
 
 interface AlertModalProps {
@@ -14,42 +13,34 @@ interface AlertModalProps {
 export default function AlertModal(
   {isOpen, isOn, message, onClose, onConfirm}: AlertModalProps
 ) {
-  const [isClosing, setIsClosing] = useState(false);
-
-  useEffect(() => {
-    if (isOpen)
-      setIsClosing(false);
-  }, [isOpen]);
-
-  const handleClose = () => {
-    setIsClosing(true);
-    onClose();
-  };
-
   if (!isOpen)
     return null;
 
+  const handleConfirm = () => {
+    onClose();
+    onConfirm?.();
+  };
+
   return (
-    <S.ModalOverlay $isClosing={isClosing}>
-      <S.ModalBox $isClosing={isClosing}>
+    <S.ModalOverlay>
+      <S.ModalBox>
         <S.ModalText>{message}</S.ModalText>
-        {isOn && (
+        <S.ButtonGroup>
+          {isOn && (
+            <S.Button
+            $variant="grey"
+            $size="medium"
+            onClick={onClose}>
+              취소
+            </S.Button>
+          )}
           <S.Button
-          $variant="danger"
+          $variant="primary"
           $size="medium"
-          onClick={handleClose}>
-            취소
+          onClick={handleConfirm}>
+            확인
           </S.Button>
-        )}
-        <S.Button
-        $variant="white"
-        $size="medium"
-        onClick={onConfirm ? () => {
-          handleClose();
-          onConfirm();
-        } : handleClose}>
-          확인
-        </S.Button>
+        </S.ButtonGroup>
       </S.ModalBox>
     </S.ModalOverlay>
   );
