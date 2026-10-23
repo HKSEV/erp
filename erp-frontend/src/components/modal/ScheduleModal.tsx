@@ -7,6 +7,8 @@ import ModalLayout from "./ModalLayout";
 
 export interface Schedule {
   id: string;
+  year: number;
+  month: number;
   date: number;
   content: string;
   status: "대기" | "진행" | "완료";
@@ -16,6 +18,7 @@ export interface Schedule {
 interface ScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
+  year: number;
   month: number;
   selectedDate: number | null;
   schedules: Schedule[];
@@ -23,7 +26,7 @@ interface ScheduleModalProps {
 };
 
 export default function ScheduleModal({
-  isOpen, onClose, month, selectedDate, schedules, setSchedules
+  isOpen, onClose, year, month, selectedDate, schedules, setSchedules
 }: ScheduleModalProps) {
   const [formContent, setFormContent] = useState("");
   const [formStatus, setFormStatus] = useState<"대기"|"진행"|"완료">("대기");
@@ -45,7 +48,7 @@ export default function ScheduleModal({
     return null;
 
   const handleSave = () => {
-    if (!formContent.trim)
+    if (!formContent.trim())
       return;
     const currentTime = Temporal.Now.plainTimeISO().toString().split(".")[0];
 
@@ -57,6 +60,8 @@ export default function ScheduleModal({
       setSchedules((prev) => [
         ...prev, {
           id: crypto.randomUUID(),
+          year: year,
+          month: month,
           date: selectedDate,
           content: formContent,
           status: formStatus,
@@ -88,7 +93,7 @@ export default function ScheduleModal({
     <ModalLayout
     isOpen={isOpen}
     onClose={onClose}
-    title={`${month}월 ${selectedDate}일 업무 일정`}>
+    title={`${year}년 ${month}월 ${selectedDate}일 업무 일정`}>
       <S.FormGroup>
         <S.CustomSelectContainer>
           <S.SelectTrigger onClick={() => setIsSelectOpen(!isSelectOpen)}>
@@ -127,7 +132,7 @@ export default function ScheduleModal({
       </S.ButtonGroup>
 
       <S.ScheduleList>
-        {schedules.filter((sch) => sch.date === selectedDate).map((sch) => (
+        {schedules.filter((sch) => sch.year === year && sch.month === month && sch.date === selectedDate).map((sch) => (
           <S.ScheduleItem key={sch.id}>
             <S.ScheduleHeader>
               <S.Badge $status={sch.status}>

@@ -5,6 +5,7 @@ import AlertModal from "../modal/AlertModal";
 // 1. ScheduleModal 설정 타입
 interface ScheduleModalConfig {
   isOpen: boolean;
+  year: number;
   month: number;
   selectedDate: number | null;
   schedules: Schedule[];
@@ -23,6 +24,7 @@ interface ModalContextType {
   scheduleModalConfig: ScheduleModalConfig;
   alertModalConfig: AlertModalConfig;
   openScheduleModal: (
+    year: number,
     month: number,
     selectedDate: number | null,
     schedules: Schedule[],
@@ -43,6 +45,7 @@ export function ModalProvider({children}: {children: ReactNode}) {
   // ScheduleModal 상태
   const [scheduleModalConfig, setScheduleModalConfig] = useState<ScheduleModalConfig>({
     isOpen: false,
+    year: 2026,
     month: 1,
     selectedDate: null,
     schedules: [],
@@ -56,13 +59,14 @@ export function ModalProvider({children}: {children: ReactNode}) {
 
   // ScheduleModal 열기 함수
   const openScheduleModal = (
+    year: number,
     month: number,
     selectedDate: number | null,
     schedules: Schedule[],
     setSchedules?: React.Dispatch<React.SetStateAction<Schedule[]>>,
   ) => {
     setScheduleModalConfig({
-      isOpen: true, month, selectedDate, schedules, setSchedules
+      isOpen: true, year, month, selectedDate, schedules, setSchedules
     });
   };
   // 갱신
@@ -91,6 +95,7 @@ export function ModalProvider({children}: {children: ReactNode}) {
       {/* 커스텀 모달 렌더링 */}
       <ScheduleModal
       isOpen={scheduleModalConfig.isOpen}
+      year={scheduleModalConfig.year}
       month={scheduleModalConfig.month}
       selectedDate={scheduleModalConfig.selectedDate}
       schedules={scheduleModalConfig.schedules}
