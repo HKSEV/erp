@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import axios from "@/app/lib/api";
 import {
   FiMail,
   FiLock,
@@ -22,6 +22,7 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -35,17 +36,42 @@ export default function Home() {
       if (response.status === 200) {
         // 1. 백엔드에서 발급한 JWT 토큰을 localStorage에 저장
         const token = response.data.token;
-        localStorage.setItem("token", token);
-        document.cookie = "login_token=true; path=/; max-age=86400;";
+        // 이전 로그인 정보가 반대쪽 저장소에 남지 않도록 정리
+        localStorage.removeItem("token");
+        sessionStorage.removeItem("token");
+
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem("token", token);
+
+        const attributes = ["path=/", "SameSite=Lax",];
+        if (rememberMe)
+          attributes.push("max-age=3600");
+        if (window.location.protocol === "https:")
+          attributes.push("Secure");
+        document.cookie = `login_token=true; ${attributes.join("; ")}`;
 
         // 2. 이후 모든 axios 요청 헤더에 JWT 토큰을 자동 포함하도록 설정
-        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        // axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-        openAlertModal("로그인 성공!", () => router.push("/dashboard"));
+        openAlertModal(
+          "로그인 성공!",
+          () => router.push("/dashboard"),
+          {
+            variant: "success",
+            description: "정상적으로 로그인되었습니다.\n서비스를 이용해 보세요.",
+          },
+        );
       };
     } catch (err) {
       console.error("로그인 에러: ", err);
-      openAlertModal("이메일 또는 비밀번호를 확인해주세요.");
+      openAlertModal(
+        "로그인에 실패했습니다.",
+        undefined,
+        {
+          variant: "error",
+          description: "이메일 또는 비밀번호를 확인해 주세요.",
+        },
+      );
     } finally {
       setIsLoading(false);
     };
@@ -116,7 +142,11 @@ export default function Home() {
 
           <S.MemberOptionWrapper>
             <S.MemberOptionLabel>
-              <input type="checkbox" name="remember"/>
+              <input
+              type="checkbox"
+              name="remember"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}/>
               로그인 상태 유지
             </S.MemberOptionLabel>
             <S.MemberTextLink href="/forgot">
@@ -136,7 +166,7 @@ export default function Home() {
           type="button"
           disabled={isLoading}>
             <FcGoogle aria-hidden="true"/>
-            Login with Google
+            Google로 로그인하기
           </S.MemberSocialButton>
           <S.MemberSocialButton
           type="button"
@@ -144,7 +174,7 @@ export default function Home() {
             <S.InstagramIcon aria-hidden="true">
               <FiInstagram/>
             </S.InstagramIcon>
-            Login with Instargram
+            Instargram으로 로그인하기
           </S.MemberSocialButton>
         </S.MemberSocialWrapper>
 

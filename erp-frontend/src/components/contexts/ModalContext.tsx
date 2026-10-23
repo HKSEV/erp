@@ -2,7 +2,7 @@
 
 import React, { createContext, useState, useContext, ReactNode } from "react";
 import ScheduleModal, { Schedule } from "../modal/ScheduleModal";
-import AlertModal from "../modal/AlertModal";
+import AlertModal, { AlertModalOptions } from "../modal/AlertModal";
 
 // 1. ScheduleModal 설정 타입
 interface ScheduleModalConfig {
@@ -15,7 +15,7 @@ interface ScheduleModalConfig {
 };
 
 // 2. AlertModal 설정 타입
-interface AlertModalConfig {
+interface AlertModalConfig extends AlertModalOptions {
   isOpen: boolean;
   type: "alert" | "confirm";
   message: string;
@@ -37,10 +37,12 @@ interface ModalContextType {
   openAlertModal: (
     message: string,
     onConfirm?: () => void,
+    options?: AlertModalOptions,
   ) => void;
   openConfirmModal: (
     message: string,
-    onConfirm: () => void
+    onConfirm: () => void,
+    options?: AlertModalOptions,
   ) => void;
 };
 
@@ -86,14 +88,17 @@ export function ModalProvider({children}: {children: ReactNode}) {
   const openAlertModal = (
     message: string,
     onConfirm?: () => void,
+    options: AlertModalOptions = {},
   ) => {
-    setAlertModalConfig({isOpen: true, type: "alert", message, onConfirm});
+    setAlertModalConfig({...options, isOpen: true, type: "alert", message, onConfirm});
   };
+  // 확인/취소 모달 열기 함수 (메시지 문구와 관계없이 취소 버튼 표시)
   const openConfirmModal = (
     message: string,
     onConfirm: () => void,
+    options: AlertModalOptions = {},
   ) => {
-    setAlertModalConfig({isOpen: true, type: "confirm", message, onConfirm});
+    setAlertModalConfig({...options, isOpen: true, type: "confirm", message, onConfirm});
   };
 
   return (
@@ -123,6 +128,10 @@ export function ModalProvider({children}: {children: ReactNode}) {
       isOpen={alertModalConfig.isOpen}
       isOn={alertModalConfig.type === "confirm"}
       message={alertModalConfig.message}
+      variant={alertModalConfig.variant}
+      description={alertModalConfig.description}
+      confirmText={alertModalConfig.confirmText}
+      cancelText={alertModalConfig.cancelText}
       onClose={() => setAlertModalConfig(
         (prev) => ({...prev, isOpen: false})
       )}

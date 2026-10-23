@@ -17,12 +17,27 @@ export const Header = ({isMenuOpen, onToggleMenu, onCloseMenu}: HeaderProps) => 
 
   const handleLogout = () => {
     onCloseMenu();
-    openConfirmModal("로그아웃 하시겠습니까?", () => {
-      localStorage.removeItem("token");
-      delete axios.defaults.headers.common["Authorization"];
-      document.cookie = "login_token=true; path=/; max-age=0;";
-      openAlertModal("로그아웃 되었습니다.", () => router.push("/"));
-    });
+    openConfirmModal(
+      "로그아웃 하시겠습니까?",
+      () => {
+        sessionStorage.removeItem("token");
+        localStorage.removeItem("token");
+        delete axios.defaults.headers.common["Authorization"];
+        document.cookie = "login_token=true; path=/; max-age=0; SameSite=Lax";
+        openAlertModal(
+          "로그아웃 되었습니다.",
+          () => router.push("/"),
+          {variant: "success"}
+        );
+      },
+      {
+        variant: "confirm",
+        description:
+          "로그아웃 후에는 다시 로그인해야\n서비스를 이용할 수 있습니다.",
+        confirmText: "로그아웃",
+        cancelText: "취소",
+      },
+    );
   };
 
   return (
@@ -52,7 +67,3 @@ export const Header = ({isMenuOpen, onToggleMenu, onCloseMenu}: HeaderProps) => 
     </S.HeaderContainer>
   );
 };
-/**
- * jwt 방식은 로그아웃을 백엔드를 거칠 필요가 없이 프론트엔드(브라우저)에
- *
- */
