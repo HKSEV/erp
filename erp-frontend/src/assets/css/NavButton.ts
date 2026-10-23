@@ -102,7 +102,6 @@ export const HeaderMobileNav = styled.nav<{$isOpen: boolean}>`
   @media (min-width: 768px) {
     display: none;
   }
-}
 `;
 export const HeaderStyledLink = styled(Link)`
   
