@@ -4,17 +4,10 @@ import { useState, useEffect } from "react";
 import { Temporal } from "@js-temporal/polyfill";
 import { Holiday } from "@/app/types/Holiday";
 import { fetchHolidays } from "@/app/api/holidays";
+import type { Schedule } from "./modal/ScheduleModal";
 import * as S from "@/assets/css/Style.styles";
 import useModal from "./contexts/ModalContext";
 
-// 일정 타입 정의 추가
-interface Schedule {
-  id: string;
-  date: number;
-  content: string;
-  status: "대기" | "진행" | "완료";
-  createdAt: string;
-};
 
 export default function Calendar({
   year = Temporal.Now.plainDateISO().year,
@@ -67,7 +60,7 @@ export default function Calendar({
   const days = [];
 
   const handleDayClick = (day: number) => {
-    openScheduleModal(currentMonth, day, schedules, setSchedules);
+    openScheduleModal(currentYear, currentMonth, day, schedules, setSchedules);
   };
 
   // 달력 빈칸 만들기
@@ -81,7 +74,7 @@ export default function Calendar({
     const isSunday = currentDayOfWeek === 0;
     const isSaturday = currentDayOfWeek === 6;
     // 해당 날짜에 등록된 일정이 있는지 확인
-    const hasSchedule = schedules.some((sch) => sch.date === d);
+    const hasSchedule = schedules.some((sch) => sch.year === currentYear && sch.month === currentMonth && sch.date === d);
 
     days.push(
       <S.CalDayCell
