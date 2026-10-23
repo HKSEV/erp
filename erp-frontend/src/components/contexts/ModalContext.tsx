@@ -96,6 +96,12 @@ export function ModalProvider({children}: {children: ReactNode}) {
       {children}
       {/* 커스텀 모달 렌더링 */}
       <ScheduleModal
+      key={`
+        ${scheduleModalConfig.year}-
+        ${scheduleModalConfig.month}-
+        ${scheduleModalConfig.selectedDate}-
+        ${scheduleModalConfig.isOpen}
+      `}
       isOpen={scheduleModalConfig.isOpen}
       year={scheduleModalConfig.year}
       month={scheduleModalConfig.month}

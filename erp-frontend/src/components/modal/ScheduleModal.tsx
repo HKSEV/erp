@@ -34,7 +34,7 @@ export default function ScheduleModal({
   const [editingId, setEditingId] = useState<string | null>(null);
   // 커스텀 셀렉스 박스 열림/닫힘 상태
   const [isSelectOpen, setIsSelectOpen] = useState(false);
-  const {openConfirmModal} = useModal();
+  const {openAlertModal} = useModal();
 
   if (!isOpen || selectedDate === null)
     return null;
@@ -72,13 +72,23 @@ export default function ScheduleModal({
   };
 
   const handleDelete = (id: string) => {
-    openConfirmModal("일정을 삭제하시겠습니까?", () => {
-      setSchedules((prev) => prev.filter((sch) => sch.id !== id));
-      if (editingId === id) {
-        setFormContent("");
-        setEditingId(null);
-      };
-    });
+    openAlertModal(
+      "일정을 삭제하시겠습니까?",
+      () => {
+        setSchedules((prev) => prev.filter((sch) => sch.id !== id));
+        if (editingId === id) {
+          setFormContent("");
+          setEditingId(null);
+        };
+      },
+      {
+        variant: "confirm",
+        description:
+          "되돌릴 수 없습니다.",
+        confirmText: "삭제",
+        cancelText: "취소",
+      },
+  );
   };
 
   return (
