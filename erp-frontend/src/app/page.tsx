@@ -3,6 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import {
+  FiMail,
+  FiLock,
+  FiEye,
+  FiEyeOff,
+  FiInstagram,
+} from "react-icons/fi";
+import { FaUser } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
 import useModal from "@/components/contexts/ModalContext";
 import * as S from "@/assets/css/Style.styles";
 
@@ -12,9 +21,12 @@ export default function Home() {
   // 입력값 상태 관리
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       // 백엔드 로그인 API 호출
       const response = await axios.post("/api/members/login", {
@@ -34,78 +46,114 @@ export default function Home() {
     } catch (err) {
       console.error("로그인 에러: ", err);
       openAlertModal("이메일 또는 비밀번호를 확인해주세요.");
+    } finally {
+      setIsLoading(false);
     };
   };
 
   return (
     <S.MemberContainer>
-      <S.MemberCard>
-        <S.MemberImageColumn/>
-        <S.MemberFormColumn>
-          <S.MemberTitle>Welcome Back!</S.MemberTitle>
-          <S.MemberForm onSubmit={handleLogin}>
-            <S.MemberInput
-            type="email"
-            id="exampleInputEmail"
-            name=""
-            placeholder="Enter Email Address..."
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required/>
+      <S.MemberCard aria-labelledby="login-title">
+        <S.MemberHeader>
+          <S.MemberLogoIcon aria-hidden="true">
+            <FaUser/>
+          </S.MemberLogoIcon>
+          <S.MemberTitle id="login-title">
+            Welcome Back!
+          </S.MemberTitle>
+          <S.MemberDescription>
+            계정에 로그인하고 시작하세요
+          </S.MemberDescription>
+        </S.MemberHeader>
 
-            <S.MemberInput
-            type="password"
-            id="exampleInputPassword"
-            name=""
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required/>
+        <S.MemberForm onSubmit={handleLogin}>
+          <S.MemberField>
+            <S.MemberInputLabel htmlFor="email">
+              이메일
+            </S.MemberInputLabel>
+            <S.MemberInputWrapper>
+              <FiMail aria-hidden="true"/>
+              <S.MemberInput
+              id="email"
+              name="email"
+              type="email"
+              placeholder="Enter Email Address..."
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required/>
+            </S.MemberInputWrapper>
+          </S.MemberField>
 
-            <S.MemberCheckboxWrapper>
-              <input type="checkbox" id=""/>
-              <S.MemberCheckboxLabel htmlFor="customCheck">
-                Remember me
-              </S.MemberCheckboxLabel>
-            </S.MemberCheckboxWrapper>
+          <S.MemberField>
+            <S.MemberInputLabel htmlFor="password">
+              비밀번호
+            </S.MemberInputLabel>
+            <S.MemberInputWrapper>
+              <FiLock aria-hidden="true"/>
+              <S.MemberInput
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required/>
+              <S.MemberPasswordToggle
+              type="button"
+              aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
+              aria-pressed={showPassword}
+              aria-controls="password"
+              onClick={() => setShowPassword((prev) => !prev)}>
+                {showPassword ? (
+                  <FiEyeOff aria-hidden="true"/>
+                ) : (
+                  <FiEye aria-hidden="true"/>
+                )}
+              </S.MemberPasswordToggle>
+            </S.MemberInputWrapper>
+          </S.MemberField>
 
-            <S.Button
-            $variant="primary"
-            $size="medium"
-            $fullWidth
-            type="submit">
-              Login
-            </S.Button>
+          <S.MemberOptionWrapper>
+            <S.MemberOptionLabel>
+              <input type="checkbox" name="remember"/>
+              로그인 상태 유지
+            </S.MemberOptionLabel>
+            <S.MemberTextLink href="/forgot">
+              비밀번호 찾기
+            </S.MemberTextLink>
+          </S.MemberOptionWrapper>
 
-            <S.MemberDivider/>
+          <S.MemberButton type="submit" disabled={isLoading}>
+            Login
+          </S.MemberButton>
+        </S.MemberForm>
 
-            <S.Button
-            $variant="kakao"
-            $size="medium"
-            $fullWidth>
-              <i className="fab fa-google fa-fw"/>
-              Login with Google
-            </S.Button>
+        <S.MemberDivider/>
 
-            <S.Button
-            $variant="insta"
-            $size="medium"
-            $fullWidth>
-              <i className="fab fa-facebook-f fa-fw"/>
-              Login with Instargram
-            </S.Button>
+        <S.MemberSocialWrapper>
+          <S.MemberSocialButton
+          type="button"
+          disabled={isLoading}>
+            <FcGoogle aria-hidden="true"/>
+            Login with Google
+          </S.MemberSocialButton>
+          <S.MemberSocialButton
+          type="button"
+          disabled={isLoading}>
+            <S.InstagramIcon aria-hidden="true">
+              <FiInstagram/>
+            </S.InstagramIcon>
+            Login with Instargram
+          </S.MemberSocialButton>
+        </S.MemberSocialWrapper>
 
-            <S.MemberDivider/>
-
-            <S.MemberStyledLink href="/forgot">
-              패스워드가 기억나지 않나요?
-            </S.MemberStyledLink>
-
-            <S.MemberStyledLink href="/member">
-              회원가입
-            </S.MemberStyledLink>
-          </S.MemberForm>
-        </S.MemberFormColumn>
+        <S.MemberFooter>
+          <span>아직 계정이 없으신가요?</span>
+          <S.MemberTextLink href="/register">
+            회원가입
+          </S.MemberTextLink>
+        </S.MemberFooter>
       </S.MemberCard>
     </S.MemberContainer>
   );

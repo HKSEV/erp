@@ -66,14 +66,6 @@ export const TextShadow = css`
 export const TransitionAll = css`
   transition: all 0.15s ease-in-out;
 `;
-export const ButtonBasic = css`
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border-radius: 10rem;
-  font-size: 0.8rem;
-  font-weight: bold;
-  cursor: pointer;
-`;
 export const CircleBtn = css`
   width: 2.5rem;
   height: 2.5rem;
@@ -89,220 +81,31 @@ export const Transparent = css`
   font-size: 0.85rem;
   font-weight: 600;
 `;
-
-// admin
-export const Container = css`
-  width: 100%;
-`;
-export const Header = css`
-  ${FlexBetween}
-  margin-bottom: 1.5rem;
-`;
-export const Title = css`
-  font-size: 1.5rem;
-  color: #5A5C69;
-  font-weight: 700;
-  margin: 0;
-`;
-export const SaveButton = css`
-  ${FlexCenter}
-  ${BlueButtonTheme}
-  padding: 0.5rem 1.2rem;
-  border-radius: 0.35rem;
-  border: none;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  ${BoxShadow}
-  ${TransitionAll}
-`;
-export const Grid = css`
-  display: grid;
-  grid-template-columns: 2fr 3fr;
-  gap: 1.5rem;
-
-  @media (max-width: 1200px) {
-    grid-template-columns: 1fr;
-  }
-`;
-export const Card = css`
-  background-color: #FFF;
-  border: 1px solid #E3E6F0;
-  border-radius: 0.35rem;
-  ${BoxShadow}
-  overflow: hidden;
-`;
-export const CardHeader = css`
-  background-color: #F8F9FC;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid #E3E6F0;
-`;
-export const CardTitle = css`
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #4E73DF;
-`;
-export const CardBody = css`
-  padding: 1.5rem;
-  color: #858796;
-
-  p {
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    font-size: 0.9rem;
-  }
-`;
-export const FormGroup = css`
-  ${FlexColumn}
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-`;
-export const Label = css`
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #5A5C69;
-`;
-export const FileInputWrapper = css`
-  margin-top: 0.5rem;
-  
-  .file-name {
-    font-size: 0.9rem;
-    color: #858796;
-  }
-`;
-export const FileLabel = css`
-  background-color: #FFF;
-  border: 1px solid #D1D3E2;
-  padding: 0.5rem 1rem;
-  margin-right: 1rem;
-  border-radius: 0.35rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #5A5C69;
-  cursor: pointer;
-  &:hover { background-color: #EAECF4; }
-`;
-export const Input = css`
-  width: 100%;
-  padding: 0.6rem 1rem;
-  font-size: 0.9rem;
-  background-color: #FFF;
-  border: 1px solid #D1D3E2;
-  border-radius: 0.35rem;
-  outline: none;
-  ${TransitionAll}
-  &:focus { border-color: #4E73DF; }
-`;
-export const AddButton = css`
+export const ButtonBase = css`
   ${FlexCenter}
   width: 100%;
-  border: 1px dashed #B7B9CC;
-  color: #5A5C69;
-  padding: 1rem;
-  border-radius: 0.35rem;
-  font-weight: 600;
-  gap: 0.5rem;
-  ${TransitionAll}
+  min-height: 3rem;
+  padding: 0.75rem 1rem;
+  gap: 0.625rem;
+
+  border-radius: 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 650;
+  line-height: 1.4;
   cursor: pointer;
 
-  &:hover {
-    background-color: #EAECF4;
-    border-color: #858796;
-  }
-`;
-export const TableWrapper = css`
-  width: 100%;
-  overflow-x: auto;
-`;
-export const Table = css`
-  width: 100%;
-  border-collapse: collapse;
-  
-  thead {
-    background-color: #EAECF4;
-    color: #202020;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:focus-visible {
+    outline: 2px solid #3278f6;
+    outline-offset: 3px;
   }
 
-  tbody {
-    color: #5A5C69;
-    font-size: 0.9rem;
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
   }
-
-  th, td {
-    text-align: center;
-    padding: 0.9rem 1rem;
-    border-bottom: 1px solid #D1D3E2;
-    white-space: nowrap;
-  }
-`;
-export const DeleteButton = css`
-  ${InlineFlexCenter}
-  background-color: transparent;
-  border-radius: 0.25rem;
-  border: none;
-  color: #E74A3B;
-  cursor: pointer;
-  padding: 0.5rem;
-  ${TransitionAll}
-  &:hover { background-color: #FDEAEA; }
-`;
-export const ActionButton = css`
-  ${FlexCenter}
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border: none;
-  border-radius: 0.35rem;
-  ${TransitionAll}
-  
-  &:not(:disabled) {
-    color: #202020;
-    cursor: pointer;
-  }
-  &:not(:disabled):hover { background-color: #E3E6F0; }
-`;
-export const Badge = css`
-  padding: 0.25rem 0.6rem;
-  border-radius: 0.2rem;
-  font-size: 0.8rem;
-  font-weight: bold;
-  white-space: nowrap;
-  ${InlineFlexCenter}
-`;
-export const RankBadge = css`
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  font-weight: bold;
-  ${InlineFlexCenter}
-  font-size: 0.9rem;
-  ${BoxShadow}
-`;
-export const Pagination = css`
-  ${FlexCenter}
-  margin-top: 20px;
-  gap: 6px;
-  padding-bottom: 20px;
-`;
-export const PaginationButton = css`
-  ${FlexCenter}
-  width: 32px;
-  height: 32px;
-  border: 1px solid #DDD;
-  background-color: ${({$active}: any) => ($active ? "#333" : "#FFF")};
-  color: ${({$active}: any) => ($active ? "#FFF" : "#333")};
-  cursor: pointer;
-  border-radius: 4px;
-  font-weight: ${({$active}: any) => ($active ? "bold" : "normal")};
-`;
-export const PaginationArrow = css`
-  ${FlexCenter}
-  width: 32px;
-  height: 32px;
-  border: 1px solid #DDD;
-  background-color: #FFF;
-  color: #333;
-  cursor: pointer;
-  border-radius: 4px;
 `;

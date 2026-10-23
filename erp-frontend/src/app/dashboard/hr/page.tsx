@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import {Container, Row, Col, Card, Table, Badge,
+  Button, InputGroup, Form } from "react-bootstrap";
 import * as S from "@/assets/css/Style.styles";
+import "@/assets/sass/styles.scss";
 
 interface Employee {
   id: string;
@@ -52,72 +55,93 @@ export default function Hr() {
     switch (status) {
       case "active":
         return (
-          <span
-          className="px-3 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">
+          <Badge bg="success" pill className="px-3 py-2">
             재직중
-          </span>
+          </Badge>
         );
       case "leave":
         return (
-          <span
-          className="px-3 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded-full">
+          <Badge bg="warning" pill className="px-3 py-2">
             휴직
-          </span>
+          </Badge>
         );
       case "resigned":
         return (
-          <span
-          className="px-3 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
+          <Badge bg="danger" pill className="px-3 py-2">
             퇴사
-          </span>
+          </Badge>
         );
       default:
         return (
-          <span
-          className="px-3 py-1 text-xs font-semibold text-gray-700 bg-gray-100 rounded-full">
+          <Badge bg="secondary" pill className="px-3 py-2">
             알수없음
-          </span>
+          </Badge>
         );
     };
   };
 
   return (
-    // 💡 Tailwind를 사용한 반응형 컨테이너: 최대 너비 제한, 자동 중앙 정렬, 패딩 적용
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 py-4">
+    <Container fluid className="py-4 mw1400">
       {/* 헤더 영역 */}
-      <div className="flex justify-between items-center mb-3">
-        <h2 className="text-2xl font-bold text-gray-900">인사 관리</h2>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="fw-bold text-dark m-0">
+          인사 관리
+        </h2>
+        <Button variant="primary" className="fw-bold px-4">
           + 신규 직원 등록
-        </button>
+        </Button>
       </div>
 
       {/* 요약 카드 영역 (Grid 레이아웃) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-3">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-sm font-medium text-gray-500 mb-2">총 임직원 수</h3>
-          <p className="text-3xl font-bold text-gray-900">{employees.length}명</p>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-sm font-medium text-gray-500 mb-2">이번 달 신규 입사</h3>
-          <p className="text-3xl font-bold text-blue-600">0명</p>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-sm font-medium text-gray-500 mb-2">현재 휴직자</h3>
-          <p className="text-3xl font-bold text-yellow-600">
-            {employees.filter(emp => emp.status === "leave").length}명
-          </p>
-        </div>
-      </div>
+      <Row className="mb-4 g-3">
+        <Col md={4}>
+          <Card className="border-0 shadow-sm h-100">
+            <Card.Body>
+              <h6 className="text-muted mb-2">총 임직원 수</h6>
+              <h3 className="text-success mb-0 fw-bold">
+                {employees.length}명
+              </h3>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4}>
+          <Card className="border-0 shadow-sm h-100">
+            <Card.Body>
+              <h6 className="text-muted mb-2">이번 달 신규 입사</h6>
+              <h3 className="text-primary mb-0 fw-bold">
+                0명
+              </h3>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4}>
+          <Card className="border-0 shadow-sm h-100">
+            <Card.Body>
+              <h6 className="text-muted mb-2">현재 휴직자</h6>
+              <h3 className="text-warning mb-0 fw-bold">
+                {employees.filter(emp => emp.status === "leave").length}명
+              </h3>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
       {/* 테이블 영역 */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-          <h3 className="font-semibold text-gray-800">임직원 목록</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
+      <Card className="border-0 shadow-sm">
+        <Card.Header className="bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <span className="fw-bold">임직원 목록</span>
+          {/* 우측 검색창 */}
+          <div style={{ width: "250px" }}>
+            <InputGroup size="sm">
+              <Form.Control placeholder="검색..." />
+              <Button variant="outline-secondary">검색</Button>
+            </InputGroup>
+          </div>
+        </Card.Header>
+
+        <Card.Body className="p-0">
+          <Table responsive hover className="align-middle mb-0">
+            <thead className="table-light">
               <tr className="bg-white border-b border-gray-200">
                 <th className="px-6 py-4 text-sm font-semibold text-gray-600">사번</th>
                 <th className="px-6 py-4 text-sm font-semibold text-gray-600">이름</th>
@@ -138,14 +162,16 @@ export default function Hr() {
                   <td className="px-6 py-4 text-sm text-center">{getStatusBadge(emp.status)}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">{emp.joinDate}</td>
                   <td className="px-6 py-4 text-sm text-center">
-                    <button className="text-blue-600 hover:text-blue-800 font-medium mr-3">수정</button>
+                    <Button className="text-blue-600 hover:text-blue-800 font-medium mr-3">
+                      수정
+                    </Button>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+          </Table>
+        </Card.Body>
+      </Card>
+    </Container>
   );
 };
