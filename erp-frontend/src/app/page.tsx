@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
 import axios from "@/app/lib/api";
 import {
   FiMail,
@@ -14,9 +15,11 @@ import { FaUser } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import useModal from "@/components/contexts/ModalContext";
 import * as S from "@/assets/css/Style.styles";
+import { setLogin } from "@/store/authSlice";
 
 export default function Home() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const {openAlertModal} = useModal();
   // 입력값 상태 관리
   const [email, setEmail] = useState("");
@@ -42,6 +45,7 @@ export default function Home() {
 
         const storage = rememberMe ? localStorage : sessionStorage;
         storage.setItem("token", token);
+        dispatch(setLogin(token));
 
         const attributes = ["path=/", "SameSite=Lax",];
         if (rememberMe)

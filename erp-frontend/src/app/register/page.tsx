@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useDispatch } from "react-redux";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
@@ -17,6 +18,7 @@ import {
 import { FaRegBuilding } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import * as S from "@/assets/css/Style.styles";
+import { setLogin } from "@/store/authSlice";
 
 const handleInstargramLogin = () => {
 
@@ -48,6 +50,7 @@ declare global {
 
 export default function Member() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
     lastName: "",
@@ -116,7 +119,15 @@ export default function Member() {
       if (response.status === 200 || response.status === 201) {
         console.log("등록 성공: ", response.data);
         alert("회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.");
-        router.push("/login");
+        // 만약 백엔드에서 가입과 동시에 토큰을 내려준다면 바로 전역 상태에 저장
+        const token = response.data.token;
+        if (token) {
+          dispatch(setLogin({token}));
+          axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+          router.push("/");
+        } else {
+          router.push("/");
+        };
       };
     } catch (err: any) {
       if (err.response && err.response.data) {

@@ -3,6 +3,7 @@ import "./globals.css";
 import StyledComponentsRegistry from "./lib/registry";
 import ThemeProviderWrapper from "@/components/ThemeProviderWrapper";
 import ConditionalLayout from "@/components/ConditionalLayout";
+import ReduxProvider from "@/store/ReduxProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -22,13 +23,15 @@ export default function RootLayout({children}: Readonly<{children: React.ReactNo
         rel="stylesheet"/>
       </head>
       <body className="h-full m-0 bg-gray-50 text-gray-900 antialiased">
-        <StyledComponentsRegistry>
-          <ThemeProviderWrapper>
+        {/* <StyledComponentsRegistry>
+          <ThemeProviderWrapper> */}
+          <ReduxProvider>
             <ConditionalLayout>
               {children}
             </ConditionalLayout>
-          </ThemeProviderWrapper>
-        </StyledComponentsRegistry>
+          </ReduxProvider>
+          {/* </ThemeProviderWrapper>
+        </StyledComponentsRegistry> */}
       </body>
     </html>
   );

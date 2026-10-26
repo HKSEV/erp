@@ -6,6 +6,7 @@ npm install @js-temporal/polyfill
 npm install korean-lunar-calendar
 npm install -D tailwindcss postcss autoprefixer
 npm install -D @tailwindcss/postcss tailwindcss
+npm install @reduxjs/toolkit react-redux
 
 ORACLE DB 명령
 ALTER SESSION SET "_ORACLE_SCRIPT"=TRUE;
