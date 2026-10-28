@@ -112,19 +112,19 @@ export default function AlertModal(
       )}
       <S.AlertButtonWrapper $double={isOn}>
         {isOn && (
-          <S.AlertButton $isCancel
+          <S.ModalButton $isCancel
           ref={cancelRef}
           type="button"
           onClick={onClose}>
             {cancelText}
-          </S.AlertButton>
+          </S.ModalButton>
         )}
-        <S.AlertButton
+        <S.ModalButton
         ref={confirmRef}
         type="button"
         onClick={handleConfirm}>
           {confirmText}
-        </S.AlertButton>
+        </S.ModalButton>
       </S.AlertButtonWrapper>
     </S.AlertBox>
   );

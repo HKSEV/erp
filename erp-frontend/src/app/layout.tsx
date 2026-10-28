@@ -23,15 +23,15 @@ export default function RootLayout({children}: Readonly<{children: React.ReactNo
         rel="stylesheet"/>
       </head>
       <body className="h-full m-0 bg-gray-50 text-gray-900 antialiased">
-        {/* <StyledComponentsRegistry>
-          <ThemeProviderWrapper> */}
-          <ReduxProvider>
-            <ConditionalLayout>
-              {children}
-            </ConditionalLayout>
-          </ReduxProvider>
-          {/* </ThemeProviderWrapper>
-        </StyledComponentsRegistry> */}
+        <StyledComponentsRegistry>
+          <ThemeProviderWrapper>
+            <ReduxProvider>
+              <ConditionalLayout>
+                {children}
+              </ConditionalLayout>
+            </ReduxProvider>
+          </ThemeProviderWrapper>
+        </StyledComponentsRegistry>
       </body>
     </html>
   );

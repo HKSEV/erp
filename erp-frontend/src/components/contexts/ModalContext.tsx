@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useState, useContext, ReactNode } from "react";
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useCallback,
+  ReactNode
+} from "react";
 import ScheduleModal, { Schedule } from "../modal/ScheduleModal";
 import AlertModal, { AlertModalOptions } from "../modal/AlertModal";
 
@@ -73,9 +79,11 @@ export function ModalProvider({children}: {children: ReactNode}) {
     });
   };
   // 갱신
-  const updateScheduleModal = (schedules: Schedule[]) => {
-    setScheduleModalConfig((prev) => ({...prev, schedules}));
-  };
+  const updateScheduleModal = useCallback((schedules: Schedule[]) => {
+    setScheduleModalConfig((prev) => (
+      prev.schedules === schedules ? prev : { ...prev, schedules }
+    ));
+  }, []);
 
   // AlertModal 열기 함수
   const openAlertModal = (

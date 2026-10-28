@@ -1,14 +1,6 @@
 import styled, { css, keyframes } from "styled-components";
 import * as C from "./common/Common.styles";
 
-const fadeIn = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
-`;
-const fadeOut = keyframes`
-  from { opacity: 1; }
-  to { opacity: 0; }
-`;
 const slideUp = keyframes`
   from {
     opacity: 0;
@@ -42,206 +34,12 @@ interface ModalProps {
   $isClosing?: boolean;
 };
 
-// layout
-export const ModalOverlay = styled.div<ModalProps>`
-  position: fixed;
-  top: 0;
-  left: 0;
-  background-color: rgba(0, 0, 0, 0.8);
-  width: 100%;
-  height: 100%;
-  z-index: 99999;
-  ${C.FlexCenter}
-  animation: ${({$isClosing}) => (
-    $isClosing ? fadeOut : fadeIn
-  )} 0.3s ease-out forwards;
-`;
-export const ModalContainer = styled.div`
-  background-color: #FFF;
-  width: 400px;
-  padding: 24px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-`;
-export const ModalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-`;
-export const ModalTitle = styled.h3`
-  font-size: 1.2rem;
-  color: #333;
-  margin: 0;
-`;
-export const CloseButton = styled.button`
-  ${C.FlexCenter}
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
-  flex-shrink: 0;
-  color: #8590A5;
-  background: transparent;
-  border: 0;
-  border-radius: 0.5rem;
-  cursor: pointer;
-
-  svg {
-    width: 1.125rem;
-    height: 1.125rem;
-  }
-
-  &:hover {
-    color: #3278F6;
-    background: #F1F6FF;
-  }
-
-  &:focus-visible {
-    outline: 2px solid #3278F6;
-    outline-offset: 2px;
-  }
-`;
-export const ModalBody = styled.div`
-  
-`;
-
-// schedule
-export const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 1rem;
-`;
-export const Select = styled.select`
-  padding: 8px;
-  border: 1px solid #D1D3E2;
-  border-radius: 4px;
-  outline: none;
-  font-size: 0.9rem;
-`;
-export const TextArea = styled.textarea`
-  padding: 8px;
-  border: 1px solid #D1D3E2;
-  border-radius: 4px;
-  outline: none;
-  resize: none;
-  height: 80px;
-`;
-export const ButtonGroup = styled.div`
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 16px;
-
-  & > button {
-    width: auto !important;
-    min-width: 80px;
-    padding: 8px 16px !important;
-    flex: none;
-  }
-`;
-export const ScheduleList = styled.ul`
-  list-style: none;
-  padding: 0;
-  margin: 16px 0 0 0;
-  max-height: 150px;
-  overflow-y: auto;
-  border-top: 1px solid #EEE;
-`;
-export const ScheduleItem = styled.li`
-  display: flex;
-  flex-direction: column;
-  padding: 12px 0;
-  border-bottom: 1px solid #EEE;
-  gap: 8px;
-`;
-export const ScheduleHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  color: #666;
-`;
-export const Badge = styled.span<{$status: "대기" | "진행" | "완료"}>`
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: bold;
-  color: #FFF;
-  background-color: ${({$status}) => (
-    $status === "완료" ? "#10B981" :
-    $status === "진행" ? "#3B82F6" : "#F59E0B"
-  )};
-`;
-export const SmallButton = styled.button`
-  width: 100px;
-  background-color: transparent;
-  border: 1px solid #D1D3E2;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 0.75rem;
-  cursor: pointer;
-`;
-export const ScheduleDot = styled.div`
-  width: 6px;
-  height: 6px;
-  background-color: #3B82F6;
-  border-radius: 50%;
-  margin-top: 4px;
-`;
-// 커스텀 셀렉트 박스 컨테이너
-export const CustomSelectContainer = styled.div`
-  position: relative;
-  width: 100%;
-`;
-export const SelectTrigger = styled.div`
-  padding: 10px 12px;
-  border: 1px solid #D1D3E2;
-  border-radius: 6px;
-  background-color: #FFF;
-  font-size: 0.9rem;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #333;
-  &:hover { border-color: #BAC8F3; }
-
-  span {
-    font-size: 0.7rem;
-    color: #94A3B8;
-  }
-`;
-// 드롭다운 리스트 영역
-export const SelectList = styled.ul`
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  margin: 4px 0 0 0;
-  padding: 0;
-  list-style: none;
-  background-color: #FFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 50;
-  overflow: hidden;
-`;
-// 드롭다운 개별 항목
-interface SelectItemProps {
-  $isSelected?: boolean;
+type Status = "대기" | "진행" | "완료";
+const colors = {
+  대기: { text: "#B7791F", background: "#FFF7E6", dot: "#F5AD24" },
+  진행: { text: "#2563EB", background: "#EFF6FF", dot: "#3B82F6" },
+  완료: { text: "#059669", background: "#ECFDF5", dot: "#10B981" },
 };
-export const SelectItem = styled.li<SelectItemProps>`
-  padding: 10px 12px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  color: ${({$isSelected}) => ($isSelected ? "#4E73DF" : "#475569")};
-  background-color: ${({$isSelected}) => (
-    $isSelected ? "#F8F9FC" : "transparent"
-  )};
-  font-weight: ${({$isSelected}) => ($isSelected ? "bold" : "normal")};
-  &:hover { background-color: #F1F5F9; }
-`;
 
 // alert
 export const AlertBox = styled.dialog<ModalProps>`
@@ -346,7 +144,9 @@ export const AlertButtonWrapper = styled.div<{$double: boolean}>`
   )};
   gap: 0.75rem;
 `;
-export const AlertButton = styled.button<{$isCancel?: boolean}>`
+
+// 공통
+export const ModalButton = styled.button<{$isCancel?: boolean}>`
   ${C.ButtonBase}
   color: ${({$isCancel}) => ($isCancel ? "#536078" : "#FFF")};
   background-color: ${({$isCancel}) => (
@@ -375,5 +175,317 @@ export const AlertButton = styled.button<{$isCancel?: boolean}>`
     background-color:  ${({$isCancel}) => (
       $isCancel ? "#E2E8F0" : "#1E40AF"
     )};
+  }
+`;
+export const CloseButton = styled.button`
+  ${C.FlexCenter}
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  flex-shrink: 0;
+  color: #8590A5;
+  background: transparent;
+  border: 0;
+  border-radius: 0.5rem;
+  cursor: pointer;
+
+  svg {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  &:hover {
+    color: #3278F6;
+    background: #F1F6FF;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #3278F6;
+    outline-offset: 2px;
+  }
+`;
+
+// schedule
+export const ScheduleDialog = styled(AlertBox)`
+  max-width: 34rem;
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+
+  @media (max-width: 480px) {
+    padding: 0;
+  }
+`;
+export const ScheduleDialogHeader = styled.header`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid #EEF2F7;
+
+  @media (max-width: 480px) {
+    padding: 1.25rem;
+  }
+`;
+export const ScheduleDialogIcon = styled.div`
+  ${C.FlexCenter}
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  background: #EAF2FF;
+  color: #2563EB;
+  border-radius: 0.75rem;
+
+  svg {
+    width: 1.375rem;
+    height: 1.375rem;
+  }
+`;
+export const ScheduleHeading = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+export const ScheduleDialogTitle = styled.h2`
+  margin: 0;
+  color: #172033;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+`;
+export const ScheduleDialogSubtitle = styled.p`
+  margin: 0.25rem 0 0;
+  color: #7B8498;
+  font-size: 0.75rem;
+  line-height: 1.6;
+`;
+export const ScheduleDialogBody = styled.div`
+  padding: 1.5rem;
+  @media (max-width: 480px) {
+    padding: 1.25rem;
+  }
+`;
+export const ScheduleForm = styled.form`
+  ${C.FlexColumn}
+  gap: 1rem;
+`;
+export const ScheduleField = styled.div`
+  ${C.FlexColumn}
+  gap: 0.5rem;
+`;
+export const ScheduleLabel = styled.label`
+  color: #334155;
+  font-size: 0.875rem;
+  font-weight: 600;
+`;
+export const ScheduleSelectWrapper = styled.div<{$status: Status}>`
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 50%;
+    background: ${({$status}) => colors[$status].dot};
+    pointer-events: none;
+  }
+
+  > svg {
+    position: absolute;
+    right: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94A3B8;
+    pointer-events: none;
+  }
+`;
+export const ScheduleSelect = styled.select`
+  width: 100%;
+  padding: 0.625rem 2.25rem;
+  border: 1px solid #DCE1EB;
+  border-radius: 0.625rem;
+  outline: none;
+  background-color: #FFF;
+  color: #1E293B;
+  font-family: inherit;
+  font-size: 0.875rem;
+  min-height: 2.75rem;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+  &::placeholder {
+    color: #94A3B8;
+  }
+
+  &:hover {
+    border-color: #94A3B8;
+  }
+
+  &:focus {
+    border-color: #4E73DF;
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.15);
+  }
+`;
+export const ScheduleTextarea = styled.textarea`
+  width: 100%;
+  min-height: 7rem;
+  padding: 0.75rem 0.875rem;
+  resize: vertical;
+  background-color: #FFF;
+  border: 1px solid #DCE1EB;
+  border-radius: 0.625rem;
+  color: #253047;
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  outline: none;
+
+  &::placeholder {
+    color: #9AA3B5;
+  }
+
+  &:hover {
+    border-color: #B7C2D4;
+  }
+
+  &:focus {
+    border-color: #3278F6;
+    box-shadow: 0 0 0 3px rgba(50, 120, 246, 0.1);
+  }
+`;
+export const ScheduleActions = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+`;
+export const ScheduleEditing = styled.div`
+  ${C.FlexBetween}
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  background: #EFF6FF;
+  border-radius: 0.5rem;
+  color: #2563EB;
+  font-size: 0.75rem;
+
+  > button {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+`;
+export const ScheduleListSection = styled.section`
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #EEF2F7;
+`;
+export const ScheduleListHeading = styled.div`
+  ${C.FlexBetween}
+  gap: 0.5rem;
+  margin-bottom: 0.875rem;
+
+  > h3 {
+    margin: 0;
+    color: #334155;
+    font-size: 0.875rem;
+    font-weight: 650;
+  }
+
+  > span {
+    color: #94A3b8;
+    font-size: 0.75rem;
+  }
+`;
+export const ScheduleEmpty = styled.div`
+  ${C.FlexColumn}
+  align-items: center;
+  gap: 0.375rem;
+  padding: 1.25rem 0.5rem;
+  text-align: center;
+
+  > svg {
+    width: 2rem;
+    height: 2rem;
+    margin-bottom: 0.375rem;
+    color: #a5b2c9;
+  }
+
+  > p {
+    margin: 0;
+    color: #7B8498;
+    font-size: 0.8125rem;
+  }
+
+  > span {
+    color: #94A3b8;
+    font-size: 0.75rem;
+  }
+`;
+export const ScheduleEntries = styled.ul`
+  ${C.FlexColumn}
+  gap: 0.75rem;
+  max-height: 16rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+`;
+export const ScheduleEntry = styled.li`
+  padding: 0.875rem;
+  border: 1px solid #E8EDF5;
+  border-radius: 0.625rem;
+  background: #FBFCFE;
+`;
+export const ScheduleEntryHeader = styled.div`
+  ${C.FlexBetween}
+  gap: 0.5rem;
+  margin-bottom: 0.625rem;
+
+  > time {
+    color: #94A3B8;
+    font-size: 0.6875rem;
+  }
+`;
+export const ScheduleStatusBadge = styled.span<{$status: Status}>`
+  padding: 0.1875rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: ${({$status}) => colors[$status].text};
+  background: ${({$status}) => colors[$status].background};
+`;
+export const ScheduleContent = styled.p`
+  margin: 0;
+  color: #334155;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+`;
+export const ScheduleEntryActions = styled.div`
+  ${C.FlexRight}
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+`;
+export const ScheduleIconButton = styled(CloseButton)<{$danger?: boolean}>`
+  width: 1.875rem;
+  height: 1.875rem;
+  color: ${({$danger}) => ($danger ? "#D96B75" : "#7B8498")};
+
+  &:hover {
+    color: ${({$danger}) => ($danger ? "#DC2626" : "#2563EB")};
+    background: ${({$danger}) => ($danger ? "#FEF2F2" : "#EFF6FF")};
+  }
+
+  svg {
+    width: 0.9375rem;
+    height: 0.9375rem;
   }
 `;

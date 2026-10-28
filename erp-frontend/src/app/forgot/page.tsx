@@ -18,6 +18,7 @@ export default function ForgotPassword() {
 
   const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       await axios.post("/api/members/forgot-password", {email});
       alert("이메일로 임시 비밀번호가 발송되었습니다. 확인 후 로그인해주세요.");
@@ -25,6 +26,8 @@ export default function ForgotPassword() {
     } catch (err: any) {
       console.error("에러: ", err);
       alert(err.response?.data || "메일 발송에 실패했습니다. 이메일을 확인해주세요.");
+    } finally {
+      setIsLoading(false);
     };
   };
 
