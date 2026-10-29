@@ -19,36 +19,39 @@ export const MyPageHeader = styled.div`
   }
 `;
 export const MyPageTitle = styled.h1`
-  color: #0F172A;
+  margin-bottom: ${({theme}) => theme.space.sm};
+  color: ${({theme}) => theme.colors.textStrong};
   font-size: 1.6rem;
   font-weight: 700;
   line-height: 1.3;
 `;
 export const MyPageSubtitle = styled.p`
-  color: #64748B;
+  margin-bottom: ${({theme}) => theme.space.lg};
+  color: ${({theme}) => theme.colors.textMuted};
   font-size: 0.9rem;
   line-height: 1.5;
 `;
 export const MyPageCard = styled.section`
-  background-color: #FFF;
-  border: 1px solid #E2E8F0;
+  background-color: ${({theme}) => theme.colors.surface};
+  border: 1px solid ${({theme}) => theme.colors.border};
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
   overflow: hidden;
 `;
 export const MyPageCardHeader = styled.div`
   padding: 20px 24px;
-  border-bottom: 1px solid #E2E8F0;
-  background-color: #F8FAFC;
+  border-bottom: 1px solid ${({theme}) => theme.colors.border};
+  background-color: ${({theme}) => theme.colors.bg};
 `;
 export const MyPageCardTitle = styled.h2`
-  color: #1E293B;
+  color: ${({theme}) => theme.colors.textStrong};
   font-size: 1.05rem;
   font-weight: 700;
   margin-bottom: 4px;
 `;
 export const MyPageCardDescription = styled.p`
-  color: #64748B;
+  margin-bottom: ${({theme}) => theme.space.lg};
+  color: ${({theme}) => theme.colors.textMuted};
   font-size: 0.85rem;
   line-height: 1.5;
 `;
@@ -68,45 +71,45 @@ export const MyPageFormGroup = styled.div`
   gap: 8px;
 `;
 export const MyPageLabel = styled.label`
-  color: #334155;
+  color: ${({theme}) => theme.colors.textBody};
   font-size: 0.875rem;
   font-weight: 600;
 `;
 export const MyPageInput = styled.input`
   width: 100%;
   padding: 11px 14px;
-  border: 1px solid #CBD5E1;
+  border: 1px solid ${({theme}) => theme.colors.borderStrong};
   border-radius: 6px;
   outline: none;
-  background-color: #FFF;
-  color: #1E293B;
+  background-color: ${({theme}) => theme.colors.surface};
+  color: ${({theme}) => theme.colors.textStrong};
   font-family: inherit;
   font-size: 0.9rem;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 
   &::placeholder {
-    color: #94A3B8;
+    color: ${({theme}) => theme.colors.textDisabled};
   }
 
   &:hover {
-    border-color: #94A3B8;
+    border-color: ${({theme}) => theme.colors.textDisabled};
   }
 
   &:focus {
-    border-color: #4E73DF;
-    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.15);
+    border-color: ${({theme}) => theme.colors.accent};
+    box-shadow: 0 0 0 3px ${({theme}) => theme.colors.accentSubtle};
   }
 `;
 export const MyPageHint = styled.p`
-  color: #94A3B8;
+  margin-bottom: ${({theme}) => theme.space.lg};
+  color: ${({theme}) => theme.colors.textDisabled};
   font-size: 0.78rem;
   line-height: 1.45;
 `;
 export const MyPageButton = styled.button`
   width: auto;
-  padding: 0.8rem;
-  background-color: #4E73DF;
-  color: white;
+  background-color: ${({theme}) => theme.colors.accent};
+  color: ${({theme}) => theme.colors.onAccent};
   align-self: flex-end;
   min-width: 150px;
   padding: 10px 18px;
@@ -117,7 +120,7 @@ export const MyPageButton = styled.button`
   transition: background-color 0.15s ease-in-out;
 
   &:hover {
-    background-color: #2E59D9;
+    background-color: ${({theme}) => theme.colors.accentHover};
   }
 
   @media (max-width: 480px) {
