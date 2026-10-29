@@ -25,9 +25,10 @@ export default function StatCard({label, value, unit, tone = "default"}: StatCar
 };
 
 // 요약 카드 여러 개를 나란히 (좁은 화면에서는 한 줄에 하나)
+// 최소 260px: 카드가 가장 좁아져도 10억 원대 금액(₩ 1,234,567,890)이 24px로 한 줄에 들어가는 너비
 export const StatGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: ${({theme}) => theme.space.lg};
   margin-bottom: ${({theme}) => theme.space.xl};
 `;
@@ -46,9 +47,11 @@ const Label = styled.p`
 `;
 const Value = styled.p<{$tone: StatTone}>`
   margin: 0;
-  font-size: ${({theme}) => theme.font.size.xxxl};
+  font-size: ${({theme}) => theme.font.size.xxl};
   font-weight: ${({theme}) => theme.font.weight.bold};
   font-variant-numeric: tabular-nums;
+  // 그보다 긴 값은 카드 밖으로 넘치지 않고 줄바꿈
+  overflow-wrap: anywhere;
   color: ${({theme, $tone}) => {
     switch ($tone) {
       case "accent": return theme.colors.accent;
