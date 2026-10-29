@@ -5,17 +5,15 @@ import type { MouseEvent as ReactMouseEvent } from "react";
 import { Temporal } from "@js-temporal/polyfill";
 import { FiCalendar, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import CalendarMonthBody from "./CalendarMonthBody";
-import { Holiday } from "@/app/types/Holiday";
-import { fetchHolidays } from "@/app/api/holidays";
+import getHolidays from "@/app/api/holidays";
 import type { Schedule } from "../modal/ScheduleModal";
 import * as S from "@/assets/css/Style.styles";
 import useModal from "../contexts/ModalContext";
 
 const OFFSETS = [-2, -1, 0, 1, 2];
-const EMPTY_HOLIDAYS: readonly Holiday[] = [];
 const DRAG_START_PX = 8;
 const MONTH_CHANGE_PX = 64;
-type Direction = -1 | 0 | 1;
+
 type CalendarDrag = {
   startX: number;
   startY: number;
@@ -51,51 +49,23 @@ export default function Calendar({
   ));
   // 모달과 관련된 추가
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [holidayMap, setHolidayMap] = useState<Record<string, Holiday[]>>({});
   // 오늘 날짜 정보
   const today = Temporal.Now.plainDateISO();
   const renderCenter = Math.round(slide);
-  const months = useMemo(() => OFFSETS.map((relativeOffset) => {
-    const offset = renderCenter + relativeOffset;
-    return {
-      offset,
-      value: viewMonth.add({months: offset}),
-    };
-  }), [viewMonth, renderCenter],);
-  
-  useEffect(() => {
-    if (isAnimating || isDragging)
-      return;
+  const months = useMemo(() => {
+    return OFFSETS.map((relativeOffset) => {
+      const offset = renderCenter + relativeOffset;
+      const value = viewMonth.add({ months: offset });
 
-    const missingMonths = months.filter(
-      ({value}) => !Object.prototype.hasOwnProperty.call(
-        holidayMap,
-        value.toString(),
-      ),
-    );
-
-    if (missingMonths.length === 0)
-      return;
-
-    let cancelled = false;
-
-    Promise.all(
-      missingMonths.map(async ({value}) => [
-        value.toString(),
-        await fetchHolidays(value.year, value.month),
-      ] as const),
-    ).then((entries) => {
-      if (cancelled)
-        return;
-      setHolidayMap((prev) => ({...prev, ...Object.fromEntries(entries)}));
-    }).catch((err: unknown) => {
-      console.error("공휴일을 불러오지 못했습니다.", err);
+      return {
+        offset,
+        value,
+        holidays: getHolidays(value.year, value.month),
+      };
     });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [months, holidayMap, isAnimating, isDragging]);
+  }, [viewMonth, renderCenter]);
+  
+  
 
   useEffect(() => {
     updateScheduleModal(schedules);
@@ -411,7 +381,7 @@ export default function Calendar({
         onMouseDown={handleDragStart}
         onClickCapture={handleCalendarClickCapture}
         onDragStart={(e) => e.preventDefault()}>
-          {months.map(({value, offset}) => {
+          {months.map(({value, offset ,holidays}) => {
             const active = offset === 0;
             const slot = offset - slide;
             const centered = Math.abs(slot) < 0.5;
@@ -456,7 +426,7 @@ export default function Calendar({
                 month={value.month}
                 selectedDate={selectedDate}
                 todayKey={today.toString()}
-                holidays={holidayMap[value.toString()] ?? EMPTY_HOLIDAYS}
+                holidays={holidays}
                 scheduleCounts={scheduleCounts}
                 onSelectDay={handleSelectDay}/>
 
