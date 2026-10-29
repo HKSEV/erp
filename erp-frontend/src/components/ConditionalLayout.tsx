@@ -16,7 +16,8 @@ export default function ConditionalLayout({children}: {
   // 현재 URL 경로를 가져옴
   const pathname = usePathname();
   // 헤더와 푸터를 숨기고 싶은 URL 배열 작성
-  const hiddenPaths = ["/", "/register", "/find-id", "/forgot"];
+  // /privacy, /manual: 로그인 없이 보는 문서 페이지 (app/(info) 레이아웃 사용)
+  const hiddenPaths = ["/", "/register", "/find-id", "/forgot", "/privacy", "/manual"];
   const isHidden = hiddenPaths.includes(pathname);
   // 모바일 사이드바 서랍 열림 상태 (헤더 버튼과 사이드바가 함께 사용)
   const [isMenuOpen, setIsMenuOpen] = useState(false);
