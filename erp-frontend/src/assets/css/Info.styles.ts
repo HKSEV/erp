@@ -34,15 +34,21 @@ export const InfoContent = styled.main`
   h1 {
     margin: 0 0 ${({theme}) => theme.space.sm};
     font-size: ${({theme}) => theme.font.size.xxl};
+    font-weight: ${({theme}) => theme.font.weight.medium};
     color: ${({theme}) => theme.colors.textStrong};
   }
   h2 {
     margin: ${({theme}) => theme.space.xxl} 0 ${({theme}) => theme.space.sm};
     font-size: ${({theme}) => theme.font.size.lg};
+    font-weight: ${({theme}) => theme.font.weight.medium};
     color: ${({theme}) => theme.colors.textStrong};
   }
   p, li {
     font-size: ${({theme}) => theme.font.size.md};
+  }
+  // :where()로 우선순위를 낮춰서 InfoMeta처럼 여백을 직접 지정한 문단은 그 값을 유지
+  :where(p) {
+    margin-bottom: ${({theme}) => theme.space.lg};
   }
   ul, ol {
     margin: 0;
