@@ -124,21 +124,21 @@ export default function Production() {
   );
 
   const columns: Column<ProductionOrder>[] = [
-    {key: "id", header: "오더 번호", variant: "code"},
+    {key: "id", header: "오더 번호", variant: "code", width: "140px"},
     {key: "productName", header: "제품명", variant: "primary"},
-    {key: "quantity", header: "수량", align: "right", render: (order) => `${order.quantity.toLocaleString()} 개`},
-    {key: "status", header: "상태", align: "center", render: (order) => {
+    {key: "quantity", header: "수량", align: "right", width: "90px", render: (order) => `${order.quantity.toLocaleString()} 개`},
+    {key: "status", header: "상태", align: "center", width: "110px", render: (order) => {
       const badge = getStatusBadge(order.status);
       return <StatusBadge tone={badge.tone}>{badge.text}</StatusBadge>;
     }},
-    {key: "progress", header: "진행률", width: "25%", render: (order) => (
+    {key: "progress", header: "진행률", width: "200px", render: (order) => (
       <ProgressBar
       value={order.progress}
       tone={order.status === "completed" ? "success" : "accent"}
       label={`${order.id} 진행률`}/>
     )},
-    {key: "dueDate", header: "납기일", align: "center"},
-    {key: "actions", header: "관리", align: "center", render: () => (
+    {key: "dueDate", header: "납기일", align: "center", width: "120px"},
+    {key: "actions", header: "관리", align: "center", width: "110px", render: () => (
       <Button variant="secondary" size="sm">상세보기</Button>
     )},
   ];

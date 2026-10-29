@@ -62,15 +62,15 @@ export default function Hr() {
   };
 
   const columns: Column<Employee>[] = [
-    {key: "id", header: "사번", variant: "code"},
-    {key: "name", header: "이름", variant: "primary"},
-    {key: "department", header: "부서"},
+    {key: "id", header: "사번", variant: "code", width: "100px"},
+    {key: "name", header: "이름", variant: "primary", width: "100px"},
+    {key: "department", header: "부서", width: "110px"},
     {key: "role", header: "직급/직책"},
-    {key: "status", header: "상태", align: "center", render: (emp) => (
+    {key: "status", header: "상태", align: "center", width: "110px", render: (emp) => (
       <StatusBadge tone={STATUS[emp.status].tone}>{STATUS[emp.status].text}</StatusBadge>
     )},
-    {key: "joinDate", header: "입사일", align: "center"},
-    {key: "actions", header: "관리", align: "center", render: () => (
+    {key: "joinDate", header: "입사일", align: "center", width: "120px"},
+    {key: "actions", header: "관리", align: "center", width: "90px", render: () => (
       <Button variant="secondary" size="sm">수정</Button>
     )},
   ];

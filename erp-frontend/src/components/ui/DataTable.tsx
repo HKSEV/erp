@@ -7,7 +7,7 @@ export interface Column<T> {
   header: React.ReactNode;
   render?: (row: T) => React.ReactNode; // 셀 내용을 직접 그릴 때 (배지, 버튼 등)
   align?: "left" | "center" | "right";  // 숫자는 right
-  width?: string;
+  width?: string;                       // 코드·숫자·배지·버튼 열은 "120px"처럼 고정, 이름 열은 비워서 남은 공간 사용
   // 셀 강조 규칙: code = 코드·번호(회색, 보통 굵기), primary = 행을 대표하는 이름(굵게)
   variant?: CellVariant;
 };
@@ -23,9 +23,14 @@ interface DataTableProps<T> {
 
 // 데이터 표: 숫자 열은 align="right"로 오른쪽 정렬 + 자릿수 맞춤
 export default function DataTable<T>({columns, rows, rowKey, emptyText = "데이터가 없습니다."}: DataTableProps<T>) {
+  // 표 최소 너비 = 픽셀로 고정한 열의 합 + 너비를 정하지 않은 열마다 160px
+  // 화면이 이보다 좁으면 내용이 잘리지 않고 표만 가로로 스크롤
+  const minWidth = columns.reduce((sum, col) =>
+    sum + (col.width?.endsWith("px") ? parseInt(col.width, 10) : 160), 0);
+
   return (
     <ScrollArea>
-      <Table>
+      <Table style={{minWidth}}>
         <thead>
           <tr>
             {columns.map((col) => (
@@ -64,8 +69,12 @@ const ScrollArea = styled.div`
   width: 100%;
   overflow-x: auto;
 `;
+// table-layout: fixed → 열 너비를 머리글(width) 기준으로 고정해서,
+// 검색으로 행이 줄거나 없어져도 레이아웃이 바뀌지 않음
+// width를 지정하지 않은 열은 남은 공간을 나눠 가짐
 const Table = styled.table`
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: ${({theme}) => theme.font.size.sm};
 
@@ -80,6 +89,8 @@ const Th = styled.th<{$align: Align}>`
   background-color: ${({theme}) => theme.colors.surfaceSubtle};
   border-bottom: 1px solid ${({theme}) => theme.colors.border};
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 const Td = styled.td<{$align: Align; $variant: CellVariant}>`
   height: 48px;
@@ -94,8 +105,10 @@ const Td = styled.td<{$align: Align; $variant: CellVariant}>`
   border-bottom: 1px solid ${({theme}) => theme.colors.border};
   // 숫자 열과 코드 열은 자릿수를 맞춰 세로로 비교하기 쉽게
   font-variant-numeric: ${({$align, $variant}) => ($align === "right" || $variant === "code" ? "tabular-nums" : "normal")};
-  // 셀 안에서 줄바꿈하지 않고, 표가 넓으면 ScrollArea가 가로 스크롤
+  // 셀 안에서 줄바꿈하지 않고, 칸보다 긴 글자는 …로 줄임
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 const EmptyCell = styled.td`
   padding: ${({theme}) => theme.space.xxl};

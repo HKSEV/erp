@@ -70,15 +70,15 @@ export default function Inventory() {
   };
 
   const columns: Column<InventoryItem>[] = [
-    {key: "id", header: "품목 코드", variant: "code"},
+    {key: "id", header: "품목 코드", variant: "code", width: "110px"},
     {key: "name", header: "품목명", variant: "primary"},
-    {key: "category", header: "분류"},
-    {key: "stock", header: "현재고", align: "right", render: (item) => item.stock.toLocaleString()},
-    {key: "unitPrice", header: "단가 (원)", align: "right", render: (item) => item.unitPrice.toLocaleString()},
-    {key: "status", header: "상태", align: "center", render: (item) => (
+    {key: "category", header: "분류", width: "90px"},
+    {key: "stock", header: "현재고", align: "right", width: "90px", render: (item) => item.stock.toLocaleString()},
+    {key: "unitPrice", header: "단가 (원)", align: "right", width: "110px", render: (item) => item.unitPrice.toLocaleString()},
+    {key: "status", header: "상태", align: "center", width: "120px", render: (item) => (
       <StatusBadge tone={STATUS[item.status].tone}>{STATUS[item.status].text}</StatusBadge>
     )},
-    {key: "actions", header: "관리", align: "center", render: () => (
+    {key: "actions", header: "관리", align: "center", width: "150px", render: () => (
       <>
         <Button variant="secondary" size="sm">수정</Button>{" "}
         <Button variant="danger" size="sm">삭제</Button>
