@@ -1,9 +1,85 @@
 "use client";
 
+// 강조색 후보: ACCENT 값만 바꾸면 버튼·현재 메뉴·링크 색이 함께 바뀜
+const ACCENT_PALETTES = {
+  blue:   { main: "#2563EB", hover: "#1D4ED8", subtle: "#EFF6FF", text: "#1E40AF" }, // A. 현재 정리
+  petrol: { main: "#0E5A6B", hover: "#0A4755", subtle: "#E6F2F4", text: "#0A4755" }, // B. 쿨 페트롤
+  indigo: { main: "#4338CA", hover: "#3730A3", subtle: "#EEF2FF", text: "#3730A3" }, // C. 미드나잇 인디고
+};
+const ACCENT = ACCENT_PALETTES.blue;
+
 export const theme = {
   colors: {
+    // 기존 키: Global.styles.ts에서 사용 중이라 값 유지
     background: "#536692",
-    primary: "#4E73DF",
+    primary: ACCENT.main,
     text: "#333",
+
+    // 바탕
+    bg: "#F8FAFC",            // 본문 영역 바탕
+    surface: "#FFFFFF",       // 카드, 표, 사이드바, 모달
+    surfaceSubtle: "#F1F5F9", // 표 머리글, hover
+
+    // 글자
+    textStrong: "#0F172A",    // 제목, 숫자
+    textBody: "#334155",      // 본문
+    textSecondary: "#475569", // 메뉴, 보조 글자
+    textMuted: "#64748B",     // 라벨, 설명
+    textDisabled: "#94A3B8",  // 비활성, 그룹 제목
+
+    // 선
+    border: "#E2E8F0",
+    borderStrong: "#CBD5E1",  // 입력창 테두리
+
+    // 강조색
+    accent: ACCENT.main,
+    accentHover: ACCENT.hover,
+    accentSubtle: ACCENT.subtle, // 현재 메뉴 배경, 선택된 행
+    accentText: ACCENT.text,     // 연한 배경 위의 강조 글자
+    onAccent: "#FFFFFF",
+
+    // 버튼용 단색
+    danger: "#EF4444",
+    dangerHover: "#DC2626",
+    neutral: "#858796",
+    neutralHover: "#717384",
+
+    // 어두운 영역 (헤더, 알림창)
+    dark: "#1E293B",
+    darkSubtle: "#334155",    // 어두운 영역의 hover
+    darkBorder: "#475569",
+    onDark: "#FFFFFF",
+    onDarkSoft: "#E2E8F0",
+    onDarkMuted: "#CBD5E1",
+
+    // 화면을 덮는 반투명 배경 (모바일 서랍 등)
+    overlay: "rgba(0, 0, 0, 0.4)",
   },
+
+  // 상태 색: 정상·대기·품절 등 모든 화면에서 동일하게 사용
+  status: {
+    success: { fg: "#166534", bg: "#DCFCE7" }, // 정상, 완료, 재직
+    warning: { fg: "#92400E", bg: "#FEF3C7" }, // 부족, 대기, 휴직
+    danger:  { fg: "#991B1B", bg: "#FEE2E2" }, // 품절, 퇴사, 삭제
+    info:    { fg: "#1E40AF", bg: "#DBEAFE" }, // 진행 중
+    neutral: { fg: "#475569", bg: "#F1F5F9" }, // 취소, 알 수 없음
+  },
+
+  space:  { xs: "4px", sm: "8px", md: "12px", lg: "16px", xl: "24px", xxl: "32px" },
+  radius: { sm: "4px", md: "6px", lg: "8px", xl: "12px", pill: "999px" },
+  font: {
+    size: { xs: "12px", sm: "13px", md: "14px", lg: "16px", xl: "20px", xxl: "24px" },
+    weight: { regular: 400, medium: 500, bold: 700 },
+  },
+  shadow: {
+    card: "0 1px 2px rgba(15, 23, 42, 0.06)",
+    header: "0 2px 4px rgba(0, 0, 0, 0.1)",
+    drawer: "4px 0 12px rgba(0, 0, 0, 0.15)",
+    popover: "0 4px 16px rgba(15, 23, 42, 0.12)",
+  },
+  // 쌓임 순서: 흩어져 있던 값(100, 140, 150)을 정리
+  zIndex: { header: 100, backdrop: 140, drawer: 150, dropdown: 200, modal: 1000, toast: 1100 },
+  breakpoint: { mobile: "768px" },
 };
+
+export type AppTheme = typeof theme;

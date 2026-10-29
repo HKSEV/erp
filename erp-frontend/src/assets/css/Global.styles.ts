@@ -79,8 +79,8 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   body {
-    background-color: ${(props: any) => props.theme.colors.background};
-    color: ${(props: any) => props.theme.colors.text};
+    background-color: ${({theme}) => theme.colors.background};
+    color: ${({theme}) => theme.colors.text};
     font-family: 'Pretendard';
     font-weight: 400;
   }

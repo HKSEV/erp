@@ -9,9 +9,9 @@ export const HeaderContainer = styled.header`
   gap: 1rem;
   padding: 0 1.5rem;
   height: 4rem;
-  background-color: #1E293B;
-  color: #FFF;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: ${({theme}) => theme.colors.dark};
+  color: ${({theme}) => theme.colors.onDark};
+  box-shadow: ${({theme}) => theme.shadow.header};
   position: relative;
 
   @media (max-width: 768px) {
@@ -21,7 +21,7 @@ export const HeaderContainer = styled.header`
 `;
 export const HeaderLogo = styled(Link)`
   margin-right: auto;
-  color: #FFF;
+  color: ${({theme}) => theme.colors.onDark};
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: 0.5px;
@@ -47,35 +47,35 @@ export const HeaderUserSection = styled.div`
   }
 `;
 export const HeaderUserName = styled.span`
-  color: #CBD5E1;
+  color: ${({theme}) => theme.colors.onDarkMuted};
 
   @media (max-width: 768px) {
     display: none;
   }
 `;
 export const HeaderUserLink = styled(Link)`
-  color: #CBD5E1;
+  color: ${({theme}) => theme.colors.onDarkMuted};
   font-weight: 500;
   text-decoration: none;
-  &:hover { color: #FFF; }
+  &:hover { color: ${({theme}) => theme.colors.onDark}; }
 `;
 export const HeaderLogoutButton = styled.button`
   background-color: transparent;
-  color: #E2E8F0;
-  border: 1px solid #475569;
+  color: ${({theme}) => theme.colors.onDarkSoft};
+  border: 1px solid ${({theme}) => theme.colors.darkBorder};
   padding: 6px 14px;
   border-radius: 4px;
   font-size: 0.875rem;
   cursor: pointer;
   transition: background-color 0.2s ease-in-out;
-  &:hover { background-color: #334155; }
+  &:hover { background-color: ${({theme}) => theme.colors.darkSubtle}; }
 `;
 // 모바일에서만 보이는 메뉴 버튼 (사이드바 서랍 열기/닫기)
 export const HeaderMobileMenuToggle = styled.button`
   display: none;
   background-color: transparent;
   border: none;
-  color: #FFF;
+  color: ${({theme}) => theme.colors.onDark};
   font-size: 1.75rem;
   cursor: pointer;
 
@@ -86,10 +86,10 @@ export const HeaderMobileMenuToggle = styled.button`
 
 // 푸터
 export const FooterContainer = styled.footer`
-  background-color: #F8FAFC;
-  border-top: 1px solid #E2E8F0;
+  background-color: ${({theme}) => theme.colors.bg};
+  border-top: 1px solid ${({theme}) => theme.colors.border};
   padding: 1.5rem 2.285rem;
-  color: #64748B;
+  color: ${({theme}) => theme.colors.textMuted};
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -115,11 +115,11 @@ export const FooterLinks = styled.div`
   font-size: 0.875rem;
   
   a {
-    color: #475569;
+    color: ${({theme}) => theme.colors.textSecondary};
     text-decoration: none;
     transition: color 0.2s;
     &:hover {
-      color: #0F172A;
+      color: ${({theme}) => theme.colors.textStrong};
       text-decoration: underline;
     }
   }
@@ -134,7 +134,7 @@ export const AsideContainer = styled.nav`
   padding: 24px 0;
   display: flex;
   flex-direction: column;
-  background-color: #FFF;
+  background-color: ${({theme}) => theme.colors.surface};
 `;
 export const MenuSection = styled.div`
   margin-bottom: 24px;
@@ -143,7 +143,7 @@ export const SectionTitle = styled.p`
   padding: 0 24px;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #94A3B8;
+  color: ${({theme}) => theme.colors.textDisabled};
   margin-bottom: 8px;
   letter-spacing: 0.05em;
 `;
@@ -155,17 +155,17 @@ export const MenuList = styled.ul`
 export const MenuItem = styled(Link)<{$isActive?: boolean}>`
   display: block;
   padding: 10px 24px;
-  color: ${({$isActive}) => ($isActive ? "#2563EB" : "#475569")};
-  background-color: ${({$isActive}) => ($isActive ? "#EFF6FF" : "transparent")};
-  border-right: 3px solid ${({$isActive}) => ($isActive ? "#2563EB" : "transparent")};
+  color: ${({theme, $isActive}) => ($isActive ? theme.colors.accent : theme.colors.textSecondary)};
+  background-color: ${({theme, $isActive}) => ($isActive ? theme.colors.accentSubtle : "transparent")};
+  border-right: 3px solid ${({theme, $isActive}) => ($isActive ? theme.colors.accent : "transparent")};
   font-weight: ${({$isActive}) => ($isActive ? 700 : 500)};
   text-decoration: none;
   font-size: 0.95rem;
   transition: background-color 0.2s ease, color 0.2s ease;
 
   &:hover {
-    background-color: #F1F5F9;
-    color: #2563EB;
+    background-color: ${({theme}) => theme.colors.surfaceSubtle};
+    color: ${({theme}) => theme.colors.accent};
   }
 `;
 
@@ -212,33 +212,33 @@ export const Button = styled.button<ButtonProps>`
   ${({ $width }) => $width && css`width: ${$width};`}
 
   //색상
-  ${({ $variant }) => {
+  ${({ $variant, theme }) => {
     switch ($variant) {
       case "danger":
         return css`
-          background-color: #EF4444;
+          background-color: ${theme.colors.danger};
           color: white;
           border: none;
           padding:  0.7rem 1rem;
-          &:hover { background-color: #DC2626; }
+          &:hover { background-color: ${theme.colors.dangerHover}; }
         `; 
 
       case "grey":
         return css`
-          background-color: #858796;
+          background-color: ${theme.colors.neutral};
           color: white;
           border: none;
           padding:  0.7rem 1rem;
-          &:hover { background-color: #717384; }
+          &:hover { background-color: ${theme.colors.neutralHover}; }
         `;
 
       case "primary":
         return css`
-          background-color: #2563EB;
+          background-color: ${theme.colors.accent};
           color: white;
           border: none;
           padding:  0.7rem 1rem;
-          &:hover { background-color: #1D4ED8; }
+          &:hover { background-color: ${theme.colors.accentHover}; }
         `; 
 
       case "ghost":
@@ -250,6 +250,7 @@ export const Button = styled.button<ButtonProps>`
           &:hover { opacity: 0.7; }
         `; 
 
+      // 외부 서비스 브랜드 색은 토큰으로 바꾸지 않음
       case "insta":
         return css`
           background-color: #E1306C;
