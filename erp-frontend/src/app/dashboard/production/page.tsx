@@ -158,7 +158,7 @@ export default function Production() {
 
       <Card
       title="생산 오더 목록"
-      actions={<SearchBar label="생산 오더 검색" placeholder="오더 번호 또는 제품명 검색" onSearch={setKeyword}/>}
+      actions={<SearchBar label="생산 오더 검색" placeholder="오더 번호·제품명 검색" onSearch={setKeyword}/>}
       noPadding>
         <DataTable
         columns={columns}

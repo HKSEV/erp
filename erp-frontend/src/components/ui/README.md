@@ -15,7 +15,7 @@ import type { Column } from "@/components/ui";
 | `<h2 className="fw-bold">재고관리</h2>` + 오른쪽 `<Button>` | `<PageHeader title="재고관리" actions={<Button>+ 신규 품목 등록</Button>}/>` |
 | `<Row><Col md={4}><Card>…</Card></Col>…</Row>` (요약 카드) | `<StatGrid><StatCard label="총 등록 품목" value={5} unit="개" tone="accent"/>…</StatGrid>` |
 | `<Card><Card.Header>…</Card.Header><Card.Body className="p-0">` | `<Card title="현재고 현황" actions={…} noPadding>` |
-| `<InputGroup><Form.Control/><Button>검색</Button></InputGroup>` | `<SearchBar placeholder="품목명 또는 코드 검색" onSearch={(keyword) => …}/>` |
+| `<InputGroup><Form.Control/><Button>검색</Button></InputGroup>` | `<SearchBar placeholder="품목명·코드 검색" onSearch={(keyword) => …}/>` |
 | `<Table hover>` + `thead`/`tbody` 직접 작성 | `<DataTable columns={columns} rows={items} rowKey={(r) => r.id}/>` |
 | `<Badge bg="success">정상</Badge>` | `<StatusBadge tone="success">정상</StatusBadge>` |
 | `<Button variant="primary">` | `<Button>` |
