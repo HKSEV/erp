@@ -62,8 +62,8 @@ export default function Hr() {
   };
 
   const columns: Column<Employee>[] = [
-    {key: "id", header: "사번"},
-    {key: "name", header: "이름", render: (emp) => <strong>{emp.name}</strong>},
+    {key: "id", header: "사번", variant: "code"},
+    {key: "name", header: "이름", variant: "primary"},
     {key: "department", header: "부서"},
     {key: "role", header: "직급/직책"},
     {key: "status", header: "상태", align: "center", render: (emp) => (

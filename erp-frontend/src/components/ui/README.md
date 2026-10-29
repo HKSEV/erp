@@ -47,6 +47,11 @@ const columns: Column<InventoryItem>[] = [
 ];
 ```
 
+- 셀 강조 규칙: 코드·번호 열은 `variant: "code"`(회색, 보통 굵기), 행을 대표하는 이름 열은 `variant: "primary"`(굵게). 한 행에서 굵은 글씨는 이름 한 곳만 씁니다.
+  ```tsx
+  { key: "id", header: "품목 코드", variant: "code" },
+  { key: "name", header: "품목명", variant: "primary" },
+  ```
 - 행이 없으면 `emptyText`(기본값: "데이터가 없습니다.")가 표시됩니다.
 - 표가 화면보다 넓으면 표만 가로로 스크롤됩니다.
 

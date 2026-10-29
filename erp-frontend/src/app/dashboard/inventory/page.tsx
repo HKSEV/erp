@@ -70,8 +70,8 @@ export default function Inventory() {
   };
 
   const columns: Column<InventoryItem>[] = [
-    {key: "id", header: "품목 코드", render: (item) => <strong>{item.id}</strong>},
-    {key: "name", header: "품목명"},
+    {key: "id", header: "품목 코드", variant: "code"},
+    {key: "name", header: "품목명", variant: "primary"},
     {key: "category", header: "분류"},
     {key: "stock", header: "현재고", align: "right", render: (item) => item.stock.toLocaleString()},
     {key: "unitPrice", header: "단가 (원)", align: "right", render: (item) => item.unitPrice.toLocaleString()},

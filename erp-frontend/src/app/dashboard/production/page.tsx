@@ -124,8 +124,8 @@ export default function Production() {
   );
 
   const columns: Column<ProductionOrder>[] = [
-    {key: "id", header: "오더 번호", render: (order) => <strong>{order.id}</strong>},
-    {key: "productName", header: "제품명"},
+    {key: "id", header: "오더 번호", variant: "code"},
+    {key: "productName", header: "제품명", variant: "primary"},
     {key: "quantity", header: "수량", align: "right", render: (order) => `${order.quantity.toLocaleString()} 개`},
     {key: "status", header: "상태", align: "center", render: (order) => {
       const badge = getStatusBadge(order.status);

@@ -8,7 +8,11 @@ export interface Column<T> {
   render?: (row: T) => React.ReactNode; // 셀 내용을 직접 그릴 때 (배지, 버튼 등)
   align?: "left" | "center" | "right";  // 숫자는 right
   width?: string;
+  // 셀 강조 규칙: code = 코드·번호(회색, 보통 굵기), primary = 행을 대표하는 이름(굵게)
+  variant?: CellVariant;
 };
+
+export type CellVariant = "default" | "code" | "primary";
 
 interface DataTableProps<T> {
   columns: Column<T>[];
@@ -40,7 +44,7 @@ export default function DataTable<T>({columns, rows, rowKey, emptyText = "데이
             rows.map((row) => (
               <tr key={rowKey(row)}>
                 {columns.map((col) => (
-                  <Td key={col.key} $align={col.align ?? "left"}>
+                  <Td key={col.key} $align={col.align ?? "left"} $variant={col.variant ?? "default"}>
                     {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? "")}
                   </Td>
                 ))}
@@ -77,13 +81,19 @@ const Th = styled.th<{$align: Align}>`
   border-bottom: 1px solid ${({theme}) => theme.colors.border};
   white-space: nowrap;
 `;
-const Td = styled.td<{$align: Align}>`
+const Td = styled.td<{$align: Align; $variant: CellVariant}>`
   height: 48px;
   padding: 0 ${({theme}) => theme.space.lg};
   text-align: ${({$align}) => $align};
-  color: ${({theme}) => theme.colors.textBody};
+  color: ${({theme, $variant}) =>
+    $variant === "code" ? theme.colors.textMuted
+    : $variant === "primary" ? theme.colors.textStrong
+    : theme.colors.textBody};
+  font-weight: ${({theme, $variant}) =>
+    $variant === "primary" ? theme.font.weight.bold : theme.font.weight.regular};
   border-bottom: 1px solid ${({theme}) => theme.colors.border};
-  font-variant-numeric: ${({$align}) => ($align === "right" ? "tabular-nums" : "normal")};
+  // 숫자 열과 코드 열은 자릿수를 맞춰 세로로 비교하기 쉽게
+  font-variant-numeric: ${({$align, $variant}) => ($align === "right" || $variant === "code" ? "tabular-nums" : "normal")};
   // 셀 안에서 줄바꿈하지 않고, 표가 넓으면 ScrollArea가 가로 스크롤
   white-space: nowrap;
 `;

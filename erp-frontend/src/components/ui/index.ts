@@ -10,6 +10,6 @@ export { default as Button } from "./Button";
 export type { ButtonVariant, ButtonSize } from "./Button";
 export { default as SearchBar } from "./SearchBar";
 export { default as DataTable } from "./DataTable";
-export type { Column } from "./DataTable";
+export type { Column, CellVariant } from "./DataTable";
 export { default as ProgressBar } from "./ProgressBar";
 export { default as TextField, FormStack } from "./TextField";
