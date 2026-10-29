@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link";
 import * as S from "@/assets/css/NavButton";
 
 export const Footer = () => {
@@ -11,9 +12,10 @@ export const Footer = () => {
       </S.FooterInfo>
       
       <S.FooterLinks>
-        <a href="mailto:support@example.com">문의 support@example.com </a>
-        <a href="/terms">개인정보처리방침</a>
-        <a href="/manual">사용자 매뉴얼</a>
+        {/* 메일 링크는 <a>, 사이트 안의 페이지는 Link */}
+        <a href="mailto:support@example.com">문의 support@example.com</a>
+        <Link href="/privacy">개인정보처리방침</Link>
+        <Link href="/manual">사용자 매뉴얼</Link>
       </S.FooterLinks>
     </S.FooterContainer>
   );

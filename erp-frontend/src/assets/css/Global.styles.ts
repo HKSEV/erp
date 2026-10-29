@@ -79,10 +79,28 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   body {
-    background-color: ${(props: any) => props.theme.colors.background};
-    color: ${(props: any) => props.theme.colors.text};
+    background-color: ${({theme}) => theme.colors.background};
+    color: ${({theme}) => theme.colors.text};
     font-family: 'Pretendard';
     font-weight: 400;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  // Bootstrap·Tailwind 제거 후에도 기존 화면이 같도록 필요한 기본값만 유지
+  *, *::before, *::after {
+    border: 0 solid;
+  }
+  button, input, select, textarea {
+    font: inherit;
+    color: inherit;
+  }
+  button {
+    background-color: transparent;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    line-height: 1.2;
   }
 
   a {

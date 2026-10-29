@@ -3,9 +3,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import useModal from "@/components/contexts/ModalContext";
-import * as S from "@/assets/css/Style.styles";
-import "@/assets/sass/styles.scss"; // 일반
-import styles from "@/assets/sass/Production.module.scss";
+import { PageContainer, PageHeader, StatGrid, StatCard, Card, SearchBar, DataTable, StatusBadge, Button, ProgressBar } from "@/components/ui";
+import type { Column, StatusTone } from "@/components/ui";
 
 interface ProductionOrder {
   id: string;
@@ -54,10 +53,6 @@ export default function Production() {
   ]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
     try {
       const response = await axios.get("/api/production/orders");
@@ -70,15 +65,32 @@ export default function Production() {
     };
   };
 
-  const getBadgeStyle = (status: string) => {
+  // 화면이 처음 열릴 때 오더 목록 조회
+  // 응답 전에 화면을 벗어나면(ignore) 상태를 바꾸지 않음
+  useEffect(() => {
+    let ignore = false;
+    axios.get("/api/production/orders")
+      .then((response) => {
+        if (!ignore && response.status === 200)
+          setOrders(response.data);
+      })
+      .catch((err) => console.error("오더 목록을 불러오는 중 오류 발생: ", err))
+      .finally(() => {
+        if (!ignore)
+          setIsLoading(false);
+      });
+    return () => { ignore = true; };
+  }, []);
+
+  const getStatusBadge = (status: ProductionOrder["status"]): {tone: StatusTone; text: string} => {
     switch (status) {
       case "progress":
-        return {bg: "bg-primary", text: "생산중"};
+        return {tone: "info", text: "생산중"};
       case "completed":
-        return {bg: "bg-success", text: "생산완료"};
+        return {tone: "success", text: "생산완료"};
       case "planning":
       default:
-        return {bg: "bg-secondary", text: "생산대기"};
+        return {tone: "neutral", text: "생산대기"};
     };
   };
 
@@ -105,114 +117,59 @@ export default function Production() {
     };
   };
 
-  if (isLoading)
-    return null;
+  // 검색어: 오더 번호 또는 제품명에 포함되면 표시
+  const [keyword, setKeyword] = useState("");
+  const filteredOrders = orders.filter((order) =>
+    order.id.toLowerCase().includes(keyword.toLowerCase()) || order.productName.includes(keyword)
+  );
+
+  const columns: Column<ProductionOrder>[] = [
+    {key: "id", header: "오더 번호", variant: "code", width: "140px"},
+    {key: "productName", header: "제품명", variant: "primary"},
+    {key: "quantity", header: "수량", align: "right", width: "90px", render: (order) => `${order.quantity.toLocaleString()} 개`},
+    {key: "status", header: "상태", align: "center", width: "110px", render: (order) => {
+      const badge = getStatusBadge(order.status);
+      return <StatusBadge tone={badge.tone}>{badge.text}</StatusBadge>;
+    }},
+    {key: "progress", header: "진행률", width: "200px", render: (order) => (
+      <ProgressBar
+      value={order.progress}
+      tone={order.status === "completed" ? "success" : "accent"}
+      label={`${order.id} 진행률`}/>
+    )},
+    {key: "dueDate", header: "납기일", align: "center", width: "120px"},
+    {key: "actions", header: "관리", align: "center", width: "110px", render: () => (
+      <Button variant="secondary" size="sm">상세보기</Button>
+    )},
+  ];
 
   return (
-    // <div className="container-fluid mw1200">
-    <div className="container-fluid mw1400">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="mb-4 fw-bold text-dark">생산관리</h2>
-        <button
-        className="btn btn-primary fw-bold"
-        onClick={handleAddOrder}>
-          + 신규 오더 등록
-        </button>
-      </div>
-      <div className="row mb-4 g-3">
-        <div className="col-md-4">
-          <div className="card border-0 shadow-sm h-100">
-            <div className="card-body">
-              <h6 className="text-muted mb-2">진행중인 오더</h6>
-              <h3 className="text-planning mb-0 fw-bold">2건</h3>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-4">
-          <div className="card border-0 shadow-sm h-100">
-            <div className="card-body">
-              <h6 className="text-muted mb-2">생산 대기</h6>
-              <h3 className="text-secondary mb-0 fw-bold">1건</h3>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-4">
-          <div className="card border-0 shadow-sm h-100">
-            <div className="card-body">
-              <h6 className="text-muted mb-2">이번 달 완료</h6>
-              <h3 className="text-success mb-0 fw-bold">1건</h3>
-            </div>
-          </div>
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader
+      title="생산관리"
+      description="생산 오더의 진행 상태와 납기를 관리합니다."
+      actions={<Button onClick={handleAddOrder}>+ 신규 오더 등록</Button>}/>
 
-      {/* 2. 메인 데이터 테이블 섹션 */}
-      <div className="card border-0 shadow-sm">
-        <div className="card-header bg-white py-3 fw-bold border-bottom">
-          생산 오더 목록
-        </div>
-        <div className="card-body p-0">
-          <div className="table-responsive">
-            {/* table, table-hover: 마우스 올리면 하이라이트, align-middle: 세로 중앙 정렬 */}
-            <table className="table table-hover align-middle mb-0">
-              <thead className="table-light">
-                <tr>
-                  <th className="px-3">오더 번호</th>
-                  <th>제품명</th>
-                  <th>수량</th>
-                  <th>상태</th>
-                  <th style={{ width: "25%" }}>진행률</th>
-                  <th>납기일</th>
-                  <th className="text-center">관리</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((order) => {
-                  const badge = getBadgeStyle(order.status);
-                  return (
-                    <tr key={order.id}>
-                      <td className="px-3"><strong>{order.id}</strong></td>
-                      <td>{order.productName}</td>
-                      <td>{order.quantity.toLocaleString()} 개</td>
-                      <td>
-                        {/* rounded-pill: 둥근 알약 모양 뱃지 */}
-                        <span className={`badge rounded-pill ${badge.bg} px-3 py-2`}>
-                          {badge.text}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center gap-2">
-                          <span className="small" style={{ minWidth: "35px" }}>
-                            {order.progress}%
-                          </span>
-                          {/* 부트스트랩 기본 progress bar */}
-                          <div className="progress flex-grow-1" style={{ height: "8px" }}>
-                            <div 
-                              className={`progress-bar ${order.status === 'completed' ? 'bg-success' : 'bg-primary'}`} 
-                              role="progressbar" 
-                              style={{ width: `${order.progress}%` }}
-                              aria-valuenow={order.progress} 
-                              aria-valuemin={0} 
-                              aria-valuemax={100}
-                            ></div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>{order.dueDate}</td>
-                      <td className="text-center">
-                        {/* btn, btn-outline-secondary: 테두리만 있는 회색 버튼 */}
-                        <button className="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-bold">
-                          상세보기
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
+      <StatGrid>
+        <StatCard label="진행중인 오더" value={2} unit="건" tone="accent"/>
+        <StatCard label="생산 대기" value={1} unit="건"/>
+        <StatCard label="이번 달 완료" value={1} unit="건" tone="success"/>
+      </StatGrid>
+
+      <Card
+      title="생산 오더 목록"
+      actions={<SearchBar label="생산 오더 검색" placeholder="오더 번호 또는 제품명 검색" onSearch={setKeyword}/>}
+      noPadding>
+        <DataTable
+        columns={columns}
+        rows={filteredOrders}
+        rowKey={(order) => order.id}
+        emptyText={
+          isLoading ? "오더 목록을 불러오는 중입니다."
+          : keyword ? `"${keyword}"에 해당하는 오더가 없습니다.`
+          : "등록된 생산 오더가 없습니다."
+        }/>
+      </Card>
+    </PageContainer>
   );
 };

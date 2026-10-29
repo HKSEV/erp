@@ -43,18 +43,18 @@ export const FlexWrap = css`
   flex-wrap: wrap;
 `;
 export const BlueButtonTheme = css`
-  background-color: #4E73DF;
-  border: 1px solid #4E73DF;
-  color: #FFF;
+  background-color: ${({theme}) => theme.colors.accent};
+  border: 1px solid ${({theme}) => theme.colors.accent};
+  color: ${({theme}) => theme.colors.onAccent};
 
   &:hover {
-    background-color: #2E59D9;
-    border-color: #2653D4;
+    background-color: ${({theme}) => theme.colors.accentHover};
+    border-color: ${({theme}) => theme.colors.accentHover};
   }
 `;
 export const LinearGradient = css`
   background-image: linear-gradient(
-    180deg, #4E73DF 10%, #224ABE 100%
+    180deg, ${({theme}) => theme.colors.accent} 10%, ${({theme}) => theme.colors.accentText} 100%
   );
 `;
 export const BoxShadow = css`
@@ -71,7 +71,7 @@ export const CircleBtn = css`
   height: 2.5rem;
   border-radius: 50%;
   border: none;
-  color: #FFF;
+  color: ${({theme}) => theme.colors.onAccent};
   cursor: pointer;
 `;
 export const Transparent = css`
@@ -100,7 +100,7 @@ export const ButtonBase = css`
     box-shadow 0.15s ease;
 
   &:focus-visible {
-    outline: 2px solid #3278f6;
+    outline: 2px solid ${({theme}) => theme.colors.accent};
     outline-offset: 3px;
   }
 

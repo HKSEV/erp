@@ -1,10 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import {Container, Row, Col, Card, Table, Badge,
-  Button, InputGroup, Form } from "react-bootstrap";
-import * as S from "@/assets/css/Style.styles";
-import "@/assets/sass/styles.scss";
+import { PageContainer, PageHeader, StatGrid, StatCard, Card, SearchBar, DataTable, StatusBadge, Button } from "@/components/ui";
+import type { Column, StatusTone } from "@/components/ui";
 
 interface InventoryItem {
   id:string;
@@ -59,126 +57,61 @@ export default function Inventory() {
     },
   ]);
 
-  const renderStatusBadge = (status: string) => {
-    switch (status) {
-      case "normal":
-        return (
-          <Badge bg="success" pill className="px-3 py-2">
-            정상
-          </Badge>
-        );
-      case "low":
-        return (
-          <Badge bg="warning" pill className="px-3 py-2">
-            재고부족
-          </Badge>
-        );
-      case "out":
-        return (
-          <Badge bg="danger" pill className="px-3 py-2">
-            품절
-          </Badge>
-        );
-      default:
-        return (
-          <Badge bg="secondary" pill className="px-3 py-2">
-            알수없음
-          </Badge>
-        );
-    };
+  // 검색어: 품목 코드 또는 품목명에 포함되면 표시
+  const [keyword, setKeyword] = useState("");
+  const filteredItems = items.filter((item) =>
+    item.id.toLowerCase().includes(keyword.toLowerCase()) || item.name.includes(keyword)
+  );
+
+  const STATUS: Record<InventoryItem["status"], {tone: StatusTone; text: string}> = {
+    normal: {tone: "success", text: "정상"},
+    low: {tone: "warning", text: "재고부족"},
+    out: {tone: "danger", text: "품절"},
   };
 
+  const columns: Column<InventoryItem>[] = [
+    {key: "id", header: "품목 코드", variant: "code", width: "110px"},
+    {key: "name", header: "품목명", variant: "primary"},
+    {key: "category", header: "분류", width: "90px"},
+    {key: "stock", header: "현재고", align: "right", width: "90px", render: (item) => item.stock.toLocaleString()},
+    {key: "unitPrice", header: "단가 (원)", align: "right", width: "110px", render: (item) => item.unitPrice.toLocaleString()},
+    {key: "status", header: "상태", align: "center", width: "120px", render: (item) => (
+      <StatusBadge tone={STATUS[item.status].tone}>{STATUS[item.status].text}</StatusBadge>
+    )},
+    {key: "actions", header: "관리", align: "center", width: "150px", render: () => (
+      <>
+        <Button variant="secondary" size="sm">수정</Button>{" "}
+        <Button variant="danger" size="sm">삭제</Button>
+      </>
+    )},
+  ];
+
   return (
-    <Container fluid className="py-4 mw1400">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold text-dark m-0">
-          재고관리
-        </h2>
-        <Button variant="primary" className="fw-bold px-4">
-          + 신규 품목 등록
-        </Button>
-      </div>
+    <PageContainer>
+      <PageHeader
+      title="재고관리"
+      description="품목별 현재고와 재고 상태를 확인하고 관리합니다."
+      actions={<Button>+ 신규 품목 등록</Button>}/>
 
-      <Row className="mb-4 g-3">
-        <Col md={4}>
-          <Card className="border-0 shadow-sm h-100">
-            <Card.Body>
-              <h6 className="text-muted mb-2">총 등록 품목</h6>
-              <h3 className="text-primary mb-0 fw-bold">{items.length}개</h3>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={4}>
-          <Card className="border-0 shadow-sm h-100">
-            <Card.Body>
-              <h6 className="text-muted mb-2">재고 부족 / 품절</h6>
-              <h3 className="text-danger mb-0 fw-bold">
-                {items.filter(item => item.status !== 'normal').length}건
-              </h3>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={4}>
-          <Card className="border-0 shadow-sm h-100">
-            <Card.Body>
-              <h6 className="text-muted mb-2">총 재고 자산</h6>
-              <h3 className="text-success mb-0 fw-bold">
-                ₩ {items.reduce((acc, curr) => acc + (curr.stock * curr.unitPrice), 0).toLocaleString()}
-              </h3>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+      <StatGrid>
+        <StatCard label="총 등록 품목" value={items.length} unit="개" tone="accent"/>
+        <StatCard label="재고 부족 / 품절" value={items.filter((item) => item.status !== "normal").length} unit="건" tone="danger"/>
+        <StatCard
+        label="총 재고 자산"
+        value={`₩ ${items.reduce((acc, curr) => acc + (curr.stock * curr.unitPrice), 0).toLocaleString()}`}
+        tone="success"/>
+      </StatGrid>
 
-      {/* 2. 메인 데이터 테이블 영역 */}
-      <Card className="border-0 shadow-sm">
-        <Card.Header className="bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-          <span className="fw-bold">현재고 현황</span>
-          {/* 우측 검색창 */}
-          <div style={{ width: "250px" }}>
-            <InputGroup size="sm">
-              <Form.Control placeholder="품목명 또는 코드 검색..." />
-              <Button variant="outline-secondary">검색</Button>
-            </InputGroup>
-          </div>
-        </Card.Header>
-        
-        <Card.Body className="p-0">
-          <Table responsive hover className="align-middle mb-0">
-            <thead className="table-light">
-              <tr>
-                <th className="px-4 py-3">품목 코드</th>
-                <th className="py-3">품목명</th>
-                <th className="py-3">분류</th>
-                <th className="py-3 text-end">현재고</th>
-                <th className="py-3 text-end">단가 (원)</th>
-                <th className="py-3 text-center">상태</th>
-                <th className="py-3 text-center">관리</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr key={item.id}>
-                  <td className="px-4 text-muted"><strong>{item.id}</strong></td>
-                  <td className="fw-semibold">{item.name}</td>
-                  <td>{item.category}</td>
-                  <td className="text-end fw-bold">{item.stock.toLocaleString()}</td>
-                  <td className="text-end text-muted">{item.unitPrice.toLocaleString()}</td>
-                  <td className="text-center">{renderStatusBadge(item.status)}</td>
-                  <td className="text-center">
-                    <Button variant="outline-secondary" size="sm" className="me-2">
-                      수정
-                    </Button>
-                    <Button variant="outline-danger" size="sm">
-                      삭제
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </Card.Body>
+      <Card
+      title="현재고 현황"
+      actions={<SearchBar label="품목 검색" placeholder="품목명 또는 코드 검색" onSearch={setKeyword}/>}
+      noPadding>
+        <DataTable
+        columns={columns}
+        rows={filteredItems}
+        rowKey={(item) => item.id}
+        emptyText={keyword ? `"${keyword}"에 해당하는 품목이 없습니다.` : "등록된 품목이 없습니다."}/>
       </Card>
-    </Container>
+    </PageContainer>
   );
 };

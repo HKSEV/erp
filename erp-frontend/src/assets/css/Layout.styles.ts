@@ -8,7 +8,7 @@ export const PageWrapper = styled.div`
 export const TopArea = styled.div`
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: ${({theme}) => theme.zIndex.header};
 `;
 export const MainContent = styled.div<{$isHidden: boolean}>`
   ${(props) => (props.$isHidden ? "width: 100%" : "display: flex")};
@@ -16,8 +16,8 @@ export const MainContent = styled.div<{$isHidden: boolean}>`
 `;
 export const LnbWrapper = styled.aside<{$isOpen: boolean}>`
   width: 250px;
-  background-color: #FFF;
-  border-right: 1px solid #E2E8F0;
+  background-color: ${({theme}) => theme.colors.surface};
+  border-right: 1px solid ${({theme}) => theme.colors.border};
   flex-shrink: 0;
 
   // 모바일: 헤더 아래에서 왼쪽으로 열리는 서랍
@@ -26,8 +26,8 @@ export const LnbWrapper = styled.aside<{$isOpen: boolean}>`
     top: 4rem;
     bottom: 0;
     left: 0;
-    z-index: 150;
-    box-shadow: ${({$isOpen}) => ($isOpen ? "4px 0 12px rgba(0, 0, 0, 0.15)" : "none")};
+    z-index: ${({theme}) => theme.zIndex.drawer};
+    box-shadow: ${({theme, $isOpen}) => ($isOpen ? theme.shadow.drawer : "none")};
     transform: translateX(${({$isOpen}) => ($isOpen ? "0" : "-100%")});
     // 닫혀 있을 때 Tab 포커스가 숨은 메뉴로 가지 않도록 visibility도 함께 전환
     visibility: ${({$isOpen}) => ($isOpen ? "visible" : "hidden")};
@@ -42,14 +42,14 @@ export const DrawerBackdrop = styled.div`
     display: block;
     position: fixed;
     inset: 4rem 0 0 0;
-    z-index: 140;
-    background-color: rgba(0, 0, 0, 0.4);
+    z-index: ${({theme}) => theme.zIndex.backdrop};
+    background-color: ${({theme}) => theme.colors.overlay};
   }
 `;
 export const ContentArea = styled.main`
   flex: 1;
   padding: 32px;
-  background-color: #F8FAFC;
+  background-color: ${({theme}) => theme.colors.bg};
   overflow-y: auto;
   min-width: 0;
 `;
