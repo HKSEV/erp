@@ -3,7 +3,6 @@
 
 import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { Top } from "./Top";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { SideBar } from "./SideBar";
@@ -41,7 +40,6 @@ export default function ConditionalLayout({children}: {
         {!isHidden ? (
           <>
             <S.TopArea>
-              <Top/>
               <Header
               isMenuOpen={isMenuOpen}
               onToggleMenu={() => setIsMenuOpen((prev) => !prev)}

@@ -4,14 +4,15 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { Temporal } from "@js-temporal/polyfill";
 import { FiCalendar, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import CalendarMonthBody from "./CalendarMonthBody";
 import { Holiday } from "@/app/types/Holiday";
 import { fetchHolidays } from "@/app/api/holidays";
-import type { Schedule } from "./modal/ScheduleModal";
+import type { Schedule } from "../modal/ScheduleModal";
 import * as S from "@/assets/css/Style.styles";
-import useModal from "./contexts/ModalContext";
+import useModal from "../contexts/ModalContext";
 
 const OFFSETS = [-2, -1, 0, 1, 2];
-const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+const EMPTY_HOLIDAYS: readonly Holiday[] = [];
 const DRAG_START_PX = 8;
 const MONTH_CHANGE_PX = 64;
 type Direction = -1 | 0 | 1;
@@ -63,28 +64,49 @@ export default function Calendar({
   }), [viewMonth, renderCenter],);
   
   useEffect(() => {
+    if (isAnimating || isDragging)
+      return;
+
+    const missingMonths = months.filter(
+      ({value}) => !Object.prototype.hasOwnProperty.call(
+        holidayMap,
+        value.toString(),
+      ),
+    );
+
+    if (missingMonths.length === 0)
+      return;
+
     let cancelled = false;
+
     Promise.all(
-      months.map(async ({value}) => [
+      missingMonths.map(async ({value}) => [
         value.toString(),
         await fetchHolidays(value.year, value.month),
       ] as const),
     ).then((entries) => {
-      if (!cancelled)
-        setHolidayMap((previous) => ({
-          ...previous, ...Object.fromEntries(entries),
-        }));
-    }).catch((err: unknown) =>
-      console.error("공휴일을 불러오지 못했습니다.", err)
-    );
+      if (cancelled)
+        return;
+      setHolidayMap((prev) => ({...prev, ...Object.fromEntries(entries)}));
+    }).catch((err: unknown) => {
+      console.error("공휴일을 불러오지 못했습니다.", err);
+    });
+
     return () => {
       cancelled = true;
     };
-  }, [months]);
+  }, [months, holidayMap, isAnimating, isDragging]);
 
   useEffect(() => {
     updateScheduleModal(schedules);
   }, [schedules, updateScheduleModal]);
+
+  useEffect(() => {
+    return () => {
+      if (frameRef.current !== null)
+        cancelAnimationFrame(frameRef.current);
+    };
+  }, []);
 
   const updateSlide = useCallback((value: number) => {
     slideRef.current = value;
@@ -178,12 +200,46 @@ export default function Calendar({
     });
   };
 
-  useEffect(() => {
-    return () => {
-      if (frameRef.current !== null)
-        cancelAnimationFrame(frameRef.current);
+  const scheduleCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+
+    for (const schedule of schedules) {
+      const key = `${schedule.year}-${schedule.month}-${schedule.date}`;
+      counts[key] = (counts[key] ?? 0) + 1;
     };
-  }, []);
+
+    return counts;
+  }, [schedules]);
+
+  const handleSelectDay = useCallback((
+    year: number,
+    month: number,
+    day: number,
+  ) => {
+    if (movingRef.current || dragRef.current?.dragging)
+      return;
+
+    const current = viewMonthRef.current;
+
+    if (current.year !== year || current.month !== month)
+      return;
+
+    setSelectedDate(
+      Temporal.PlainDate.from({
+        year,
+        month,
+        day,
+      }).toString(),
+    );
+
+    openScheduleModal(
+      year,
+      month,
+      day,
+      schedules,
+      setSchedules,
+    );
+  }, [openScheduleModal, schedules]);
 
   const handleDragStart = (e: ReactMouseEvent<HTMLDivElement>) => {
     if (e.button !== 0) 
@@ -359,8 +415,7 @@ export default function Calendar({
             const active = offset === 0;
             const slot = offset - slide;
             const centered = Math.abs(slot) < 0.5;
-            const firstWeekday = value.toPlainDate({day: 1}).dayOfWeek % 7;
-            const holidays = holidayMap[value.toString()] ?? [];
+
             return (
               <S.CalendarWrapper
               key={value.toString()}
@@ -396,90 +451,14 @@ export default function Calendar({
                   </S.CalNavigation>
                 </S.CalHeader>
 
-                <S.CalBody>
-                  <S.CalWeekdays aria-hidden="true">
-                    {WEEKDAYS.map((day, index) => (
-                      <S.CalDayName key={day} $weekday={index}>
-                        {day}
-                      </S.CalDayName>
-                    ))}
-                  </S.CalWeekdays>
-                  <S.CalGrid>
-                    {Array.from({ length: 42 }, (_, index) => {
-                      const day = index - firstWeekday + 1;
-                      if (day < 1 || day > value.daysInMonth)
-                        return (
-                          <S.CalEmptyCell
-                          key={`empty-${index}`}
-                          aria-hidden="true"/>
-                        );
-                      const date = value.toPlainDate({day});
-                      const dayHolidays = holidays.filter(
-                        (holiday) => holiday.date === day,
-                      );
-                      const count = schedules.filter(
-                        (item) =>
-                          item.year === value.year &&
-                          item.month === value.month &&
-                          item.date === day,
-                      ).length;
-                      const names = dayHolidays.map(
-                        (holiday) => holiday.name
-                      ).join(", ");
-                      return(
-                        <S.CalDayCell
-                        key={day}
-                        type="button"
-                        $selected={selectedDate === date.toString()}
-                        $isHoliday={dayHolidays.length > 0}
-                        $weekday={index % 7}
-                        data-calendar-day="true"
-                        aria-current={date.equals(today) ? "date" : undefined}
-                        aria-pressed={selectedDate === date.toString()}
-                        aria-label={`${value.year}년 ${value.month}월 ${day}일${names ? `, ${names}` : ""}, 일정 ${count}건`}
-                        onClick={() => {
-                          if (!active || movingRef.current)
-                            return;
-                          setSelectedDate(date.toString());
-                          openScheduleModal(
-                            value.year,
-                            value.month,
-                            day,
-                            schedules,
-                            setSchedules,
-                          );
-                        }}>
-                          <S.CalDateNumber>{day}</S.CalDateNumber>
-                          <S.CalHolidayRow title={names}>
-                            {dayHolidays.length > 0 && (
-                              <>
-                                <S.CalHolidayIcon aria-hidden="true">
-                                  {dayHolidays.map(
-                                    (holiday) => holiday.icon
-                                  ).join("")}
-                                </S.CalHolidayIcon>
-                                <S.CalHolidayName>
-                                  {dayHolidays[0].name}
-                                  {dayHolidays.length > 1
-                                    ? ` 외 ${dayHolidays.length - 1}`
-                                    : ""}
-                                </S.CalHolidayName>
-                              </>
-                            )}
-                          </S.CalHolidayRow>
-                          <S.CalScheduleRow>
-                            {count > 0 && (
-                              <S.CalScheduleBadge>
-                                <FiCalendar aria-hidden="true" />
-                                <span>{count}건</span>
-                              </S.CalScheduleBadge>
-                            )}
-                          </S.CalScheduleRow>
-                        </S.CalDayCell>
-                      );
-                    })}
-                  </S.CalGrid>
-                </S.CalBody>
+                <CalendarMonthBody
+                year={value.year}
+                month={value.month}
+                selectedDate={selectedDate}
+                todayKey={today.toString()}
+                holidays={holidayMap[value.toString()] ?? EMPTY_HOLIDAYS}
+                scheduleCounts={scheduleCounts}
+                onSelectDay={handleSelectDay}/>
 
                 <S.CalLegend aria-hidden="true">
                   <span>

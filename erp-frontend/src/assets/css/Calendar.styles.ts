@@ -134,7 +134,10 @@ export const CalendarWrapper = styled.section.attrs<CalendarWrapperProps>(
         $slot === 0 && !$moving ? "auto" : "none",
     };
 
-    return { style };
+    return {
+      "data-moving": $moving ? "true" : "false",
+      style
+    };
   })`
   position: relative;
   grid-area: 1 / 1;
@@ -153,6 +156,10 @@ export const CalendarWrapper = styled.section.attrs<CalendarWrapperProps>(
   opacity: var(--cal-opacity);
   filter: blur(var(--cal-blur));
   transition: none;
+
+  &[data-moving="true"] {
+    filter: none;
+  }
 
   @media (max-width: 768px) {
     transform: translateX(var(--cal-mobile-x));

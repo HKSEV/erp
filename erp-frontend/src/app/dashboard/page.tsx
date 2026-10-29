@@ -1,7 +1,6 @@
 "use client";
 
-import SmallCalendar from "@/components/SmallCalendar";
-import Calendar from "@/components/Calendar";
+import Calendar from "@/components/calendar/Calendar";
 import * as S from "@/assets/css/Style.styles";
 
 export default function Dashboard() {
