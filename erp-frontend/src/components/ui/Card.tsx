@@ -1,0 +1,51 @@
+"use client";
+
+import styled from "styled-components";
+
+interface CardProps {
+  title?: string;
+  actions?: React.ReactNode; // 머리글 오른쪽 (예: 검색창)
+  noPadding?: boolean;       // 표처럼 본문을 꽉 채울 때
+  children: React.ReactNode;
+};
+
+// 흰 바탕 카드: 머리글(제목 + 오른쪽 영역)과 본문
+export default function Card({title, actions, noPadding = false, children}: CardProps) {
+  return (
+    <Wrapper>
+      {(title || actions) && (
+        <Header>
+          {title && <Title>{title}</Title>}
+          {actions}
+        </Header>
+      )}
+      <Body $noPadding={noPadding}>{children}</Body>
+    </Wrapper>
+  );
+};
+
+const Wrapper = styled.section`
+  background-color: ${({theme}) => theme.colors.surface};
+  border: 1px solid ${({theme}) => theme.colors.border};
+  border-radius: ${({theme}) => theme.radius.xl};
+  box-shadow: ${({theme}) => theme.shadow.card};
+  overflow: hidden;
+`;
+const Header = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({theme}) => theme.space.md};
+  padding: ${({theme}) => theme.space.lg} ${({theme}) => theme.space.xl};
+  border-bottom: 1px solid ${({theme}) => theme.colors.border};
+  flex-wrap: wrap;
+`;
+const Title = styled.h2`
+  margin: 0;
+  font-size: ${({theme}) => theme.font.size.lg};
+  font-weight: ${({theme}) => theme.font.weight.bold};
+  color: ${({theme}) => theme.colors.textStrong};
+`;
+const Body = styled.div<{$noPadding: boolean}>`
+  padding: ${({theme, $noPadding}) => ($noPadding ? "0" : theme.space.xl)};
+`;
