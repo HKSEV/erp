@@ -29,14 +29,21 @@ export default function Calendar({
   month?: number;
 }) {
   const {openScheduleModal, updateScheduleModal} = useModal();
+
+  const [slide, setSlide] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [viewMonth, setViewMonth] = useState(() => (
     Temporal.PlainYearMonth.from({year, month})
   ));
-  const [direction, setDirection] = useState<Direction>(0);
+
   const movingRef = useRef(false);
   const dragRef = useRef<CalendarDrag | null>(null);
   const suppressClickRef = useRef(false);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const slideRef = useRef(0);
+  const frameRef = useRef<number | null>(null);
+  const viewMonthRef = useRef(viewMonth);
 
   const [selectedDate, setSelectedDate] = useState<string>(() => (
     Temporal.Now.plainDateISO().toString()
@@ -46,9 +53,14 @@ export default function Calendar({
   const [holidayMap, setHolidayMap] = useState<Record<string, Holiday[]>>({});
   // 오늘 날짜 정보
   const today = Temporal.Now.plainDateISO();
-  const months = useMemo(() => OFFSETS.map((offset) => ({
-    offset, value: viewMonth.add({months: offset})
-  })), [viewMonth]);
+  const renderCenter = Math.round(slide);
+  const months = useMemo(() => OFFSETS.map((relativeOffset) => {
+    const offset = renderCenter + relativeOffset;
+    return {
+      offset,
+      value: viewMonth.add({months: offset}),
+    };
+  }), [viewMonth, renderCenter],);
   
   useEffect(() => {
     let cancelled = false;
@@ -74,27 +86,103 @@ export default function Calendar({
     updateScheduleModal(schedules);
   }, [schedules, updateScheduleModal]);
 
-  const finishTransition = useCallback(() => {
-    if (!movingRef.current || direction === 0)
-      return;
-    movingRef.current = false;
-    setViewMonth((previous) => previous.add({months: direction}));
-    setDirection(0);
-  }, [direction]);
+  const updateSlide = useCallback((value: number) => {
+    slideRef.current = value;
+    setSlide(value);
+  }, []);
 
-  useEffect(() => {
-    if (direction === 0)
-      return;
-    // transitionend 누락 및 동작 줄이기 설정에서도 이동을 완료합니다.
-    const timer = window.setTimeout(finishTransition, 420);
-    return () => window.clearTimeout(timer);
-  }, [direction, finishTransition]);
+  const animateTo = useCallback((
+    target: number,
+    duration: number,
+    onComplete: () => void,
+  ) => {
+    if (frameRef.current !== null)
+      cancelAnimationFrame(frameRef.current);
+
+    movingRef.current = true;
+    setIsAnimating(true);
+
+    const from = slideRef.current;
+    const startedAt = performance.now();
+
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    const tick = (now: number) => {
+      const progress = reducedMotion
+        ? 1
+        : Math.min((now - startedAt) / duration, 1);
+
+      const eased = 1 - Math.pow(1 - progress, 3);
+
+      updateSlide(from + (target - from) * eased);
+
+      if (progress < 1) {
+        frameRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      frameRef.current = null;
+      movingRef.current = false;
+      setIsAnimating(false);
+      onComplete();
+    };
+
+    frameRef.current = requestAnimationFrame(tick);
+  }, [updateSlide]);
+
+  const commitMonth = useCallback((month: Temporal.PlainYearMonth) => {
+    viewMonthRef.current = month;
+    setViewMonth(month);
+    updateSlide(0);
+  }, [updateSlide]);
 
   const handleChangeMonth = useCallback((nextDirection: -1 | 1) => {
     if (movingRef.current)
       return;
-    movingRef.current = true;
-    setDirection(nextDirection);
+
+    animateTo(nextDirection, 280, () => {
+      commitMonth(viewMonthRef.current.add({months: nextDirection}));
+    });
+  }, [animateTo, commitMonth]);
+
+  const handleToday = () => {
+    if (movingRef.current || isDragging)
+      return;
+
+    const now = Temporal.Now.plainDateISO();
+    const target = Temporal.PlainYearMonth.from({
+      year: now.year,
+      month: now.month,
+    });
+
+    setSelectedDate(now.toString());
+
+    const current = viewMonthRef.current;
+    const distance =
+      (target.year - current.year) * 12 +
+      target.month - current.month;
+
+    if (distance === 0)
+      return;
+
+    // 가까운 달은 천천히, 멀리 있는 달은 빠르게 연속 이동합니다.
+    const duration = Math.min(
+      1600,
+      380 + Math.abs(distance) * 65,
+    );
+
+    animateTo(distance, duration, () => {
+      commitMonth(target);
+    });
+  };
+
+  useEffect(() => {
+    return () => {
+      if (frameRef.current !== null)
+        cancelAnimationFrame(frameRef.current);
+    };
   }, []);
 
   const handleDragStart = (e: ReactMouseEvent<HTMLDivElement>) => {
@@ -136,9 +224,29 @@ export default function Calendar({
   };
 
   useEffect(() => {
+    const getDragSlide = (dx: number) => {
+      const card = viewportRef.current
+        ?.querySelector<HTMLElement>('[data-active="true"]');
+
+      if (!card)
+        return 0;
+
+      const mobile = window.matchMedia("(max-width: 768px)").matches;
+      const pageWidth = card.offsetWidth * (mobile ? 1.1 : 0.64);
+
+      // 한 번의 드래그에서는 앞뒤 한 달까지 이동합니다.
+      return Math.max(-1, Math.min(1, -dx / pageWidth));
+    };
+
     const cancelDrag = () => {
+      if (!dragRef.current)
+        return;
+
       dragRef.current = null;
       setIsDragging(false);
+
+      if (!movingRef.current && slideRef.current !== 0)
+        animateTo(0, 180, () => updateSlide(0));
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -173,8 +281,10 @@ export default function Calendar({
         setIsDragging(true);
       };
 
-      if (drag.dragging)
+      if (drag.dragging) {
         e.preventDefault();
+        updateSlide(getDragSlide(dx));
+      };
     };
 
     const handleMouseUp = (e: MouseEvent) => {
@@ -189,19 +299,30 @@ export default function Calendar({
       const dx = e.clientX - drag.startX;
       const dy = e.clientY - drag.startY;
 
-      cancelDrag();
+      dragRef.current = null;
+      setIsDragging(false);
 
-      if (
+      const moved =
+        drag.dragging ||
         Math.abs(dx) >= DRAG_START_PX ||
-        Math.abs(dy) >= DRAG_START_PX
-      )
+        Math.abs(dy) >= DRAG_START_PX;
+
+      if (moved)
         suppressClickRef.current = true;
 
-      if (
+      const changeMonth =
         Math.abs(dx) >= MONTH_CHANGE_PX &&
-        Math.abs(dx) > Math.abs(dy) * 1.2
-      )
-        handleChangeMonth(dx < 0 ? 1 : -1);
+        Math.abs(dx) > Math.abs(dy) * 1.2;
+
+      if (changeMonth) {
+        const nextDirection = dx < 0 ? 1 : -1;
+        animateTo(nextDirection, 220, () => {
+          commitMonth(viewMonthRef.current.add({months: nextDirection}));
+        });
+      } else if (slideRef.current !== 0) {
+        // 이동 기준보다 짧게 밀었다면 원래 위치로 복귀합니다.
+        animateTo(0, 180, () => updateSlide(0));
+      };
     };
 
     // 달력 밖으로 마우스가 나가도 드래그 종료를 감지합니다.
@@ -214,7 +335,7 @@ export default function Calendar({
       window.removeEventListener("mouseup", handleMouseUp);
       window.removeEventListener("blur", cancelDrag);
     };
-  }, [handleChangeMonth]);
+  }, [animateTo, commitMonth, updateSlide]);
 
   return (
     <S.CalTopMargin aria-label="업무 캘린더">
@@ -223,48 +344,42 @@ export default function Calendar({
         type="button"
         $side="prev"
         aria-label="이전 달"
-        disabled={direction !== 0 || isDragging}
+        disabled={isAnimating || isDragging}
         onClick={() => handleChangeMonth(-1)}>
           <FiChevronLeft aria-hidden="true"/>
         </S.CalSideArrowButton>
 
         <S.CalViewport
-        $dragging={isDragging}
-        aria-busy={direction !== 0}
+        ref={viewportRef}
+        aria-busy={isAnimating}
         onMouseDown={handleDragStart}
         onClickCapture={handleCalendarClickCapture}
         onDragStart={(e) => e.preventDefault()}>
           {months.map(({value, offset}) => {
             const active = offset === 0;
-            const slot = offset - direction;
+            const slot = offset - slide;
+            const centered = Math.abs(slot) < 0.5;
             const firstWeekday = value.toPlainDate({day: 1}).dayOfWeek % 7;
             const holidays = holidayMap[value.toString()] ?? [];
             return (
               <S.CalendarWrapper
               key={value.toString()}
               $slot={slot}
-              $moving={direction !== 0}
+              $moving={isAnimating || isDragging}
               aria-hidden={!active}
-              inert={!active || direction !== 0}
+              inert={!active || isAnimating || isDragging}
               data-month={value.toString()}
-              data-active={active}
-              onTransitionEnd={(event) => {
-                if (active &&
-                  event.target === event.currentTarget &&
-                  event.propertyName === "transform"
-                )
-                  finishTransition();
-              }}>
+              data-active={active}>
                 <S.CalPreviewTitle
-                $active={slot === 0}
-                $moving={direction !== 0}
+                $active={centered}
+                $moving={isAnimating || isDragging}
                 aria-hidden="true">
                   {value.year}년 {value.month}월
                 </S.CalPreviewTitle>
 
                 <S.CalHeader
-                $active={slot === 0}
-                $moving={direction !== 0}>
+                $active={centered}
+                $moving={isAnimating || isDragging}>
                   <div>
                     <S.CalEyebrow>업무 캘린더</S.CalEyebrow>
                     <S.CalMonthTitle>
@@ -274,18 +389,8 @@ export default function Calendar({
                   <S.CalNavigation>
                     <S.CalTodayButton
                     type="button"
-                    disabled={direction !== 0 || isDragging}
-                    onClick={() => {
-                      if (movingRef.current)
-                        return;
-                      setViewMonth(
-                        Temporal.PlainYearMonth.from({
-                          year: today.year,
-                          month: today.month,
-                        })
-                      );
-                      setSelectedDate(today.toString());
-                    }}>
+                    disabled={isAnimating || isDragging}
+                    onClick={handleToday}>
                       오늘
                     </S.CalTodayButton>
                   </S.CalNavigation>
@@ -394,12 +499,12 @@ export default function Calendar({
             );
           })}
         </S.CalViewport>
-        
+
         <S.CalSideArrowButton
         type="button"
         $side="next"
         aria-label="다음 달"
-        disabled={direction !== 0 || isDragging}
+        disabled={isAnimating || isDragging}
         onClick={() => handleChangeMonth(1)}>
           <FiChevronRight aria-hidden="true"/>
         </S.CalSideArrowButton>

@@ -1,5 +1,14 @@
 import styled from "styled-components";
+import type { CSSProperties } from "react";
 import * as C from "@/assets/css/common/Common.styles";
+
+interface CalendarWrapperProps {
+  $slot: number;
+  $moving: boolean;
+};
+
+type CalendarMotionStyle = CSSProperties &
+  Record<`--cal-${string}`, string | number>;
 
 // 캘린더
 export const CalTopMargin = styled.div`
@@ -50,9 +59,9 @@ export const CalSideArrowButton = styled.button<{$side: "prev" | "next"}>`
   transition: opacity 150ms ease, transform 150ms ease;
 
   svg {
-    width: 2rem;
-    height: 2rem;
-    stroke-width: 2.5;
+    width: 3rem;
+    height: 3rem;
+    stroke-width: 2;
   }
 
   &:hover:not(:disabled) {
@@ -76,8 +85,8 @@ export const CalSideArrowButton = styled.button<{$side: "prev" | "next"}>`
 
   @media (max-width: 768px) {
     svg {
-      width: 1.5rem;
-      height: 1.5rem;
+      width: 2rem;
+      height: 2rem;
     }
   }
 
@@ -85,7 +94,7 @@ export const CalSideArrowButton = styled.button<{$side: "prev" | "next"}>`
     transition: none;
   }
 `;
-export const CalViewport = styled.div<{$dragging: boolean}>`
+export const CalViewport = styled.div`
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -95,16 +104,38 @@ export const CalViewport = styled.div<{$dragging: boolean}>`
   isolation: isolate;
   user-select: none;
   -webkit-user-select: none;
-  cursor: ${({$dragging}) => ($dragging ? "grabbing" : "grab")};
-
-  button[data-calendar-day] {
-    cursor: inherit;
-  }
 `;
-export const CalendarWrapper = styled.section<{
-  $slot: number;
-  $moving: boolean;
-}>`
+export const CalendarWrapper = styled.section.attrs<CalendarWrapperProps>(
+  ({$slot, $moving}) => {
+    const distance = Math.abs($slot);
+
+    const style: CalendarMotionStyle = {
+      "--cal-x": `${-50 + $slot * 64}%`,
+      "--cal-mobile-x": `${-50 + $slot * 110}%`,
+
+      "--cal-scale":
+        1 - Math.min(distance, 1) * 0.16,
+
+      "--cal-opacity":
+        distance <= 1
+          ? 1 - distance * 0.72
+          : Math.max(0, 0.28 * (2 - distance)),
+
+      "--cal-mobile-opacity":
+        Math.max(0, 1 - distance),
+
+      "--cal-blur":
+        `${Math.min(distance, 1) * 1.5}px`,
+
+      zIndex:
+        10 - Math.min(Math.round(distance), 3),
+
+      pointerEvents:
+        $slot === 0 && !$moving ? "auto" : "none",
+    };
+
+    return { style };
+  })`
   position: relative;
   grid-area: 1 / 1;
   align-self: start;
@@ -117,37 +148,16 @@ export const CalendarWrapper = styled.section<{
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
   overflow: hidden;
-  transform: ${({$slot}) => (`
-    translateX(calc(-50% + ${$slot * 64}%))
-    scale(${$slot === 0 ? 1 : 0.84})
-  `)};
+  transform: translateX(var(--cal-x)) scale(var(--cal-scale));
   transform-origin: center center;
-  z-index: ${({$slot}) => (10 - Math.min(Math.abs($slot), 3))};
-  opacity: ${({$slot}) => (
-    $slot === 0 ? 1 : Math.abs($slot) === 1 ? 0.28 : 0
-  )};
-  filter: ${({$slot}) => ($slot === 0 ? "none" : "blur(1.5px)")};
-  pointer-events: ${({$slot, $moving}) => (
-    $slot === 0 && !$moving ? "auto" : "none"
-  )};
-  transition: ${({$moving}) => (
-    $moving
-      ? `
-        transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1),
-        opacity 320ms ease,
-        filter 320ms ease
-      `
-      : "none"
-  )};
+  opacity: var(--cal-opacity);
+  filter: blur(var(--cal-blur));
+  transition: none;
 
   @media (max-width: 768px) {
-    transform: ${({$slot}) => `translateX(calc(-50% + ${$slot * 110}%))`};
-    opacity: ${({$slot}) => ($slot === 0 ? 1 : 0)};
+    transform: translateX(var(--cal-mobile-x));
+    opacity: var(--cal-mobile-opacity);
     filter: none;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    transition-duration: 1ms;
   }
 `;
 export const CalHeader = styled.div<{
@@ -288,22 +298,6 @@ export const CalDayName = styled.div<{$weekday: number}>`
   font-weight: 600;
   text-align: center;
 `;
-// export const CalTooltip = styled.div`
-//   position: absolute;
-//   bottom: 10%;
-//   left: 50%;
-//   transform: translateX(-50%);
-//   background-color: rgba(0, 0, 0, 0.7);
-//   color: white;
-//   text-align: center;
-//   padding: 4px;
-//   border-radius: 4px;
-//   font-size: 0.75rem;
-//   white-space: nowrap;
-//   z-index: 10;
-//   opacity: 0;
-//   transition: opacity 0.2s ease-in-out;
-// `;
 export const CalGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
