@@ -9,59 +9,86 @@ export const CalTopMargin = styled.div`
 `;
 export const CalViewport = styled.div`
   position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   width: 100%;
-  height: 43.75rem;
+  padding-block: 0.75rem;
   overflow: hidden;
   isolation: isolate;
-
-  @media (max-width: 600px) {
-    height: 39.25rem;
-  }
 `;
 export const CalendarWrapper = styled.section<{
   $slot: number;
   $moving: boolean;
 }>`
-  position: absolute;
-  top: 0.75rem;
+  position: relative;
+  grid-area: 1 / 1;
+  align-self: start;
   left: 50%;
   width: min(42rem, calc(100% - 3rem));
+  min-width: 0;
+  box-sizing: border-box;
   background-color: #FFF;
   border: 1px solid #E2E8F0;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
   overflow: hidden;
+
   transform: ${({$slot}) => (`
-    translateX(calc(-50% + ${$slot * 64}%)) scale(${Math.abs($slot) === 0 ? 1 : 0.84})
+    translateX(calc(-50% + ${$slot * 64}%))
+    scale(${$slot === 0 ? 1 : 0.84})
   `)};
+
   transform-origin: center center;
+
   z-index: ${({$slot}) => (10 - Math.min(Math.abs($slot), 3))};
+
   opacity: ${({$slot}) => (
-    Math.abs($slot) === 0 ? 1 : Math.abs($slot) === 1 ? 0.28 : 0
+    $slot === 0 ? 1 : Math.abs($slot) === 1 ? 0.28 : 0
   )};
-  filter: ${({$slot}) => (
-    Math.abs($slot) === 0 ? "none" : "blur(1.5px)"
-  )};
+
+  filter: ${({$slot}) => ($slot === 0 ? "none" : "blur(1.5px)")};
+
   pointer-events: ${({$slot, $moving}) => (
     $slot === 0 && !$moving ? "auto" : "none"
   )};
+
   transition: ${({$moving}) => (
     $moving
-    ? "transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1), opacity 320ms ease, filter 320ms ease"
-    : "none"
+      ? `
+        transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1),
+        opacity 320ms ease,
+        filter 320ms ease
+      `
+      : "none"
   )};
+
+  @media (max-width: 768px) {
+    width: min(42rem, calc(100% - 1.5rem));
+    transform: ${({$slot}) => `translateX(calc(-50% + ${$slot * 110}%))`};
+    opacity: ${({$slot}) => ($slot === 0 ? 1 : 0)};
+    filter: none;
+  }
 
   @media (prefers-reduced-motion: reduce) {
     transition-duration: 1ms;
   }
 `;
-export const CalHeader = styled.div<{$preview?: boolean}>`
-  visibility: ${({$preview}) => ($preview ? "hidden" : "visible")};
+export const CalHeader = styled.div<{
+  $active: boolean;
+  $moving: boolean;
+}>`
   ${C.FlexBetween}
   gap: 1rem;
   padding: 1.25rem;
   border-bottom: 1px solid #E2E8F0;
   background-color: #F8FAFC;
+  opacity: ${({$active}) => ($active ? 1 : 0)};
+  transform: ${({$active}) => (
+    $active ? "translateY(0)" : "translateY(0.375rem)"
+  )};
+  transition: ${({$moving}) => (
+    $moving ? "opacity 320ms ease, transform 320ms ease" : "none"
+  )};
 
   @media (max-width: 600px) {
     padding: 1rem 0.75rem;
@@ -69,22 +96,40 @@ export const CalHeader = styled.div<{$preview?: boolean}>`
     flex-direction: column;
     text-align: center;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-duration: 1ms;
+  }
 `;
-export const CalPreviewTitle = styled.p`
+export const CalPreviewTitle = styled.p<{
+  $active: boolean;
+  $moving: boolean;
+}>`
   position: absolute;
   top: 1.5rem;
   left: 50%;
-  transform: translateX(-50%);
   margin: 0;
   color: #334155;
   font-size: 1.25rem;
   font-weight: 700;
   white-space: nowrap;
+  pointer-events: none;
+  opacity: ${({$active}) => ($active ? 0 : 1)};
+  transform: ${({$active}) => (
+    $active ? "translate(-50%, -0.375rem)" : "translate(-50%, 0)"
+  )};
+  transition: ${({$moving}) => (
+    $moving ? "opacity 320ms ease, transform 320ms ease" : "none"
+  )};
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-duration: 1ms;
+  }
 `;
 export const CalEyebrow = styled.p`
   margin: 0 0 0.25rem;
   color: #64748B;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   line-height: 1.5;
   font-weight: 600;
 `;
@@ -97,7 +142,7 @@ export const CalMonthTitle = styled.h2`
   white-space: nowrap;
 
   @media (max-width: 600px) {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
   }
 `;
 export const CalNavigation = styled.div`
@@ -121,12 +166,12 @@ export const CalEventArrowButton = styled.button`
   }
 
   &:hover:not(:disabled) {
-    background: #eef3ff;
-    border-color: #4e73df;
+    background: #EEF3FF;
+    border-color: #4E73DF;
   }
 
   &:focus-visible {
-    outline: 2px solid #4e73df;
+    outline: 2px solid #4E73DF;
     outline-offset: 2px;
   }
 
@@ -144,7 +189,7 @@ export const CalTodayButton = styled(CalEventArrowButton)`
   width: auto;
   padding-inline: 0.75rem;
   font: inherit;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 600;
   white-space: nowrap;
 
@@ -172,7 +217,7 @@ export const CalDayName = styled.div<{$weekday: number}>`
     ? "#EF5A67"
     : $weekday === 6 ? "#4E73DF" : "#64748B"
   )};
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 600;
   text-align: center;
 `;
@@ -206,10 +251,9 @@ export const CalGrid = styled.div`
 export const CalEmptyCell = styled.div`
   min-width: 0;
   border-radius: 0.5rem;
-  background: #FAFBFD;
+  background-color: #FAFBFD;
 `;
 export const CalDayCell = styled.button<{
-  $isToday: boolean;
   $selected: boolean;
   $isHoliday: boolean;
   $weekday: number;
@@ -221,12 +265,12 @@ export const CalDayCell = styled.button<{
   width: 100%;
   min-width: 0;
   padding: 0.25rem 0.375rem;
-  border: 1px solid ${({$isToday, $selected}) => (
-    $isToday || $selected ? "#4E73DF" : "#EEF2F7"
+  border: 1px solid ${({$selected}) => (
+    $selected ? "#4E73DF" : "#EEF2F7"
   )};
   border-radius: 0.5rem;
-  background: ${({$selected, $isToday}) => (
-    $selected ? "#EAF0FF" : $isToday ? "#F3F6FF" : "#FFF"
+  background-color: ${({$selected}) => (
+    $selected ? "#EAF0FF" : "#FFF"
   )};
   color: ${({$isHoliday, $weekday}) => (
     $isHoliday || $weekday === 0 
@@ -238,7 +282,7 @@ export const CalDayCell = styled.button<{
   transition: background-color 0.15s ease, border-color 0.15s ease;
 
   &:hover {
-    background: #F0F4FF;
+    background-color: #F0F4FF;
     border-color: #A9BCEF;
   }
 
@@ -252,7 +296,7 @@ export const CalDayCell = styled.button<{
   }
 `;
 export const CalDateNumber = styled.span`
-  font-size: 0.8125rem;
+  font-size: 0.95rem;
   font-weight: 600;
   line-height: 1.125rem;
 `;
@@ -270,7 +314,7 @@ export const CalHolidayIcon = styled.span`
   flex-shrink: 0;
   max-width: 2rem;
   overflow: hidden;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   line-height: 1rem;
 `;
 export const CalHolidayName = styled.span`
@@ -278,7 +322,7 @@ export const CalHolidayName = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.625rem;
+  font-size: 0.75rem;
 
   @media (max-width: 600px) {
     display: none;
@@ -299,11 +343,13 @@ export const CalScheduleBadge = styled.span`
   gap: 0.125rem;
   overflow: hidden;
   border-radius: 0.25rem;
-  background: #EDF2FF;
+  background-color: #EDF2FF;
   color: #4E73DF;
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
+  line-height: 1;
+
   svg {
     width: 0.625rem;
     height: 0.625rem;
@@ -316,7 +362,7 @@ export const CalScheduleBadge = styled.span`
   }
   @media (max-width: 600px) {
     padding-inline: 0.125rem;
-    font-size: 0.5625rem;
+
     svg {
       display: none;
     }
@@ -329,10 +375,11 @@ export const CalLegend = styled.div`
   padding: 0.75rem;
   border-top: 1px solid #EEF2F7;
   color: #64748B;
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
 
   > span {
-    ${C.InlineFlexCenter} gap: 0.375rem;
+    ${C.InlineFlexCenter}
+    gap: 0.375rem;
   }
 
   svg {
@@ -341,11 +388,12 @@ export const CalLegend = styled.div`
     color: #4E73DF;
   }
 `;
-export const CalTodayMark = styled.i`
+export const CalSelectedMark = styled.i`
   width: 0.75rem;
   height: 0.75rem;
   border: 1px solid #4E73DF;
   border-radius: 0.1875rem;
+  background-color: #EAF0FF;
 `;
 export const CalHolidayMark = styled.i`
   width: 0.5rem;

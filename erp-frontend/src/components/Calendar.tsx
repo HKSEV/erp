@@ -26,7 +26,9 @@ export default function Calendar({
   ));
   const [direction, setDirection] = useState<Direction>(0);
   const movingRef = useRef(false);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>(() => (
+    Temporal.Now.plainDateISO().toString()
+  ));
   // 모달과 관련된 추가
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [holidayMap, setHolidayMap] = useState<Record<string, Holiday[]>>({});
@@ -107,13 +109,16 @@ export default function Calendar({
               )
                 finishTransition();
             }}>
-              {!active && (
-                <S.CalPreviewTitle>
-                  {value.year}년 {value.month}월
-                </S.CalPreviewTitle>
-              )}
+              <S.CalPreviewTitle
+              $active={slot === 0}
+              $moving={direction !== 0}
+              aria-hidden="true">
+                {value.year}년 {value.month}월
+              </S.CalPreviewTitle>
 
-              <S.CalHeader $preview={!active}>
+              <S.CalHeader
+              $active={slot === 0}
+              $moving={direction !== 0}>
                 <div>
                   <S.CalEyebrow>업무 캘린더</S.CalEyebrow>
                   <S.CalMonthTitle>
@@ -132,11 +137,15 @@ export default function Calendar({
                   type="button"
                   disabled={direction !== 0}
                   onClick={() => {
-                    if (!movingRef.current)
-                      setViewMonth(Temporal.PlainYearMonth.from({
+                    if (movingRef.current)
+                      return;
+                    setViewMonth(
+                      Temporal.PlainYearMonth.from({
                         year: today.year,
                         month: today.month,
-                      }));
+                      })
+                    );
+                    setSelectedDate(today.toString());
                   }}>
                     오늘
                   </S.CalTodayButton>
@@ -177,7 +186,6 @@ export default function Calendar({
                         item.month === value.month &&
                         item.date === day,
                     ).length;
-                    const isToday = Temporal.PlainDate.compare(date, today) === 0;
                     const names = dayHolidays.map(
                       (holiday) => holiday.name
                     ).join(", ");
@@ -185,11 +193,11 @@ export default function Calendar({
                       <S.CalDayCell
                       key={day}
                       type="button"
-                      $isToday={isToday}
                       $selected={selectedDate === date.toString()}
                       $isHoliday={dayHolidays.length > 0}
                       $weekday={index % 7}
-                      aria-current={isToday ? "date" : undefined}
+                      aria-current={date.equals(today) ? "date" : undefined}
+                      aria-pressed={selectedDate === date.toString()}
                       aria-label={`${value.year}년 ${value.month}월 ${day}일${names ? `, ${names}` : ""}, 일정 ${count}건`}
                       onClick={() => {
                         if (!active || movingRef.current)
@@ -237,8 +245,8 @@ export default function Calendar({
 
               <S.CalLegend aria-hidden="true">
                 <span>
-                  <S.CalTodayMark/>
-                  오늘
+                  <S.CalSelectedMark/>
+                  선택 날짜
                 </span>
                 <span>
                   <S.CalHolidayMark/>
