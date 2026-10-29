@@ -42,9 +42,6 @@ export default function ScheduleModal({
   const [editingId, setEditingId] = useState<string | null>(null);
   const {openAlertModal} = useModal();
 
-  if (!isOpen || selectedDate === null)
-    return null;
-
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!isOpen || !dialog)
@@ -58,6 +55,9 @@ export default function ScheduleModal({
       document.body.style.overflow = previousOverflow;
     };
   }, [isOpen]);
+
+  if (!isOpen || selectedDate === null)
+    return null;
 
   const entries = schedules.filter((sch) => (
     sch.year === year && sch.month === month && sch.date === selectedDate
