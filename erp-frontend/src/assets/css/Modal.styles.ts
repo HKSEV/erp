@@ -176,6 +176,10 @@ export const ModalButton = styled.button<{$isCancel?: boolean}>`
       $isCancel ? "#E2E8F0" : "#1E40AF"
     )};
   }
+
+  &:disabled {
+    cursor: default;
+  }
 `;
 export const CloseButton = styled.button`
   ${C.FlexCenter}

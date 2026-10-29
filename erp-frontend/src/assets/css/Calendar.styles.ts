@@ -7,7 +7,85 @@ export const CalTopMargin = styled.div`
   min-width: 0;
   margin-top: 2rem;
 `;
-export const CalViewport = styled.div`
+export const CalCarousel = styled.div`
+  --cal-card-width: min(42rem, calc(100% - 3rem));
+  --cal-arrow-size: 2.5rem;
+
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+
+  @media (max-width: 768px) {
+    --cal-card-width: min(42rem, calc(100% - 1.5rem));
+    --cal-arrow-size: 1.75rem;
+  }
+`;
+export const CalSideArrowButton = styled.button<{$side: "prev" | "next"}>`
+  position: absolute;
+  top: 50%;
+  z-index: 30;
+  left: ${({$side}) => (
+    $side === "next"
+      ? "calc(50% + var(--cal-card-width) / 2 + 0.25rem)"
+      : "auto"
+  )};
+  right: ${({$side}) => (
+    $side === "prev"
+      ? "calc(50% + var(--cal-card-width) / 2 + 0.25rem)"
+      : "auto"
+  )};
+  display: grid;
+  place-items: center;
+  width: var(--cal-arrow-size);
+  height: 2.75rem;
+  padding: 0;
+  color: #000;
+  background: none;
+  border: 0;
+  border-radius: 0.25rem;
+  box-shadow: none;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition: opacity 150ms ease, transform 150ms ease;
+
+  svg {
+    width: 2rem;
+    height: 2rem;
+    stroke-width: 2.5;
+  }
+
+  &:hover:not(:disabled) {
+    background: none;
+    opacity: 0.65;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(-50%) scale(0.94);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #111;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.25;
+    cursor: default;
+  }
+
+  @media (max-width: 768px) {
+    svg {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
+export const CalViewport = styled.div<{$dragging: boolean}>`
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -15,6 +93,13 @@ export const CalViewport = styled.div`
   padding-block: 0.75rem;
   overflow: hidden;
   isolation: isolate;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: ${({$dragging}) => ($dragging ? "grabbing" : "grab")};
+
+  button[data-calendar-day] {
+    cursor: inherit;
+  }
 `;
 export const CalendarWrapper = styled.section<{
   $slot: number;
@@ -24,7 +109,7 @@ export const CalendarWrapper = styled.section<{
   grid-area: 1 / 1;
   align-self: start;
   left: 50%;
-  width: min(42rem, calc(100% - 3rem));
+  width: var(--cal-card-width);
   min-width: 0;
   box-sizing: border-box;
   background-color: #FFF;
@@ -32,26 +117,19 @@ export const CalendarWrapper = styled.section<{
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
   overflow: hidden;
-
   transform: ${({$slot}) => (`
     translateX(calc(-50% + ${$slot * 64}%))
     scale(${$slot === 0 ? 1 : 0.84})
   `)};
-
   transform-origin: center center;
-
   z-index: ${({$slot}) => (10 - Math.min(Math.abs($slot), 3))};
-
   opacity: ${({$slot}) => (
     $slot === 0 ? 1 : Math.abs($slot) === 1 ? 0.28 : 0
   )};
-
   filter: ${({$slot}) => ($slot === 0 ? "none" : "blur(1.5px)")};
-
   pointer-events: ${({$slot, $moving}) => (
     $slot === 0 && !$moving ? "auto" : "none"
   )};
-
   transition: ${({$moving}) => (
     $moving
       ? `
@@ -63,7 +141,6 @@ export const CalendarWrapper = styled.section<{
   )};
 
   @media (max-width: 768px) {
-    width: min(42rem, calc(100% - 1.5rem));
     transform: ${({$slot}) => `translateX(calc(-50% + ${$slot * 110}%))`};
     opacity: ${({$slot}) => ($slot === 0 ? 1 : 0)};
     filter: none;
@@ -149,15 +226,19 @@ export const CalNavigation = styled.div`
   ${C.FlexCenter}
   gap: 0.375rem;
 `;
-export const CalEventArrowButton = styled.button`
+export const CalTodayButton = styled.button`
   ${C.FlexCenter}
-  width: 2.25rem;
+  width: auto;
   height: 2.25rem;
-  padding: 0;
+  padding: 0 0.75rem;
   border: 1px solid #DBE3EF;
   border-radius: 0.5rem;
-  background: #FFF;
+  background-color: #FFF;
   color: #4E73DF;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
 
   svg {
@@ -181,20 +262,6 @@ export const CalEventArrowButton = styled.button`
   }
 
   @media (max-width: 600px) {
-    width: 1.875rem;
-    height: 1.875rem;
-  }
-`;
-export const CalTodayButton = styled(CalEventArrowButton)`
-  width: auto;
-  padding-inline: 0.75rem;
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 600;
-  white-space: nowrap;
-
-  @media (max-width: 600px) {
-    width: auto;
     padding-inline: 0.5rem;
   }
 `;
