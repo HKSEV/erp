@@ -1,4 +1,5 @@
 // 공통 UI 컴포넌트: import { PageHeader, StatCard } from "@/components/ui";
+export { default as PageContainer } from "./PageContainer";
 export { default as PageHeader } from "./PageHeader";
 export { default as Card } from "./Card";
 export { default as StatCard, StatGrid } from "./StatCard";
@@ -11,3 +12,4 @@ export { default as SearchBar } from "./SearchBar";
 export { default as DataTable } from "./DataTable";
 export type { Column } from "./DataTable";
 export { default as ProgressBar } from "./ProgressBar";
+export { default as TextField, FormStack } from "./TextField";
