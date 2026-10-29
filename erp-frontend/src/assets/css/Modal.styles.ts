@@ -1,4 +1,4 @@
-import styled, { css, keyframes } from "styled-components";
+import styled, { keyframes } from "styled-components";
 import * as C from "./common/Common.styles";
 
 const slideUp = keyframes`
@@ -35,11 +35,12 @@ interface ModalProps {
 };
 
 type Status = "대기" | "진행" | "완료";
-const colors = {
-  대기: { text: "#B7791F", background: "#FFF7E6", dot: "#F5AD24" },
-  진행: { text: "#2563EB", background: "#EFF6FF", dot: "#3B82F6" },
-  완료: { text: "#059669", background: "#ECFDF5", dot: "#10B981" },
-};
+// 일정 상태 → 공통 상태 색 (다른 화면의 StatusBadge와 같은 색)
+const STATUS_TONE = {
+  대기: "warning",
+  진행: "info",
+  완료: "success",
+} as const;
 
 // alert
 export const AlertBox = styled.dialog<ModalProps>`
@@ -49,14 +50,12 @@ export const AlertBox = styled.dialog<ModalProps>`
   min-width: 18.75rem;
   margin: auto;
   padding: 2rem 1.75rem 1.75rem;
-  color: #172033;
-  background-color: #FFF;
-  border: 1px solid #EEF2F7;
+  color: ${({theme}) => theme.colors.textStrong};
+  background-color: ${({theme}) => theme.colors.surface};
+  border: 1px solid ${({theme}) => theme.colors.border};
   border-radius: 1.25rem;
   outline: none;
-  box-shadow:
-    0 24px 64px rgba(15, 23, 42, 0.16),
-    0 8px 24px rgba(15, 23, 42, 0.06);
+  box-shadow: ${({theme}) => theme.shadow.modal};
   overflow-y: auto;
   overscroll-behavior: contain;
   font-family: inherit;
@@ -79,7 +78,7 @@ export const AlertBox = styled.dialog<ModalProps>`
   }
 
   &::backdrop {
-    background: rgba(15, 23, 42, 0.32);
+    background: ${({theme}) => theme.colors.backdrop};
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
   }
@@ -96,7 +95,7 @@ export const AlertBox = styled.dialog<ModalProps>`
 `;
 export const AlertText = styled.h2`
   margin: 0;
-  color: #172033;
+  color: ${({theme}) => theme.colors.textStrong};
   font-size: 1.25rem;
   font-weight: 700;
   line-height: 1.4;
@@ -112,12 +111,12 @@ export const AlertIcon = styled.div<{$variant: AlertModalVariant}>`
   width: 3.5rem;
   height: 3.5rem;
   margin: 0 auto 1.25rem;
-  color: ${({$variant}) => (
-    $variant === "error" ? "#DC2626" : "#2563EB"
+  color: ${({theme, $variant}) => (
+    $variant === "error" ? theme.colors.dangerHover : theme.colors.accent
   )};
 
-  background-color: ${({$variant}) => (
-    $variant === "error" ? "#FEF2F2" : "#EAF2FF"
+  background-color: ${({theme, $variant}) => (
+    $variant === "error" ? theme.status.danger.bg : theme.colors.accentSubtle
   )};
   border-radius: 1rem;
 
@@ -129,7 +128,7 @@ export const AlertIcon = styled.div<{$variant: AlertModalVariant}>`
 `;
 export const AlertDescription = styled.p`
   margin: 0.5rem 0 0;
-  color: #7B8498;
+  color: ${({theme}) => theme.colors.textMuted};
   font-size: 0.875rem;
   line-height: 1.6;
   letter-spacing: -0.3px;
@@ -148,32 +147,32 @@ export const AlertButtonWrapper = styled.div<{$double: boolean}>`
 // 공통
 export const ModalButton = styled.button<{$isCancel?: boolean}>`
   ${C.ButtonBase}
-  color: ${({$isCancel}) => ($isCancel ? "#536078" : "#FFF")};
-  background-color: ${({$isCancel}) => (
-    $isCancel ? "#F8FAFC" : "#2563EB"
+  color: ${({theme, $isCancel}) => ($isCancel ? theme.colors.textSecondary : theme.colors.onAccent)};
+  background-color: ${({theme, $isCancel}) => (
+    $isCancel ? theme.colors.bg : theme.colors.accent
   )};
-  border: 1px solid ${({$isCancel}) => (
-    $isCancel ? "#DCE1EB" : "#2563EB"
+  border: 1px solid ${({theme, $isCancel}) => (
+    $isCancel ? theme.colors.borderStrong : theme.colors.accent
   )};
   min-height: 2.75rem;
   padding: 0.625rem 1rem;
   gap: 0.5rem;
 
   &:not(:disabled):hover {
-    background-color: ${({$isCancel}) => (
-      $isCancel ? "#EEF2F7" : "#1D4ED8"
+    background-color: ${({theme, $isCancel}) => (
+      $isCancel ? theme.colors.surfaceSubtle : theme.colors.accentHover
     )};
-    border-color: ${({$isCancel}) => (
-      $isCancel ? "#CBD5E1" : "#1D4ED8"
+    border-color: ${({theme, $isCancel}) => (
+      $isCancel ? theme.colors.borderStrong : theme.colors.accentHover
     )};
-    box-shadow: ${({$isCancel}) => (
-      $isCancel ? "none" : "0 4px 12px rgba(37, 99, 235, 0.16)"
+    box-shadow: ${({theme, $isCancel}) => (
+      $isCancel ? "none" : theme.shadow.accent
     )};
   }
 
   &:not(:disabled):active {
-    background-color:  ${({$isCancel}) => (
-      $isCancel ? "#E2E8F0" : "#1E40AF"
+    background-color: ${({theme, $isCancel}) => (
+      $isCancel ? theme.colors.border : theme.colors.accentText
     )};
   }
 
@@ -187,7 +186,7 @@ export const CloseButton = styled.button`
   height: 2rem;
   padding: 0;
   flex-shrink: 0;
-  color: #8590A5;
+  color: ${({theme}) => theme.colors.textMuted};
   background: transparent;
   border: 0;
   border-radius: 0.5rem;
@@ -199,12 +198,12 @@ export const CloseButton = styled.button`
   }
 
   &:hover {
-    color: #3278F6;
-    background: #F1F6FF;
+    color: ${({theme}) => theme.colors.accent};
+    background: ${({theme}) => theme.colors.accentSubtle};
   }
 
   &:focus-visible {
-    outline: 2px solid #3278F6;
+    outline: 2px solid ${({theme}) => theme.colors.accent};
     outline-offset: 2px;
   }
 `;
@@ -225,7 +224,7 @@ export const ScheduleDialogHeader = styled.header`
   align-items: flex-start;
   gap: 0.75rem;
   padding: 1.5rem;
-  border-bottom: 1px solid #EEF2F7;
+  border-bottom: 1px solid ${({theme}) => theme.colors.border};
 
   @media (max-width: 480px) {
     padding: 1.25rem;
@@ -236,8 +235,8 @@ export const ScheduleDialogIcon = styled.div`
   width: 2.75rem;
   height: 2.75rem;
   flex-shrink: 0;
-  background: #EAF2FF;
-  color: #2563EB;
+  background: ${({theme}) => theme.colors.accentSubtle};
+  color: ${({theme}) => theme.colors.accent};
   border-radius: 0.75rem;
 
   svg {
@@ -251,7 +250,7 @@ export const ScheduleHeading = styled.div`
 `;
 export const ScheduleDialogTitle = styled.h2`
   margin: 0;
-  color: #172033;
+  color: ${({theme}) => theme.colors.textStrong};
   font-size: 1.125rem;
   font-weight: 700;
   line-height: 1.5;
@@ -259,7 +258,7 @@ export const ScheduleDialogTitle = styled.h2`
 `;
 export const ScheduleDialogSubtitle = styled.p`
   margin: 0.25rem 0 0;
-  color: #7B8498;
+  color: ${({theme}) => theme.colors.textMuted};
   font-size: 0.75rem;
   line-height: 1.6;
 `;
@@ -278,7 +277,7 @@ export const ScheduleField = styled.div`
   gap: 0.5rem;
 `;
 export const ScheduleLabel = styled.label`
-  color: #334155;
+  color: ${({theme}) => theme.colors.textBody};
   font-size: 0.875rem;
   font-weight: 600;
 `;
@@ -294,7 +293,7 @@ export const ScheduleSelectWrapper = styled.div<{$status: Status}>`
     width: 0.625rem;
     height: 0.625rem;
     border-radius: 50%;
-    background: ${({$status}) => colors[$status].dot};
+    background: ${({theme, $status}) => theme.status[STATUS_TONE[$status]].dot};
     pointer-events: none;
   }
 
@@ -303,18 +302,18 @@ export const ScheduleSelectWrapper = styled.div<{$status: Status}>`
     right: 0.875rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #94A3B8;
+    color: ${({theme}) => theme.colors.textDisabled};
     pointer-events: none;
   }
 `;
 export const ScheduleSelect = styled.select`
   width: 100%;
   padding: 0.625rem 2.25rem;
-  border: 1px solid #DCE1EB;
+  border: 1px solid ${({theme}) => theme.colors.borderStrong};
   border-radius: 0.625rem;
   outline: none;
-  background-color: #FFF;
-  color: #1E293B;
+  background-color: ${({theme}) => theme.colors.surface};
+  color: ${({theme}) => theme.colors.textStrong};
   font-family: inherit;
   font-size: 0.875rem;
   min-height: 2.75rem;
@@ -323,16 +322,16 @@ export const ScheduleSelect = styled.select`
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 
   &::placeholder {
-    color: #94A3B8;
+    color: ${({theme}) => theme.colors.textDisabled};
   }
 
   &:hover {
-    border-color: #94A3B8;
+    border-color: ${({theme}) => theme.colors.textDisabled};
   }
 
   &:focus {
-    border-color: #4E73DF;
-    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.15);
+    border-color: ${({theme}) => theme.colors.accent};
+    box-shadow: 0 0 0 3px ${({theme}) => theme.colors.accentSubtle};
   }
 `;
 export const ScheduleTextarea = styled.textarea`
@@ -340,26 +339,26 @@ export const ScheduleTextarea = styled.textarea`
   min-height: 7rem;
   padding: 0.75rem 0.875rem;
   resize: vertical;
-  background-color: #FFF;
-  border: 1px solid #DCE1EB;
+  background-color: ${({theme}) => theme.colors.surface};
+  border: 1px solid ${({theme}) => theme.colors.borderStrong};
   border-radius: 0.625rem;
-  color: #253047;
+  color: ${({theme}) => theme.colors.textStrong};
   font: inherit;
   font-size: 0.875rem;
   line-height: 1.6;
   outline: none;
 
   &::placeholder {
-    color: #9AA3B5;
+    color: ${({theme}) => theme.colors.textDisabled};
   }
 
   &:hover {
-    border-color: #B7C2D4;
+    border-color: ${({theme}) => theme.colors.textDisabled};
   }
 
   &:focus {
-    border-color: #3278F6;
-    box-shadow: 0 0 0 3px rgba(50, 120, 246, 0.1);
+    border-color: ${({theme}) => theme.colors.accent};
+    box-shadow: 0 0 0 3px ${({theme}) => theme.colors.accentSubtle};
   }
 `;
 export const ScheduleActions = styled.div`
@@ -371,9 +370,9 @@ export const ScheduleEditing = styled.div`
   ${C.FlexBetween}
   gap: 0.5rem;
   padding: 0.625rem 0.75rem;
-  background: #EFF6FF;
+  background: ${({theme}) => theme.colors.accentSubtle};
   border-radius: 0.5rem;
-  color: #2563EB;
+  color: ${({theme}) => theme.colors.accent};
   font-size: 0.75rem;
 
   > button {
@@ -388,7 +387,7 @@ export const ScheduleEditing = styled.div`
 export const ScheduleListSection = styled.section`
   margin-top: 1.5rem;
   padding-top: 1.25rem;
-  border-top: 1px solid #EEF2F7;
+  border-top: 1px solid ${({theme}) => theme.colors.border};
 `;
 export const ScheduleListHeading = styled.div`
   ${C.FlexBetween}
@@ -397,13 +396,13 @@ export const ScheduleListHeading = styled.div`
 
   > h3 {
     margin: 0;
-    color: #334155;
+    color: ${({theme}) => theme.colors.textBody};
     font-size: 0.875rem;
     font-weight: 650;
   }
 
   > span {
-    color: #94A3b8;
+    color: ${({theme}) => theme.colors.textDisabled};
     font-size: 0.75rem;
   }
 `;
@@ -418,17 +417,17 @@ export const ScheduleEmpty = styled.div`
     width: 2rem;
     height: 2rem;
     margin-bottom: 0.375rem;
-    color: #a5b2c9;
+    color: ${({theme}) => theme.colors.textDisabled};
   }
 
   > p {
     margin: 0;
-    color: #7B8498;
+    color: ${({theme}) => theme.colors.textMuted};
     font-size: 0.8125rem;
   }
 
   > span {
-    color: #94A3b8;
+    color: ${({theme}) => theme.colors.textDisabled};
     font-size: 0.75rem;
   }
 `;
@@ -443,9 +442,9 @@ export const ScheduleEntries = styled.ul`
 `;
 export const ScheduleEntry = styled.li`
   padding: 0.875rem;
-  border: 1px solid #E8EDF5;
+  border: 1px solid ${({theme}) => theme.colors.border};
   border-radius: 0.625rem;
-  background: #FBFCFE;
+  background: ${({theme}) => theme.colors.bg};
 `;
 export const ScheduleEntryHeader = styled.div`
   ${C.FlexBetween}
@@ -453,7 +452,7 @@ export const ScheduleEntryHeader = styled.div`
   margin-bottom: 0.625rem;
 
   > time {
-    color: #94A3B8;
+    color: ${({theme}) => theme.colors.textDisabled};
     font-size: 0.6875rem;
   }
 `;
@@ -462,12 +461,12 @@ export const ScheduleStatusBadge = styled.span<{$status: Status}>`
   border-radius: 0.375rem;
   font-size: 0.6875rem;
   font-weight: 600;
-  color: ${({$status}) => colors[$status].text};
-  background: ${({$status}) => colors[$status].background};
+  color: ${({theme, $status}) => theme.status[STATUS_TONE[$status]].fg};
+  background: ${({theme, $status}) => theme.status[STATUS_TONE[$status]].bg};
 `;
 export const ScheduleContent = styled.p`
   margin: 0;
-  color: #334155;
+  color: ${({theme}) => theme.colors.textBody};
   font-size: 0.875rem;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -481,11 +480,11 @@ export const ScheduleEntryActions = styled.div`
 export const ScheduleIconButton = styled(CloseButton)<{$danger?: boolean}>`
   width: 1.875rem;
   height: 1.875rem;
-  color: ${({$danger}) => ($danger ? "#D96B75" : "#7B8498")};
+  color: ${({theme, $danger}) => ($danger ? theme.colors.danger : theme.colors.textMuted)};
 
   &:hover {
-    color: ${({$danger}) => ($danger ? "#DC2626" : "#2563EB")};
-    background: ${({$danger}) => ($danger ? "#FEF2F2" : "#EFF6FF")};
+    color: ${({theme, $danger}) => ($danger ? theme.colors.dangerHover : theme.colors.accent)};
+    background: ${({theme, $danger}) => ($danger ? theme.status.danger.bg : theme.colors.accentSubtle)};
   }
 
   svg {

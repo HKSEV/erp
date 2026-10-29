@@ -1,8 +1,9 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import Link from "next/link";
 import * as C from "./common/Common.styles";
 
 // 로그인, 회원가입, 비밀번호 찾기 창
+// 배경·아이콘 그라데이션은 로그인 화면 전용 장식이라 토큰으로 빼지 않음
 export const MemberContainer = styled.div`
   ${C.FlexCenter}
   width: 100%;
@@ -20,7 +21,7 @@ export const MemberContainer = styled.div`
       #C4E1FB 50%,
       #A8CBEE 100%
     );
-  color: #172033;
+  color: ${({theme}) => theme.colors.textStrong};
 
   &,
   & * {
@@ -40,12 +41,10 @@ export const MemberCard = styled.section`
   width: 100%;
   max-width: 800px;
   padding: 2.25rem 2rem 1.75rem;
-  background-color: #FFF;
-  border: 1px solid #EEF2F7;
+  background-color: ${({theme}) => theme.colors.surface};
+  border: 1px solid ${({theme}) => theme.colors.border};
   border-radius: 1.5rem;
-  box-shadow:
-    0 24px 64px rgba(59, 130, 246, 0.09),
-    0 4px 16px rgba(15, 23, 42, 0.025);
+  box-shadow: ${({theme}) => theme.shadow.authCard};
   
   @media (max-width: 480px) {
     padding: 2rem 1.5rem 1.5rem;
@@ -61,10 +60,10 @@ export const MemberIcon = styled.div`
   width: 3.25rem;
   height: 3.25rem;
   margin: 0 auto 1.25rem;
-  color: #FFF;
+  color: ${({theme}) => theme.colors.onAccent};
   background: linear-gradient(135deg, #3498FF, #2463EB);
   border-radius: 0.9375rem;
-  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.16);
+  box-shadow: ${({theme}) => theme.shadow.accent};
 
   svg {
     width: 1.625rem;
@@ -84,7 +83,7 @@ export const MemberTitle = styled.h1`
 `;
 export const MemberDescription = styled.p`
   margin: 0.5rem 0 0;
-  color: #7B8498;
+  color: ${({theme}) => theme.colors.textMuted};
   font-size: 0.875rem;
   line-height: 1.6;
   letter-spacing: -0.3px;
@@ -110,7 +109,7 @@ export const MemberCol = styled.div`
   flex: 1;
 `;
 export const MemberInputLabel = styled.label`
-  color: #253047;
+  color: ${({theme}) => theme.colors.textBody};
   font-size: 0.875rem;
   font-weight: 650;
 `;
@@ -119,10 +118,10 @@ export const MemberInputWrapper = styled.div<{$disabled?: boolean}>`
   min-height: 3rem;
   padding: 0 0.875rem;
   gap: 0.75rem;
-  background-color: ${({$disabled}) => (
-    $disabled ? "#F0F3F9" : "#FFF"
+  background-color: ${({theme, $disabled}) => (
+    $disabled ? theme.colors.surfaceSubtle : theme.colors.surface
   )};
-  border: 0.0625rem solid #DCE1EB;
+  border: 0.0625rem solid ${({theme}) => theme.colors.borderStrong};
   border-radius: 0.625rem;
 
   transition:
@@ -133,26 +132,26 @@ export const MemberInputWrapper = styled.div<{$disabled?: boolean}>`
     width: 19px;
     height: 19px;
     flex-shrink: 0;
-    color: #8590A5;
+    color: ${({theme}) => theme.colors.textMuted};
   }
 
-  ${({$disabled}) => !$disabled && (`
+  ${({$disabled}) => !$disabled && css`
     &:hover {
-      border-color: #B7C2D4;
+      border-color: ${({theme}) => theme.colors.textDisabled};
     }
 
     &:focus-within {
-      border-color: #3278F6;
-      box-shadow: 0 0 0 3px rgba(50, 120, 246, 0.1);
+      border-color: ${({theme}) => theme.colors.accent};
+      box-shadow: 0 0 0 3px ${({theme}) => theme.colors.accentSubtle};
     }
-  `)}
+  `}
 `;
 export const MemberInput = styled.input`
   width: 100%;
   min-width: 0;
   min-height: 2.875rem;
   padding: 0.75rem 0;
-  color: #253047;
+  color: ${({theme}) => theme.colors.textStrong};
   background-color: transparent;
   border: 0;
   outline: none;
@@ -160,7 +159,7 @@ export const MemberInput = styled.input`
   line-height: 1.5;
 
   &::placeholder {
-    color: #9aa3b5;
+    color: ${({theme}) => theme.colors.textDisabled};
   }
 `;
 export const MemberPasswordToggle = styled.button`
@@ -169,7 +168,7 @@ export const MemberPasswordToggle = styled.button`
   height: 2rem;
   padding: 0;
   flex-shrink: 0;
-  color: #8590A5;
+  color: ${({theme}) => theme.colors.textMuted};
   background: transparent;
   border: 0;
   border-radius: 0.375rem;
@@ -181,12 +180,12 @@ export const MemberPasswordToggle = styled.button`
   }
 
   &:hover {
-    color: #3278F6;
-    background: #F1F6FF;
+    color: ${({theme}) => theme.colors.accent};
+    background: ${({theme}) => theme.colors.accentSubtle};
   }
 
   &:focus-visible {
-    outline: 2px solid #3278F6;
+    outline: 2px solid ${({theme}) => theme.colors.accent};
     outline-offset: 2px;
   }
 `;
@@ -199,7 +198,7 @@ export const MemberOptionWrapper = styled.div`
 export const MemberOptionLabel = styled.label`
   ${C.InlineFlexCenter}
   gap: 0.5rem;
-  color: #536078;
+  color: ${({theme}) => theme.colors.textSecondary};
   cursor: pointer;
   user-select: none;
 
@@ -208,7 +207,7 @@ export const MemberOptionLabel = styled.label`
     height: 1rem;
     margin: 0;
     flex-shrink: 0;
-    accent-color: #2563EB;
+    accent-color: ${({theme}) => theme.colors.accent};
     cursor: pointer;
   }
 `;
@@ -222,16 +221,16 @@ export const MemberGenderOption = styled(MemberOptionLabel)<{
 }>`
   min-height: 3rem;
   padding: 0.625rem 0.5rem;
-  color: ${({$selected}) => (
-    $selected ? "#2563EB" : "#7B8498"
+  color: ${({theme, $selected}) => (
+    $selected ? theme.colors.accent : theme.colors.textMuted
   )};
 
-  background-color: ${({$selected}) => (
-    $selected ? "#EFF6FF" : "#FFF"
+  background-color: ${({theme, $selected}) => (
+    $selected ? theme.colors.accentSubtle : theme.colors.surface
   )};
 
-  border: 1px solid ${({$selected}) => (
-    $selected ? "#3278F6" : "#DCE1EB"
+  border: 1px solid ${({theme, $selected}) => (
+    $selected ? theme.colors.accent : theme.colors.borderStrong
   )};
   border-radius: 0.625rem;
   font-size: 0.875rem;
@@ -241,28 +240,28 @@ export const MemberGenderOption = styled(MemberOptionLabel)<{
     border-color 0.15s ease;
 
   &:hover {
-    border-color: #3278f6;
+    border-color: ${({theme}) => theme.colors.accent};
   }
 
   &:focus-within {
-    outline: 2px solid #3278f6;
+    outline: 2px solid ${({theme}) => theme.colors.accent};
     outline-offset: 2px;
   }
 `;
 export const MemberTextLink = styled(Link)`
-  color: #3278F6;
+  color: ${({theme}) => theme.colors.accent};
   font-size: inherit;
   font-weight: 600;
   text-decoration: none;
 
   &:hover {
-    color: #1D4ED8;
+    color: ${({theme}) => theme.colors.accentHover};
     text-decoration: underline;
     text-underline-offset: 3px;
   }
 
   &:focus-visible {
-    outline: 2px solid #3278F6;
+    outline: 2px solid ${({theme}) => theme.colors.accent};
     outline-offset: 4px;
     border-radius: 2px;
   }
@@ -285,38 +284,38 @@ export const MemberAddressRow = styled.div`
 `;
 export const MemberButton = styled.button`
   ${C.ButtonBase}
-  color: #FFF;
-  background-color: #2563EB;
-  border: 1px solid #2563EB;
+  color: ${({theme}) => theme.colors.onAccent};
+  background-color: ${({theme}) => theme.colors.accent};
+  border: 1px solid ${({theme}) => theme.colors.accent};
 
   &:not(:disabled):hover {
-    background-color: #1D4ED8;
-    border-color: #1D4ED8;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.16);
+    background-color: ${({theme}) => theme.colors.accentHover};
+    border-color: ${({theme}) => theme.colors.accentHover};
+    box-shadow: ${({theme}) => theme.shadow.accent};
   }
 
   &:not(:disabled):active {
-    background-color: #1E40AF;
+    background-color: ${({theme}) => theme.colors.accentText};
   }
 `;
 export const MemberSearchButton = styled.button`
   ${C.ButtonBase}
   width: auto;
   padding-inline: 1rem;
-  color: #2563EB;
-  border: 1px solid #3278F6;
+  color: ${({theme}) => theme.colors.accent};
+  border: 1px solid ${({theme}) => theme.colors.accent};
   white-space: nowrap;
 
   &:not(:disabled):hover {
-    background-color: #EFF6FF;
-    border-color: #2563EB;
+    background-color: ${({theme}) => theme.colors.accentSubtle};
+    border-color: ${({theme}) => theme.colors.accentHover};
   }
 `;
 export const MemberDivider = styled.hr`
   ${C.FlexCenter}
   margin: 1.375rem 0;
   gap: 0.875rem;
-  color: #939CAD;
+  color: ${({theme}) => theme.colors.textMuted};
   font-size: 0.75rem;
 
   &::before,
@@ -324,7 +323,7 @@ export const MemberDivider = styled.hr`
     content: "";
     height: 1px;
     flex: 1;
-    background-color: #E5E9F1;
+    background-color: ${({theme}) => theme.colors.border};
   }
 `;
 export const MemberSocialWrapper = styled.div`
@@ -333,9 +332,9 @@ export const MemberSocialWrapper = styled.div`
 `;
 export const MemberSocialButton = styled.button`
   ${C.ButtonBase}
-  color: #253047;
-  background-color: #FFF;
-  border: 1px solid #DCE1EB;
+  color: ${({theme}) => theme.colors.textStrong};
+  background-color: ${({theme}) => theme.colors.surface};
+  border: 1px solid ${({theme}) => theme.colors.borderStrong};
 
   svg {
     width: 1.3125rem;
@@ -344,13 +343,13 @@ export const MemberSocialButton = styled.button`
   }
 
   &:not(:disabled):hover {
-    background-color: #F8FAFC;
-    border-color: #BCC7D8;
+    background-color: ${({theme}) => theme.colors.bg};
+    border-color: ${({theme}) => theme.colors.textDisabled};
   }
 `;
 export const InstagramIcon = styled.span`
   ${C.InlineFlexCenter}
-  color: #DF287B;
+  color: #DF287B; // 인스타그램 브랜드 색
 `;
 export const MemberFooter = styled.footer`
   ${C.FlexCenter}
@@ -358,8 +357,8 @@ export const MemberFooter = styled.footer`
   padding-top: 1.25rem;
   flex-wrap: wrap;
   gap: 0.5rem;
-  border-top: 1px solid #F0F2F6;
-  color: #8590A5;
+  border-top: 1px solid ${({theme}) => theme.colors.border};
+  color: ${({theme}) => theme.colors.textMuted};
   font-size: 0.75rem;
   line-height: 1.6;
 `;

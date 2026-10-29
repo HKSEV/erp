@@ -49,7 +49,7 @@ export const CalSideArrowButton = styled.button<{$side: "prev" | "next"}>`
   width: var(--cal-arrow-size);
   height: 2.75rem;
   padding: 0;
-  color: #000;
+  color: ${({theme}) => theme.colors.textStrong};
   background: none;
   border: 0;
   border-radius: 0.25rem;
@@ -74,7 +74,7 @@ export const CalSideArrowButton = styled.button<{$side: "prev" | "next"}>`
   }
 
   &:focus-visible {
-    outline: 2px solid #111;
+    outline: 2px solid ${({theme}) => theme.colors.textStrong};
     outline-offset: 2px;
   }
 
@@ -146,10 +146,10 @@ export const CalendarWrapper = styled.section.attrs<CalendarWrapperProps>(
   width: var(--cal-card-width);
   min-width: 0;
   box-sizing: border-box;
-  background-color: #FFF;
-  border: 1px solid #E2E8F0;
+  background-color: ${({theme}) => theme.colors.surface};
+  border: 1px solid ${({theme}) => theme.colors.border};
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  box-shadow: ${({theme}) => theme.shadow.card};
   overflow: hidden;
   transform: translateX(var(--cal-x)) scale(var(--cal-scale));
   transform-origin: center center;
@@ -174,8 +174,8 @@ export const CalHeader = styled.div<{
   ${C.FlexBetween}
   gap: 1rem;
   padding: 1.25rem;
-  border-bottom: 1px solid #E2E8F0;
-  background-color: #F8FAFC;
+  border-bottom: 1px solid ${({theme}) => theme.colors.border};
+  background-color: ${({theme}) => theme.colors.bg};
   opacity: ${({$active}) => ($active ? 1 : 0)};
   transform: ${({$active}) => (
     $active ? "translateY(0)" : "translateY(0.375rem)"
@@ -203,7 +203,7 @@ export const CalPreviewTitle = styled.p<{
   top: 1.5rem;
   left: 50%;
   margin: 0;
-  color: #334155;
+  color: ${({theme}) => theme.colors.textBody};
   font-size: 1.25rem;
   font-weight: 700;
   white-space: nowrap;
@@ -222,13 +222,13 @@ export const CalPreviewTitle = styled.p<{
 `;
 export const CalEyebrow = styled.p`
   margin: 0 0 0.25rem;
-  color: #64748B;
+  color: ${({theme}) => theme.colors.textMuted};
   font-size: 0.875rem;
   line-height: 1.5;
   font-weight: 600;
 `;
 export const CalMonthTitle = styled.h2`
-  color: #0F172A;
+  color: ${({theme}) => theme.colors.textStrong};
   font-weight: 700;
   line-height: 1.3;
   margin: 0;
@@ -248,10 +248,10 @@ export const CalTodayButton = styled.button`
   width: auto;
   height: 2.25rem;
   padding: 0 0.75rem;
-  border: 1px solid #DBE3EF;
+  border: 1px solid ${({theme}) => theme.colors.borderStrong};
   border-radius: 0.5rem;
-  background-color: #FFF;
-  color: #4E73DF;
+  background-color: ${({theme}) => theme.colors.surface};
+  color: ${({theme}) => theme.colors.accent};
   font: inherit;
   font-size: 0.875rem;
   font-weight: 600;
@@ -264,12 +264,12 @@ export const CalTodayButton = styled.button`
   }
 
   &:hover:not(:disabled) {
-    background: #EEF3FF;
-    border-color: #4E73DF;
+    background: ${({theme}) => theme.colors.accentSubtle};
+    border-color: ${({theme}) => theme.colors.accent};
   }
 
   &:focus-visible {
-    outline: 2px solid #4E73DF;
+    outline: 2px solid ${({theme}) => theme.colors.accent};
     outline-offset: 2px;
   }
 
@@ -296,10 +296,11 @@ export const CalWeekdays = styled.div`
 `;
 export const CalDayName = styled.div<{$weekday: number}>`
   padding: 0.375rem 0;
-  color: ${({$weekday}) => (
+  // 일요일 빨강, 토요일 강조색
+  color: ${({theme, $weekday}) => (
     $weekday === 0
-    ? "#EF5A67"
-    : $weekday === 6 ? "#4E73DF" : "#64748B"
+    ? theme.colors.danger
+    : $weekday === 6 ? theme.colors.accent : theme.colors.textMuted
   )};
   font-size: 0.875rem;
   font-weight: 600;
@@ -319,7 +320,7 @@ export const CalGrid = styled.div`
 export const CalEmptyCell = styled.div`
   min-width: 0;
   border-radius: 0.5rem;
-  background-color: #FAFBFD;
+  background-color: ${({theme}) => theme.colors.bg};
 `;
 export const CalDayCell = styled.button<{
   $selected: boolean;
@@ -333,16 +334,16 @@ export const CalDayCell = styled.button<{
   width: 100%;
   min-width: 0;
   padding: 0.25rem 0.375rem;
-  border: 1px solid ${({$selected}) => (
-    $selected ? "#4E73DF" : "#EEF2F7"
+  border: 1px solid ${({theme, $selected}) => (
+    $selected ? theme.colors.accent : theme.colors.border
   )};
   border-radius: 0.5rem;
-  background-color: ${({$selected}) => (
-    $selected ? "#EAF0FF" : "#FFF"
+  background-color: ${({theme, $selected}) => (
+    $selected ? theme.colors.accentSubtle : theme.colors.surface
   )};
-  color: ${({$isHoliday, $weekday}) => (
-    $isHoliday || $weekday === 0 
-    ? "#EF5A67" : $weekday === 6 ? "#4E73DF" : "#334155"
+  color: ${({theme, $isHoliday, $weekday}) => (
+    $isHoliday || $weekday === 0
+    ? theme.colors.danger : $weekday === 6 ? theme.colors.accent : theme.colors.textBody
   )};
   font-family: inherit;
   text-align: left;
@@ -350,12 +351,12 @@ export const CalDayCell = styled.button<{
   transition: background-color 0.15s ease, border-color 0.15s ease;
 
   &:hover {
-    background-color: #F0F4FF;
-    border-color: #A9BCEF;
+    background-color: ${({theme}) => theme.colors.accentSubtle};
+    border-color: ${({theme}) => theme.colors.accentBorder};
   }
 
   &:focus-visible {
-    outline: 2px solid #4E73DF;
+    outline: 2px solid ${({theme}) => theme.colors.accent};
     outline-offset: 1px;
   }
 
@@ -376,7 +377,7 @@ export const CalHolidayRow = styled.span`
   height: 1rem;
   gap: 0.1875rem;
   overflow: hidden;
-  color: #DF5566;
+  color: ${({theme}) => theme.colors.danger};
 `;
 export const CalHolidayIcon = styled.span`
   flex-shrink: 0;
@@ -411,8 +412,8 @@ export const CalScheduleBadge = styled.span`
   gap: 0.125rem;
   overflow: hidden;
   border-radius: 0.25rem;
-  background-color: #EDF2FF;
-  color: #4E73DF;
+  background-color: ${({theme}) => theme.colors.accentSubtle};
+  color: ${({theme}) => theme.colors.accent};
   font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
@@ -441,8 +442,8 @@ export const CalLegend = styled.div`
   gap: 1.25rem;
   margin-top: 1rem;
   padding: 0.75rem;
-  border-top: 1px solid #EEF2F7;
-  color: #64748B;
+  border-top: 1px solid ${({theme}) => theme.colors.border};
+  color: ${({theme}) => theme.colors.textMuted};
   font-size: 0.8125rem;
 
   > span {
@@ -453,21 +454,21 @@ export const CalLegend = styled.div`
   svg {
     width: 0.875rem;
     height: 0.875rem;
-    color: #4E73DF;
+    color: ${({theme}) => theme.colors.accent};
   }
 `;
 export const CalSelectedMark = styled.i`
   width: 0.75rem;
   height: 0.75rem;
-  border: 1px solid #4E73DF;
+  border: 1px solid ${({theme}) => theme.colors.accent};
   border-radius: 0.1875rem;
-  background-color: #EAF0FF;
+  background-color: ${({theme}) => theme.colors.accentSubtle};
 `;
 export const CalHolidayMark = styled.i`
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  background: #EF5A67;
+  background: ${({theme}) => theme.colors.danger};
 `;
 export const CalLiveMonth = styled.p`
   position: absolute;
