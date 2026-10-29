@@ -76,7 +76,7 @@ const Table = styled.table`
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
-  font-size: ${({theme}) => theme.font.size.sm};
+  font-size: ${({theme}) => theme.font.size.md};
 
   tbody tr { transition: background-color 0.15s ease; }
   tbody tr:hover { background-color: ${({theme}) => theme.colors.surfaceSubtle}; }
@@ -84,6 +84,7 @@ const Table = styled.table`
 const Th = styled.th<{$align: Align}>`
   padding: ${({theme}) => theme.space.md} ${({theme}) => theme.space.lg};
   text-align: ${({$align}) => $align};
+  font-size: ${({theme}) => theme.font.size.sm};
   font-weight: ${({theme}) => theme.font.weight.medium};
   color: ${({theme}) => theme.colors.textMuted};
   background-color: ${({theme}) => theme.colors.surfaceSubtle};

@@ -21,7 +21,7 @@ const Badge = styled.span<{$tone: StatusTone}>`
   gap: 6px;
   padding: 2px 10px;
   border-radius: ${({theme}) => theme.radius.pill};
-  font-size: ${({theme}) => theme.font.size.xs};
+  font-size: ${({theme}) => theme.font.size.sm};
   font-weight: ${({theme}) => theme.font.weight.medium};
   white-space: nowrap;
   color: ${({theme, $tone}) => theme.status[$tone].fg};

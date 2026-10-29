@@ -68,7 +68,7 @@ export const theme = {
   space:  { xs: "4px", sm: "8px", md: "12px", lg: "16px", xl: "24px", xxl: "32px" },
   radius: { sm: "4px", md: "6px", lg: "8px", xl: "12px", pill: "999px" },
   font: {
-    size: { xs: "12px", sm: "13px", md: "14px", lg: "16px", xl: "20px", xxl: "24px" },
+    size: { xs: "12px", sm: "13px", md: "14px", lg: "16px", xl: "20px", xxl: "24px", xxxl: "28px" },
     weight: { regular: 400, medium: 500, bold: 700 },
   },
   shadow: {

@@ -11,7 +11,7 @@ interface StatCardProps {
   tone?: StatTone;    // 숫자 색
 };
 
-// 요약 카드: 작은 라벨 + 큰 숫자
+// 요약 카드: 라벨 + 큰 숫자 (라벨·단위가 숫자에 묻히지 않도록 크기 차이를 줄임)
 export default function StatCard({label, value, unit, tone = "default"}: StatCardProps) {
   return (
     <Wrapper>
@@ -41,12 +41,12 @@ const Wrapper = styled.div`
 `;
 const Label = styled.p`
   margin: 0 0 ${({theme}) => theme.space.sm};
-  font-size: ${({theme}) => theme.font.size.sm};
-  color: ${({theme}) => theme.colors.textMuted};
+  font-size: ${({theme}) => theme.font.size.lg};
+  color: ${({theme}) => theme.colors.textSecondary};
 `;
 const Value = styled.p<{$tone: StatTone}>`
   margin: 0;
-  font-size: ${({theme}) => theme.font.size.xxl};
+  font-size: ${({theme}) => theme.font.size.xxxl};
   font-weight: ${({theme}) => theme.font.weight.bold};
   font-variant-numeric: tabular-nums;
   color: ${({theme, $tone}) => {
@@ -60,8 +60,8 @@ const Value = styled.p<{$tone: StatTone}>`
   }};
 `;
 const Unit = styled.span`
-  margin-left: 2px;
-  font-size: ${({theme}) => theme.font.size.md};
+  margin-left: ${({theme}) => theme.space.xs};
+  font-size: ${({theme}) => theme.font.size.xl};
   font-weight: ${({theme}) => theme.font.weight.medium};
-  color: ${({theme}) => theme.colors.textMuted};
+  color: ${({theme}) => theme.colors.textSecondary};
 `;

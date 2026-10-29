@@ -31,7 +31,7 @@ const Wrapper = styled.div`
 `;
 const Title = styled.h1`
   margin: 0;
-  font-size: ${({theme}) => theme.font.size.xxl};
+  font-size: ${({theme}) => theme.font.size.xxxl};
   font-weight: ${({theme}) => theme.font.weight.bold};
   color: ${({theme}) => theme.colors.textStrong};
 `;

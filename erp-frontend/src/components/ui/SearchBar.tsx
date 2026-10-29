@@ -43,7 +43,7 @@ const Input = styled.input`
   flex: 1;
   min-width: 0;
   padding: 6px 10px;
-  font-size: ${({theme}) => theme.font.size.sm};
+  font-size: ${({theme}) => theme.font.size.md};
   color: ${({theme}) => theme.colors.textBody};
   background-color: ${({theme}) => theme.colors.surface};
   border: 1px solid ${({theme}) => theme.colors.borderStrong};
