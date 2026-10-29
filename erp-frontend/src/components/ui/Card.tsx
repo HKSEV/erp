@@ -36,6 +36,8 @@ const Header = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: ${({theme}) => theme.space.md};
+  // 검색창이 있든 없든 모든 카드 머리글 높이를 같게 맞춤 (검색창 포함 높이 66.5px 기준)
+  min-height: 68px;
   padding: ${({theme}) => theme.space.lg} ${({theme}) => theme.space.xl};
   border-bottom: 1px solid ${({theme}) => theme.colors.border};
   flex-wrap: wrap;

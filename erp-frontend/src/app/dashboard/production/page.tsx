@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import useModal from "@/components/contexts/ModalContext";
-import { PageContainer, PageHeader, StatGrid, StatCard, Card, DataTable, StatusBadge, Button, ProgressBar } from "@/components/ui";
+import { PageContainer, PageHeader, StatGrid, StatCard, Card, SearchBar, DataTable, StatusBadge, Button, ProgressBar } from "@/components/ui";
 import type { Column, StatusTone } from "@/components/ui";
 
 interface ProductionOrder {
@@ -117,6 +117,12 @@ export default function Production() {
     };
   };
 
+  // 검색어: 오더 번호 또는 제품명에 포함되면 표시
+  const [keyword, setKeyword] = useState("");
+  const filteredOrders = orders.filter((order) =>
+    order.id.toLowerCase().includes(keyword.toLowerCase()) || order.productName.includes(keyword)
+  );
+
   const columns: Column<ProductionOrder>[] = [
     {key: "id", header: "오더 번호", render: (order) => <strong>{order.id}</strong>},
     {key: "productName", header: "제품명"},
@@ -150,12 +156,19 @@ export default function Production() {
         <StatCard label="이번 달 완료" value={1} unit="건" tone="success"/>
       </StatGrid>
 
-      <Card title="생산 오더 목록" noPadding>
+      <Card
+      title="생산 오더 목록"
+      actions={<SearchBar label="생산 오더 검색" placeholder="오더 번호 또는 제품명 검색" onSearch={setKeyword}/>}
+      noPadding>
         <DataTable
         columns={columns}
-        rows={orders}
+        rows={filteredOrders}
         rowKey={(order) => order.id}
-        emptyText={isLoading ? "오더 목록을 불러오는 중입니다." : "등록된 생산 오더가 없습니다."}/>
+        emptyText={
+          isLoading ? "오더 목록을 불러오는 중입니다."
+          : keyword ? `"${keyword}"에 해당하는 오더가 없습니다.`
+          : "등록된 생산 오더가 없습니다."
+        }/>
       </Card>
     </PageContainer>
   );
