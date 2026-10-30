@@ -16,7 +16,7 @@ public record ScheduleResponseDto(
 ) {
 
   private static final DateTimeFormatter TIME_FORMAT =
-    DateTimeFormatter.ofPattern("HH:mm:ss");
+    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
   public static ScheduleResponseDto from(Schedule schedule) {
     LocalDate scheduleDate = schedule.getScheduleDate();

@@ -62,6 +62,8 @@ export default function Calendar({
   const frameRef = useRef<number | null>(null);
   const viewMonthRef = useRef(viewMonth);
   const calendarLoadRef = useRef<AbortController | null>(null);
+  const loadedMonthsRef = useRef(new Set<string>());
+  const scheduleAlertRef = useRef(openAlertModal);
   
   const [selectedDate, setSelectedDate] = useState<string>(() => (
     Temporal.Now.plainDateISO().toString()
@@ -95,8 +97,8 @@ export default function Calendar({
   }, []);
 
   const currentMonthKey = viewMonth.toString();
-  const isCalendarReady =
-    calendarData.loadedKey === currentMonthKey;
+  // 최초 조회 이후에는 달이 바뀌어도 달력을 계속 표시합니다.
+  const isCalendarReady = calendarData.loadedKey !== null;
 
   const currentError =
     calendarData.error?.key === currentMonthKey
@@ -120,26 +122,33 @@ export default function Calendar({
   }, [viewMonth, renderCenter]);
 
   useEffect(() => {
-    const key = viewMonth.toString();
+    scheduleAlertRef.current = openAlertModal;
+  }, [openAlertModal]);
 
-    // 모달 편집 중이거나 이미 준비된 월이면 조회를 생략합니다.
-    if (isScheduleModalOpen || calendarData.loadedKey === key)
+  useEffect(() => {
+    if (isScheduleModalOpen)
       return;
 
+    // 이미 조회한 달은 재사용하고, 새로 필요한 달만 요청합니다.
+    const targets = OFFSETS
+      .map((offset) => viewMonth.add({months: offset}))
+      .filter((target) => (
+        !loadedMonthsRef.current.has(target.toString())
+      ));
+
+    if (targets.length === 0)
+      return;
+
+    const key = viewMonth.toString();
     const controller = new AbortController();
     calendarLoadRef.current = controller;
 
     const load = async () => {
       setCalendarData((prev) => (
-        prev.error === null ? prev : { ...prev, error: null }
+        prev.error === null ? prev : {...prev, error: null}
       ));
 
       try {
-        const targets = OFFSETS.map((offset) =>
-          viewMonth.add({ months: offset }),
-        );
-
-        // 표시 범위의 모든 월이 준비될 때까지 기다립니다.
         const responses = await Promise.all(
           targets.map((target) =>
             api.get<Schedule[]>("/api/schedules", {
@@ -156,35 +165,38 @@ export default function Calendar({
           return;
 
         const targetKeys = new Set(
-          targets.map((target) =>
-            target.year + "-" + target.month,
-          ),
+          targets.map((target) => target.year + "-" + target.month),
         );
 
         const incoming = responses.flatMap(
           (response) => response.data,
         );
 
-        // 데이터와 준비 상태를 한 번에 반영합니다.
+        // 일정이 없는 달도 조회 완료로 기록합니다.
+        for (const target of targets)
+          loadedMonthsRef.current.add(target.toString());
+
         setCalendarData((prev) => ({
           schedules: [
             ...prev.schedules.filter(
-              (item) =>
-                !targetKeys.has(item.year + "-" + item.month),
+              (item) => !targetKeys.has(item.year + "-" + item.month),
             ),
             ...incoming,
           ],
-          loadedKey: key,
+          // 최초 조회 완료 상태를 유지합니다.
+          loadedKey: prev.loadedKey ?? key,
           error: null,
         }));
       } catch (err: unknown) {
         if (controller.signal.aborted)
           return;
 
+        controller.abort();
+
         let message =
           "일정을 불러오지 못했습니다. 다시 시도해 주세요.";
 
-        if (isAxiosError<{message?: unknown}>(err)) {
+        if (isAxiosError<{ message?: unknown }>(err)) {
           if (err.response?.status === 401) {
             message =
               "로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.";
@@ -196,13 +208,24 @@ export default function Calendar({
           }
         }
 
-        setCalendarData((prev) => ({
-          ...prev,
-          error: { key, message },
-        }));
-
-        controller.abort();
-      };
+        if (calendarData.loadedKey === null) {
+          // 최초 조회 실패: 기존 오류 및 재시도 화면을 사용합니다.
+          setCalendarData((prev) => ({
+            ...prev,
+            error: { key, message },
+          }));
+        } else {
+          // 이후 조회 실패: 달력을 유지하고 오류만 알립니다.
+          scheduleAlertRef.current(
+            "일정 조회에 실패했습니다.",
+            undefined,
+            {
+              variant: "error",
+              description: message,
+            },
+          );
+        }
+      }
     };
 
     void load();
@@ -522,25 +545,31 @@ export default function Calendar({
       <S.CalTopMargin
       aria-label="업무 캘린더"
       aria-busy={!currentError}>
-        {currentError ? (
-          <div role="alert">
-            <p>{currentError}</p>
-            <S.CalTodayButton
-            type="button"
-            onClick={() => {
-              setCalendarData((prev) => ({
-                ...prev, error: null
-              }));
-              setRetryKey((prev) => prev + 1);
-            }}>
-              다시 시도
-            </S.CalTodayButton>
-          </div>
-        ) : (
-          <p role="status">
-            캘린더 일정을 불러오는 중입니다.
-          </p>
-        )}
+        <S.CalLoadingWrapper>
+          {currentError ? (
+            <>
+              <S.CalLoadingMessage role="alert">
+                {currentError}
+              </S.CalLoadingMessage>
+
+              <S.CalTodayButton
+              type="button"
+              onClick={() => {
+                setCalendarData((prev) => ({...prev, error: null}));
+                setRetryKey((prev) => prev + 1);
+              }}>
+                다시 시도
+              </S.CalTodayButton>
+            </>
+          ) : (
+            <>
+              <S.CalLoadingSpinner aria-hidden="true"/>
+              <S.CalLoadingMessage role="status">
+                캘린더 일정을 불러오는 중입니다.
+              </S.CalLoadingMessage>
+            </>
+          )}
+        </S.CalLoadingWrapper>
       </S.CalTopMargin>
     );
   };

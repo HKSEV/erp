@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import type { CSSProperties } from "react";
 import * as C from "@/assets/css/common/Common.styles";
 
@@ -9,6 +9,12 @@ interface CalendarWrapperProps {
 
 type CalendarMotionStyle = CSSProperties &
   Record<`--cal-${string}`, string | number>;
+
+const calendarLoadingSpin = keyframes`
+  to {
+    transform: rotate(360deg);
+  }
+`;
 
 // 캘린더
 export const CalTopMargin = styled.div`
@@ -479,4 +485,44 @@ export const CalLiveMonth = styled.p`
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+`;
+export const CalLoadingWrapper = styled.div`
+  ${C.FlexCenter}
+  flex-direction: column;
+  gap: 1rem;
+  width: min(42rem, calc(100% - 3rem));
+  min-height: 36rem;
+  margin: 0.75rem auto;
+  padding: 2rem 1rem;
+  box-sizing: border-box;
+  text-align: center;
+
+  @media (max-width: 768px) {
+    width: min(42rem, calc(100% - 1.5rem));
+    min-height: 32rem;
+  }
+`;
+export const CalLoadingSpinner = styled.span`
+  display: block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  box-sizing: border-box;
+  border: 3px solid ${({theme}) => theme.colors.accentSubtle};
+  border-top-color: ${({theme}) => theme.colors.accent};
+  border-radius: 50%;
+  animation: ${calendarLoadingSpin} 800ms linear infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`;
+export const CalLoadingMessage = styled.p`
+  margin: 0;
+  max-width: 100%;
+  color: ${({theme}) => theme.colors.textMuted};
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
 `;
