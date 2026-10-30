@@ -41,6 +41,8 @@ const Header = styled.div`
   padding: ${({theme}) => theme.space.lg} ${({theme}) => theme.space.xl};
   border-bottom: 1px solid ${({theme}) => theme.colors.border};
   flex-wrap: wrap;
+  // 머리글 너비를 기준으로 안쪽 요소(검색창 등)가 크기를 정하도록
+  container-type: inline-size;
 `;
 const Title = styled.h2`
   margin: 0;

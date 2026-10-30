@@ -104,7 +104,7 @@ export default function Inventory() {
 
       <Card
       title="현재고 현황"
-      actions={<SearchBar label="품목 검색" placeholder="품목명 또는 코드 검색" onSearch={setKeyword}/>}
+      actions={<SearchBar label="품목 검색" placeholder="품목명·코드 검색" onSearch={setKeyword}/>}
       noPadding>
         <DataTable
         columns={columns}

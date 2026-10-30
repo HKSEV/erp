@@ -90,7 +90,7 @@ export default function Hr() {
 
       <Card
       title="임직원 목록"
-      actions={<SearchBar label="임직원 검색" placeholder="사번, 이름 또는 부서 검색" onSearch={setKeyword}/>}
+      actions={<SearchBar label="임직원 검색" placeholder="사번·이름·부서 검색" onSearch={setKeyword}/>}
       noPadding>
         <DataTable
         columns={columns}
