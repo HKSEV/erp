@@ -1,7 +1,14 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import type { MouseEvent as ReactMouseEvent } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback
+} from "react";
+import { isAxiosError } from "axios";
+import api from "@/app/lib/api";
 import { Temporal } from "@js-temporal/polyfill";
 import { FiCalendar, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import CalendarMonthBody from "./CalendarMonthBody";
@@ -20,6 +27,12 @@ type CalendarDrag = {
   dragging: boolean;
 };
 
+type CalendarScheduleData = {
+  schedules: Schedule[];
+  loadedKey: string | null;
+  error: {key: string; message: string} | null;
+};
+
 export default function Calendar({
   year = Temporal.Now.plainDateISO().year,
   month = Temporal.Now.plainDateISO().month,
@@ -27,7 +40,12 @@ export default function Calendar({
   year?: number;
   month?: number;
 }) {
-  const {openScheduleModal, updateScheduleModal} = useModal();
+  const {
+    openScheduleModal,
+    updateScheduleModal,
+    openAlertModal,
+    scheduleModalConfig,
+  } = useModal();
 
   const [slide, setSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -43,12 +61,48 @@ export default function Calendar({
   const slideRef = useRef(0);
   const frameRef = useRef<number | null>(null);
   const viewMonthRef = useRef(viewMonth);
-
+  const calendarLoadRef = useRef<AbortController | null>(null);
+  
   const [selectedDate, setSelectedDate] = useState<string>(() => (
     Temporal.Now.plainDateISO().toString()
   ));
+
   // 모달과 관련된 추가
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const isScheduleModalOpen = scheduleModalConfig.isOpen;
+  const [calendarData, setCalendarData] =
+    useState<CalendarScheduleData>({
+      schedules: [],
+      loadedKey: null,
+      error: null,
+    });
+
+  const [retryKey, setRetryKey] = useState(0);
+  const schedules = calendarData.schedules;
+
+  // 기존 모달에서 사용하는 setSchedules 형식을 유지합니다.
+  const setSchedules = useCallback<React.Dispatch<
+    React.SetStateAction<Schedule[]>
+  >>((next) => {
+    setCalendarData((prev) => {
+      const updated = typeof next === "function"
+        ? next(prev.schedules)
+        : next;
+
+      return updated === prev.schedules
+        ? prev
+        : { ...prev, schedules: updated };
+    });
+  }, []);
+
+  const currentMonthKey = viewMonth.toString();
+  const isCalendarReady =
+    calendarData.loadedKey === currentMonthKey;
+
+  const currentError =
+    calendarData.error?.key === currentMonthKey
+      ? calendarData.error.message
+      : null;
+
   // 오늘 날짜 정보
   const today = Temporal.Now.plainDateISO();
   const renderCenter = Math.round(slide);
@@ -64,8 +118,107 @@ export default function Calendar({
       };
     });
   }, [viewMonth, renderCenter]);
-  
-  
+
+  useEffect(() => {
+    const key = viewMonth.toString();
+
+    // 모달 편집 중이거나 이미 준비된 월이면 조회를 생략합니다.
+    if (isScheduleModalOpen || calendarData.loadedKey === key)
+      return;
+
+    const controller = new AbortController();
+    calendarLoadRef.current = controller;
+
+    const load = async () => {
+      setCalendarData((prev) => (
+        prev.error === null ? prev : { ...prev, error: null }
+      ));
+
+      try {
+        const targets = OFFSETS.map((offset) =>
+          viewMonth.add({ months: offset }),
+        );
+
+        // 표시 범위의 모든 월이 준비될 때까지 기다립니다.
+        const responses = await Promise.all(
+          targets.map((target) =>
+            api.get<Schedule[]>("/api/schedules", {
+              params: {
+                year: target.year,
+                month: target.month,
+              },
+              signal: controller.signal,
+            }),
+          ),
+        );
+
+        if (controller.signal.aborted)
+          return;
+
+        const targetKeys = new Set(
+          targets.map((target) =>
+            target.year + "-" + target.month,
+          ),
+        );
+
+        const incoming = responses.flatMap(
+          (response) => response.data,
+        );
+
+        // 데이터와 준비 상태를 한 번에 반영합니다.
+        setCalendarData((prev) => ({
+          schedules: [
+            ...prev.schedules.filter(
+              (item) =>
+                !targetKeys.has(item.year + "-" + item.month),
+            ),
+            ...incoming,
+          ],
+          loadedKey: key,
+          error: null,
+        }));
+      } catch (err: unknown) {
+        if (controller.signal.aborted)
+          return;
+
+        let message =
+          "일정을 불러오지 못했습니다. 다시 시도해 주세요.";
+
+        if (isAxiosError<{message?: unknown}>(err)) {
+          if (err.response?.status === 401) {
+            message =
+              "로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.";
+          } else {
+            const detail = err.response?.data?.message;
+
+            if (typeof detail === "string" && detail.trim())
+              message = detail;
+          }
+        }
+
+        setCalendarData((prev) => ({
+          ...prev,
+          error: { key, message },
+        }));
+
+        controller.abort();
+      };
+    };
+
+    void load();
+
+    return () => {
+      controller.abort();
+
+      if (calendarLoadRef.current === controller)
+        calendarLoadRef.current = null;
+    };
+  }, [
+    viewMonth,
+    calendarData.loadedKey,
+    isScheduleModalOpen,
+    retryKey,
+  ]);
 
   useEffect(() => {
     updateScheduleModal(schedules);
@@ -194,6 +347,7 @@ export default function Calendar({
     if (current.year !== year || current.month !== month)
       return;
 
+    calendarLoadRef.current?.abort();
     setSelectedDate(
       Temporal.PlainDate.from({
         year,
@@ -211,7 +365,7 @@ export default function Calendar({
     );
   }, [openScheduleModal, schedules]);
 
-  const handleDragStart = (e: ReactMouseEvent<HTMLDivElement>) => {
+  const handleDragStart = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.button !== 0) 
       return;
 
@@ -238,7 +392,7 @@ export default function Calendar({
     };
   };
 
-  const handleCalendarClickCapture = (e: ReactMouseEvent<HTMLDivElement>) => {
+  const handleCalendarClickCapture = (e: React.MouseEvent<HTMLDivElement>) => {
     const shouldSuppress = suppressClickRef.current;
     suppressClickRef.current = false;
 
@@ -363,6 +517,35 @@ export default function Calendar({
     };
   }, [animateTo, commitMonth, updateSlide]);
 
+  if (!isCalendarReady) {
+    return (
+      <S.CalTopMargin
+      aria-label="업무 캘린더"
+      aria-busy={!currentError}>
+        {currentError ? (
+          <div role="alert">
+            <p>{currentError}</p>
+            <S.CalTodayButton
+            type="button"
+            onClick={() => {
+              setCalendarData((prev) => ({
+                ...prev, error: null
+              }));
+              setRetryKey((prev) => prev + 1);
+            }}>
+              다시 시도
+            </S.CalTodayButton>
+          </div>
+        ) : (
+          <p role="status">
+            캘린더 일정을 불러오는 중입니다.
+          </p>
+        )}
+      </S.CalTopMargin>
+    );
+  };
+
+  // 이 아래의 기존 달력 return JSX는 유지합니다.
   return (
     <S.CalTopMargin aria-label="업무 캘린더">
       <S.CalCarousel>

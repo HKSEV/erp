@@ -34,7 +34,7 @@ interface ScheduleModalProps {
 };
 
 function getApiError(error: unknown, fallback: string): string {
-  if (!isAxiosError<{ message?: unknown }>(error))
+  if (!isAxiosError<{message?: unknown}>(error))
     return fallback;
 
   if (error.response?.status === 401)
