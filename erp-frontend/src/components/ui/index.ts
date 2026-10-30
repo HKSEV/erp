@@ -1,7 +1,7 @@
 // 공통 UI 컴포넌트: import { PageHeader, StatCard } from "@/components/ui";
 export { default as PageContainer } from "./PageContainer";
 export { default as PageHeader } from "./PageHeader";
-export { default as Card } from "./Card";
+export { default as Card, CardStack } from "./Card";
 export { default as StatCard, StatGrid } from "./StatCard";
 export type { StatTone } from "./StatCard";
 export { default as StatusBadge } from "./StatusBadge";
@@ -12,6 +12,8 @@ export { default as SearchBar } from "./SearchBar";
 export { default as DataTable } from "./DataTable";
 export type { Column, CellVariant } from "./DataTable";
 export { default as ProgressBar } from "./ProgressBar";
-export { default as TextField, FormStack } from "./TextField";
+export { default as TextField, FormStack, FormActions, FieldWithButton } from "./TextField";
 export { default as Select } from "./Select";
 export type { SelectOption } from "./Select";
+export { default as DescriptionList } from "./DescriptionList";
+export type { DescriptionItem } from "./DescriptionList";

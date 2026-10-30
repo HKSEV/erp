@@ -24,6 +24,13 @@ export default function Card({title, actions, noPadding = false, children}: Card
   );
 };
 
+// 카드 여러 장을 세로로 쌓기 (폼 화면은 style={{maxWidth}}로 폭을 좁혀서 사용)
+export const CardStack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({theme}) => theme.space.xl};
+`;
+
 const Wrapper = styled.section`
   background-color: ${({theme}) => theme.colors.surface};
   border: 1px solid ${({theme}) => theme.colors.border};
