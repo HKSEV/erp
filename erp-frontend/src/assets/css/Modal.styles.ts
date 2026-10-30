@@ -208,6 +208,15 @@ export const ModalForm = styled.form`
   ${C.FlexColumn}
   gap: 1rem;
 `;
+export const ModalField = styled.div`
+  ${C.FlexColumn}
+  gap: 0.5rem;
+`;
+export const ModalLabel = styled.label`
+  color: ${({theme}) => theme.colors.textBody};
+  font-size: 0.875rem;
+  font-weight: 600;
+`;
 export const ModalButton = styled.button<{$isCancel?: boolean}>`
   ${C.ButtonBase}
   color: ${({theme, $isCancel}) => ($isCancel ? theme.colors.textSecondary : theme.colors.onAccent)};
@@ -299,15 +308,6 @@ export const ModalErrorMessage = styled.p`
 `;
 
 // schedule
-export const ScheduleField = styled.div`
-  ${C.FlexColumn}
-  gap: 0.5rem;
-`;
-export const ScheduleLabel = styled.label`
-  color: ${({theme}) => theme.colors.textBody};
-  font-size: 0.875rem;
-  font-weight: 600;
-`;
 export const ScheduleSelectWrapper = styled.div<{$status: Status}>`
   position: relative;
 

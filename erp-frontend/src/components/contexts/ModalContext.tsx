@@ -36,7 +36,10 @@ interface AlertModalConfig extends AlertModalOptions {
 // ProductionOrderModal 설정 타입
 interface ProductionOrderModalConfig {
   isOpen: boolean;
+  order?: ProductionOrder;
   onCreated?: (order: ProductionOrder) => void;
+  onUpdated?: (order: ProductionOrder) => void;
+  onDeleted?: (orderId: string) => void;
 };
 
 // Context 타입
@@ -61,7 +64,10 @@ interface ModalContextType {
   ) => void;
 
   openProductionOrderModal: (
-    onCreated?: (order: ProductionOrder) => void
+    order: ProductionOrder,
+    onCreated?: (order: ProductionOrder) => void,
+    onUpdated?: (order: ProductionOrder) => void,
+    onDeleted?: (orderId: string) => void
   ) => void;
 };
 
@@ -119,9 +125,18 @@ export function ModalProvider({children}: {children: ReactNode}) {
   }, []);
 
   const openProductionOrderModal = useCallback((
+    order: ProductionOrder,
     onCreated?: (order: ProductionOrder) => void,
+    onUpdated?: (order: ProductionOrder) => void,
+    onDeleted?: (orderId: string) => void,
   ) => {
-    setProductionOrderModalConfig({isOpen: true, onCreated});
+    setProductionOrderModalConfig({
+    isOpen: true,
+    order,
+    onCreated,
+    onUpdated,
+    onDeleted,
+  });
   }, []);
 
   return (
@@ -164,10 +179,14 @@ export function ModalProvider({children}: {children: ReactNode}) {
 
       {productionOrderModalConfig.isOpen && (
         <ProductionOrderModal
+        key={productionOrderModalConfig.order?.id ?? "create"}
+        order={productionOrderModalConfig.order}
         onClose={() => setProductionOrderModalConfig(
           (prev) => ({...prev, isOpen: false})
         )}
-        onCreated={productionOrderModalConfig.onCreated!}/>
+        onCreated={productionOrderModalConfig.onCreated}
+        onUpdated={productionOrderModalConfig.onUpdated}
+        onDeleted={productionOrderModalConfig.onDeleted}/>
       )}
     </ModalContext.Provider>
   );

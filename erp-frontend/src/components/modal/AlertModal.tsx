@@ -8,6 +8,7 @@ import {
   FiLogOut,
   FiX,
 } from "react-icons/fi";
+import { lockModalScroll } from "@/app/lib/modalScrollLock";
 import * as S from "@/assets/css/Style.styles";
 
 export interface AlertModalOptions {
@@ -58,8 +59,7 @@ export default function AlertModal(
     if (!dialog.open)
       dialog.showModal();
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlockScroll = lockModalScroll();
 
     const initialButton = isOn
       ? cancelRef.current
@@ -69,7 +69,7 @@ export default function AlertModal(
     return () => {
       if (dialog.open)
         dialog.close();
-      document.body.style.overflow = previousOverflow;
+      unlockScroll();
     };
   }, [isOpen, isOn, message]);
 

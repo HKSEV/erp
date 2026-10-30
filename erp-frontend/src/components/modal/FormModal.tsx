@@ -2,6 +2,7 @@
 
 import React, { useEffect, useId, useRef } from "react";
 import { FiEdit3, FiX } from "react-icons/fi";
+import { lockModalScroll } from "@/app/lib/modalScrollLock";
 import * as S from "@/assets/css/Style.styles";
 
 interface FormModalProps {
@@ -17,6 +18,7 @@ interface FormModalProps {
   cancelText?: string;
   onClose: () => void;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  noValidate?: boolean;
 }
 
 export default function FormModal({
@@ -32,6 +34,7 @@ export default function FormModal({
   cancelText = "취소",
   onClose,
   onSubmit,
+  noValidate = false,
 }: FormModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const id = useId();
@@ -42,18 +45,15 @@ export default function FormModal({
     if (!isOpen || !dialog)
       return;
 
-    const previousOverflow = document.body.style.overflow;
-
     if (!dialog.open)
       dialog.showModal();
 
-    document.body.style.overflow = "hidden";
+    const unlockScroll = lockModalScroll();
 
     return () => {
       if (dialog.open)
         dialog.close();
-
-      document.body.style.overflow = previousOverflow;
+      unlockScroll();
     };
   }, [isOpen]);
 
@@ -121,10 +121,10 @@ export default function FormModal({
 
       <S.ModalDialogBody>
         <S.ModalForm
+          noValidate={noValidate}
           aria-busy={isSubmitting}
           onSubmit={(e) => {
             e.preventDefault();
-
             if (!isSubmitting)
               onSubmit(e);
           }}

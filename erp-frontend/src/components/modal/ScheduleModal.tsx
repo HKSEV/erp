@@ -13,6 +13,7 @@ import {
 } from "react-icons/fi";
 import * as S from "@/assets/css/Style.styles";
 import useModal from "../contexts/ModalContext";
+import { lockModalScroll } from "@/app/lib/modalScrollLock";
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -73,17 +74,16 @@ export default function ScheduleModal({
     const dialog = dialogRef.current;
     if (!isOpen || selectedDate === null || !dialog)
       return;
-
-    const previousOverflow = document.body.style.overflow;
+    
     if (!dialog.open)
       dialog.showModal();
 
-    document.body.style.overflow = "hidden";
+    const unlockScroll = lockModalScroll();
 
     return () => {
       if (dialog.open)
         dialog.close();
-      document.body.style.overflow = previousOverflow;
+      unlockScroll();
     };
   }, [isOpen, selectedDate]);
 
@@ -374,8 +374,10 @@ export default function ScheduleModal({
               </button>
             </S.ScheduleEditing>
           )}
-          <S.ScheduleField>
-            <S.ScheduleLabel htmlFor={`${id}-status`}>진행 상태</S.ScheduleLabel>
+          <S.ModalField>
+            <S.ModalLabel htmlFor={`${id}-status`}>
+              진행 상태
+            </S.ModalLabel>
             <S.ScheduleSelectWrapper $status={formStatus}>
               <S.ScheduleSelect
               id={`${id}-status`}
@@ -390,9 +392,11 @@ export default function ScheduleModal({
               </S.ScheduleSelect>
               <FiChevronDown aria-hidden="true"/>
             </S.ScheduleSelectWrapper>
-          </S.ScheduleField>
-          <S.ScheduleField>
-            <S.ScheduleLabel htmlFor={`${id}-content`}>일정 내용</S.ScheduleLabel>
+          </S.ModalField>
+          <S.ModalField>
+            <S.ModalLabel htmlFor={`${id}-content`}>
+              일정 내용
+            </S.ModalLabel>
             <S.ScheduleTextarea
             id={`${id}-content`}
             rows={4}
@@ -402,7 +406,7 @@ export default function ScheduleModal({
             onChange={(e) => setFormContent(e.target.value)}
             placeholder="일정 내용을 입력해 주세요."
             required/>
-          </S.ScheduleField>
+          </S.ModalField>
           <S.ModalActions>
             <S.ModalButton
             type="button"

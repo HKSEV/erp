@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import api from "@/app/lib/api";
 import type { ProductionOrder } from "@/app/types/ProductionOrder";
 import useModal from "@/components/contexts/ModalContext";
@@ -11,6 +11,7 @@ export default function Production() {
   const {openProductionOrderModal} = useModal();
   const [orders, setOrders] = useState<ProductionOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const deletedOrderIdsRef = useRef(new Set<string>());
 
   // 화면이 처음 열릴 때 오더 목록 조회
   // 응답 전에 화면을 벗어나면(ignore) 상태를 바꾸지 않음
@@ -31,7 +32,10 @@ export default function Production() {
 
         return [
           ...prev,
-          ...data.filter((order) => !existingIds.has(order.id)),
+          ...data.filter((order) => (
+            !existingIds.has(order.id) &&
+            !deletedOrderIdsRef.current.has(order.id)
+          )),
         ];
       });
     }).catch((err: unknown) => {
@@ -57,13 +61,27 @@ export default function Production() {
     };
   };
 
-  const handleAddOrder = () => {
-    openProductionOrderModal((savedOrder) => {
-      setOrders((prev) => [
-        savedOrder,
-        ...prev.filter((order) => order.id !== savedOrder.id)
-      ]);
-    });
+  const handleOrder = (order?: ProductionOrder) => {
+    openProductionOrderModal(
+      order!,
+      (savedOrder) => {
+        setOrders((prev) => [
+          savedOrder,
+          ...prev.filter((order) => order.id !== savedOrder.id)
+        ]);
+      },
+      (savedOrder) => {
+        setOrders((prev) => prev.map((item) =>
+          item.id === savedOrder.id ? savedOrder : item,
+        ));
+      },
+      (orderId) => {
+        deletedOrderIdsRef.current.add(orderId);
+        setOrders((prev) =>
+          prev.filter((item) => item.id !== orderId),
+        );
+      },
+    );
   };
 
   // 검색어: 오더 번호 또는 제품명에 포함되면 표시
@@ -87,8 +105,13 @@ export default function Production() {
       label={`${order.id} 진행률`}/>
     )},
     {key: "dueDate", header: "납기일", align: "center", width: "120px"},
-    {key: "actions", header: "관리", align: "center", width: "110px", render: () => (
-      <Button variant="secondary" size="sm">상세보기</Button>
+    {key: "actions", header: "관리", align: "center", width: "110px", render: (order) => (
+      <Button
+      variant="secondary"
+      size="sm"
+      onClick={() => handleOrder(order)}>
+        상세보기
+      </Button>
     )},
   ];
 
@@ -97,7 +120,9 @@ export default function Production() {
       <PageHeader
       title="생산관리"
       description="생산 오더의 진행 상태와 납기를 관리합니다."
-      actions={<Button onClick={handleAddOrder}>+ 신규 오더 등록</Button>}/>
+      actions={
+      <Button onClick={() => handleOrder()}>+ 신규 오더 등록</Button>
+      }/>
 
       <StatGrid>
         <StatCard label="진행중인 오더" value={2} unit="건" tone="accent"/>
