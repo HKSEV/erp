@@ -1,85 +1,48 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "@/app/lib/api";
+import type { ProductionOrder } from "@/app/types/ProductionOrder";
 import useModal from "@/components/contexts/ModalContext";
 import { PageContainer, PageHeader, StatGrid, StatCard, Card, SearchBar, DataTable, StatusBadge, Button, ProgressBar } from "@/components/ui";
 import type { Column, StatusTone } from "@/components/ui";
 
-interface ProductionOrder {
-  id: string;
-  productName: string;
-  quantity: number;
-  status: "planning" | "progress" | "completed";
-  progress: number;
-  dueDate: string;
-};
-
 export default function Production() {
-  const {openAlertModal} = useModal();
-  const [orders, setOrders] = useState<ProductionOrder[]>([
-    // {
-    //   id: "PRD-2023-001",
-    //   productName: "알루미늄 프레임 A형",
-    //   quantity: 500,
-    //   status: "progress",
-    //   progress: 65,
-    //   dueDate: "2023-11-20"
-    // },
-    // {
-    //   id: "PRD-2023-002",
-    //   productName: "공업용 모터 250W",
-    //   quantity: 120,
-    //   status: "planning",
-    //   progress: 0,
-    //   dueDate: "2023-11-25"
-    // },
-    // {
-    //   id: "PRD-2023-003",
-    //   productName: "제어용 메인보드 v2",
-    //   quantity: 300,
-    //   status: "completed",
-    //   progress: 100,
-    //   dueDate: "2023-11-15"
-    // },
-    // {
-    //   id: "PRD-2023-004",
-    //   productName: "스틸 하우징 케이스",
-    //   quantity: 1000,
-    //   status: "progress",
-    //   progress: 30,
-    //   dueDate: "2023-12-01"
-    // },
-  ]);
+  const {openProductionOrderModal} = useModal();
+  const [orders, setOrders] = useState<ProductionOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  const fetchData = async () => {
-    try {
-      const response = await axios.get("/api/production/orders");
-      if (response.status === 200)
-        setOrders(response.data);
-    } catch (err) {
-      console.error("오더 목록을 불러오는 중 오류 발생: ", err);
-    } finally {
-      setIsLoading(false);
-    };
-  };
 
   // 화면이 처음 열릴 때 오더 목록 조회
   // 응답 전에 화면을 벗어나면(ignore) 상태를 바꾸지 않음
   useEffect(() => {
-    let ignore = false;
-    axios.get("/api/production/orders")
-      .then((response) => {
-        if (!ignore && response.status === 200)
-          setOrders(response.data);
-      })
-      .catch((err) => console.error("오더 목록을 불러오는 중 오류 발생: ", err))
-      .finally(() => {
-        if (!ignore)
-          setIsLoading(false);
+    const controller = new AbortController();
+
+    api.get<ProductionOrder[]>("/api/production/orders", {
+      signal: controller.signal
+    }).then(({data}) => {
+      if (controller.signal.aborted)
+        return;
+
+      // 최초 조회가 늦게 끝나도 방금 등록한 오더를 유지합니다.
+      setOrders((prev) => {
+        const existingIds = new Set(
+          prev.map((order) => order.id),
+        );
+
+        return [
+          ...prev,
+          ...data.filter((order) => !existingIds.has(order.id)),
+        ];
       });
-    return () => { ignore = true; };
+    }).catch((err: unknown) => {
+      if (!controller.signal.aborted)
+        console.error("오더 목록을 불러오는 중 오류 발생:", err);
+    }).finally(() => {
+      if (!controller.signal.aborted)
+        setIsLoading(false);
+    });
+
+    return () => controller.abort();
   }, []);
 
   const getStatusBadge = (status: ProductionOrder["status"]): {tone: StatusTone; text: string} => {
@@ -94,27 +57,13 @@ export default function Production() {
     };
   };
 
-  const handleAddOrder = async () => {
-    // 일단 테스트용 임시 데이터를 만듭니다 (나중에는 입력 폼 데이터로 교체)
-    const newOrderData = {
-      id: `PRD-2023-999`, // 테스트용 임시 ID
-      productName: "테스트 신규 모터",
-      quantity: 100,
-      status: "planning",
-      progress: 0,
-      dueDate: "2023-12-31"
-    };
-
-    try {
-      const response = await axios.post("/api/production/orders", newOrderData);
-      if (response.status === 200) {
-        openAlertModal("신규 오더가 성공적으로 DB에 저장되었습니다!");
-        fetchData();
-      };
-    } catch (err) {
-      console.error("등록 중 오류 발생: ", err);
-      openAlertModal("등록에 실패했습니다.");
-    };
+  const handleAddOrder = () => {
+    openProductionOrderModal((savedOrder) => {
+      setOrders((prev) => [
+        savedOrder,
+        ...prev.filter((order) => order.id !== savedOrder.id)
+      ]);
+    });
   };
 
   // 검색어: 오더 번호 또는 제품명에 포함되면 표시

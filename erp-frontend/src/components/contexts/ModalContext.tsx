@@ -7,10 +7,16 @@ import React, {
   useCallback,
   ReactNode
 } from "react";
-import ScheduleModal, { Schedule } from "../modal/ScheduleModal";
+
+import ScheduleModal from "../modal/ScheduleModal";
+import type { Schedule } from "@/app/types/Schedule";
+
 import AlertModal, { AlertModalOptions } from "../modal/AlertModal";
 
-// 1. ScheduleModal 설정 타입
+import ProductionOrderModal from "../modal/ProductionOrderModal";
+import type { ProductionOrder } from "@/app/types/ProductionOrder";
+
+// ScheduleModal 설정 타입
 interface ScheduleModalConfig {
   isOpen: boolean;
   year: number;
@@ -20,17 +26,25 @@ interface ScheduleModalConfig {
   setSchedules?: React.Dispatch<React.SetStateAction<Schedule[]>>;
 };
 
-// 2. AlertModal 설정 타입
+// AlertModal 설정 타입
 interface AlertModalConfig extends AlertModalOptions {
   isOpen: boolean;
   message: string;
   onConfirm?: () => void;
 };
 
-// 3. Context 타입
+// ProductionOrderModal 설정 타입
+interface ProductionOrderModalConfig {
+  isOpen: boolean;
+  onCreated?: (order: ProductionOrder) => void;
+};
+
+// Context 타입
 interface ModalContextType {
   scheduleModalConfig: ScheduleModalConfig;
   alertModalConfig: AlertModalConfig;
+  productionOrderModalConfig: ProductionOrderModalConfig;
+
   openScheduleModal: (
     year: number,
     month: number,
@@ -39,10 +53,15 @@ interface ModalContextType {
     setSchedules?: React.Dispatch<React.SetStateAction<Schedule[]>>
   ) => void;
   updateScheduleModal: (schedules: Schedule[]) => void;
+
   openAlertModal: (
     message: string,
     onConfirm?: () => void,
-    options?: AlertModalOptions,
+    options?: AlertModalOptions
+  ) => void;
+
+  openProductionOrderModal: (
+    onCreated?: (order: ProductionOrder) => void
   ) => void;
 };
 
@@ -65,9 +84,14 @@ export function ModalProvider({children}: {children: ReactNode}) {
     isOpen: false,
     message: "",
   });
+  // ProductionOrderModal 상태
+  const [productionOrderModalConfig, setProductionOrderModalConfig] =
+    useState<ProductionOrderModalConfig>({
+      isOpen: false,
+    });
 
   // ScheduleModal 열기 함수
-  const openScheduleModal = (
+  const openScheduleModal = useCallback((
     year: number,
     month: number,
     selectedDate: number | null,
@@ -77,7 +101,7 @@ export function ModalProvider({children}: {children: ReactNode}) {
     setScheduleModalConfig({
       isOpen: true, year, month, selectedDate, schedules, setSchedules
     });
-  };
+  }, []);
   // 갱신
   const updateScheduleModal = useCallback((schedules: Schedule[]) => {
     setScheduleModalConfig((prev) => (
@@ -86,22 +110,30 @@ export function ModalProvider({children}: {children: ReactNode}) {
   }, []);
 
   // AlertModal 열기 함수
-  const openAlertModal = (
+  const openAlertModal = useCallback((
     message: string,
     onConfirm?: () => void,
     options: AlertModalOptions = {},
   ) => {
     setAlertModalConfig({...options, isOpen: true, message, onConfirm});
-  };
+  }, []);
+
+  const openProductionOrderModal = useCallback((
+    onCreated?: (order: ProductionOrder) => void,
+  ) => {
+    setProductionOrderModalConfig({isOpen: true, onCreated});
+  }, []);
 
   return (
     <ModalContext.Provider
     value={{
       scheduleModalConfig,
       alertModalConfig,
+      productionOrderModalConfig,
       updateScheduleModal,
       openScheduleModal,
       openAlertModal,
+      openProductionOrderModal,
     }}>
       {children}
       {/* 커스텀 모달 렌더링 */}
@@ -116,6 +148,7 @@ export function ModalProvider({children}: {children: ReactNode}) {
       onClose={() => setScheduleModalConfig(
         (prev) => ({...prev, isOpen: false})
       )}/>
+
       <AlertModal
       isOpen={alertModalConfig.isOpen}
       isOn={alertModalConfig.variant === "confirm"}
@@ -128,6 +161,14 @@ export function ModalProvider({children}: {children: ReactNode}) {
         (prev) => ({...prev, isOpen: false})
       )}
       onConfirm={alertModalConfig.onConfirm}/>
+
+      {productionOrderModalConfig.isOpen && (
+        <ProductionOrderModal
+        onClose={() => setProductionOrderModalConfig(
+          (prev) => ({...prev, isOpen: false})
+        )}
+        onCreated={productionOrderModalConfig.onCreated!}/>
+      )}
     </ModalContext.Provider>
   );
 };

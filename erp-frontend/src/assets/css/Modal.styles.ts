@@ -145,6 +145,69 @@ export const AlertButtonWrapper = styled.div<{$double: boolean}>`
 `;
 
 // 공통
+export const ModalDialog = styled(AlertBox)`
+  max-width: 34rem;
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+
+  @media (max-width: 480px) {
+    padding: 0;
+  }
+`;
+export const ModalDialogHeader = styled.header`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid ${({theme}) => theme.colors.border};
+
+  @media (max-width: 480px) {
+    padding: 1.25rem;
+  }
+`;
+export const ModalDialogIcon = styled.div`
+  ${C.FlexCenter}
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  background: ${({theme}) => theme.colors.accentSubtle};
+  color: ${({theme}) => theme.colors.accent};
+  border-radius: 0.75rem;
+
+  svg {
+    width: 1.375rem;
+    height: 1.375rem;
+  }
+`;
+export const ModalHeading = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+export const ModalDialogTitle = styled.h2`
+  margin: 0;
+  color: ${({theme}) => theme.colors.textStrong};
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+`;
+export const ModalDialogDescription = styled.p`
+  margin: 0.25rem 0 0;
+  color: ${({theme}) => theme.colors.textMuted};
+  font-size: 0.75rem;
+  line-height: 1.6;
+`;
+export const ModalDialogBody = styled.div`
+  padding: 1.5rem;
+  @media (max-width: 480px) {
+    padding: 1.25rem;
+  }
+`;
+export const ModalForm = styled.form`
+  ${C.FlexColumn}
+  gap: 1rem;
+`;
 export const ModalButton = styled.button<{$isCancel?: boolean}>`
   ${C.ButtonBase}
   color: ${({theme, $isCancel}) => ($isCancel ? theme.colors.textSecondary : theme.colors.onAccent)};
@@ -207,71 +270,35 @@ export const CloseButton = styled.button`
     outline-offset: 2px;
   }
 `;
-
-// schedule
-export const ScheduleDialog = styled(AlertBox)`
-  max-width: 34rem;
-  min-width: 0;
-  padding: 0;
-  text-align: left;
-
-  @media (max-width: 480px) {
-    padding: 0;
-  }
-`;
-export const ScheduleDialogHeader = styled.header`
-  display: flex;
-  align-items: flex-start;
+export const ModalActions = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
-  padding: 1.5rem;
-  border-bottom: 1px solid ${({theme}) => theme.colors.border};
-
-  @media (max-width: 480px) {
-    padding: 1.25rem;
-  }
 `;
-export const ScheduleDialogIcon = styled.div`
-  ${C.FlexCenter}
-  width: 2.75rem;
-  height: 2.75rem;
-  flex-shrink: 0;
-  background: ${({theme}) => theme.colors.accentSubtle};
-  color: ${({theme}) => theme.colors.accent};
-  border-radius: 0.75rem;
-
-  svg {
-    width: 1.375rem;
-    height: 1.375rem;
-  }
-`;
-export const ScheduleHeading = styled.div`
-  flex: 1;
-  min-width: 0;
-`;
-export const ScheduleDialogTitle = styled.h2`
-  margin: 0;
-  color: ${({theme}) => theme.colors.textStrong};
-  font-size: 1.125rem;
-  font-weight: 700;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-`;
-export const ScheduleDialogSubtitle = styled.p`
-  margin: 0.25rem 0 0;
-  color: ${({theme}) => theme.colors.textMuted};
-  font-size: 0.75rem;
-  line-height: 1.6;
-`;
-export const ScheduleDialogBody = styled.div`
-  padding: 1.5rem;
-  @media (max-width: 480px) {
-    padding: 1.25rem;
-  }
-`;
-export const ScheduleForm = styled.form`
+export const ModalFields = styled.fieldset`
   ${C.FlexColumn}
   gap: 1rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  &:disabled {
+    opacity: 0.65;
+  }
 `;
+export const ModalErrorMessage = styled.p`
+  margin: 0;
+  padding: 0.75rem 0.875rem;
+  color: ${({theme}) => theme.colors.danger};
+  background: ${({theme}) => theme.status.danger.bg};
+  border-radius: 0.625rem;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+`;
+
+// schedule
 export const ScheduleField = styled.div`
   ${C.FlexColumn}
   gap: 0.5rem;
@@ -360,11 +387,6 @@ export const ScheduleTextarea = styled.textarea`
     border-color: ${({theme}) => theme.colors.accent};
     box-shadow: 0 0 0 3px ${({theme}) => theme.colors.accentSubtle};
   }
-`;
-export const ScheduleActions = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
 `;
 export const ScheduleEditing = styled.div`
   ${C.FlexBetween}

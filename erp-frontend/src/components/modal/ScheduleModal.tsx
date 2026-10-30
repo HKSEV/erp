@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useId, useRef } from "react";
 import { isAxiosError } from "axios";
 import api from "@/app/lib/api";
+import type { Schedule } from "@/app/types/Schedule";
 import {
   FiCalendar,
   FiChevronDown,
@@ -12,16 +13,6 @@ import {
 } from "react-icons/fi";
 import * as S from "@/assets/css/Style.styles";
 import useModal from "../contexts/ModalContext";
-
-export interface Schedule {
-  id: string;
-  year: number;
-  month: number;
-  date: number;
-  content: string;
-  status: "대기" | "진행" | "완료";
-  createdAt: string;
-};
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -328,7 +319,7 @@ export default function ScheduleModal({
   );
 
   return (
-    <S.ScheduleDialog
+    <S.ModalDialog
     ref={dialogRef}
     aria-labelledby={`${id}-title`}
     aria-describedby={`${id}-description`}
@@ -347,18 +338,18 @@ export default function ScheduleModal({
       )
         handleClose();
     }}>
-      <S.ScheduleDialogHeader>
-        <S.ScheduleDialogIcon aria-hidden="true">
+      <S.ModalDialogHeader>
+        <S.ModalDialogIcon aria-hidden="true">
           <FiCalendar/>
-        </S.ScheduleDialogIcon>
-        <S.ScheduleHeading>
-          <S.ScheduleDialogTitle id={`${id}-title`}>
+        </S.ModalDialogIcon>
+        <S.ModalHeading>
+          <S.ModalDialogTitle id={`${id}-title`}>
             {`${year}년 ${month}월 ${selectedDate}일 업무 일정`}
-          </S.ScheduleDialogTitle>
-          <S.ScheduleDialogSubtitle id={`${id}-description`}>
+          </S.ModalDialogTitle>
+          <S.ModalDialogDescription id={`${id}-description`}>
             일정을 등록하고 진행 상태를 관리하세요.
-          </S.ScheduleDialogSubtitle>
-        </S.ScheduleHeading>
+          </S.ModalDialogDescription>
+        </S.ModalHeading>
         <S.CloseButton
         type="button"
         aria-label="일정 모달 닫기"
@@ -367,9 +358,9 @@ export default function ScheduleModal({
         style={{flexShrink: 0}}>
           <FiX aria-hidden="true"/>
         </S.CloseButton>
-      </S.ScheduleDialogHeader>
-      <S.ScheduleDialogBody>
-        <S.ScheduleForm
+      </S.ModalDialogHeader>
+      <S.ModalDialogBody>
+        <S.ModalForm
         aria-busy={isBusy}
         onSubmit={handleSave}>
           {editingId && (
@@ -412,7 +403,7 @@ export default function ScheduleModal({
             placeholder="일정 내용을 입력해 주세요."
             required/>
           </S.ScheduleField>
-          <S.ScheduleActions>
+          <S.ModalActions>
             <S.ModalButton
             type="button"
             $isCancel
@@ -425,8 +416,8 @@ export default function ScheduleModal({
             disabled={isBusy || !formContent.trim()}>
               {editingId ? "수정" : "등록"}
             </S.ModalButton>
-          </S.ScheduleActions>
-        </S.ScheduleForm>
+          </S.ModalActions>
+        </S.ModalForm>
 
         <S.ScheduleListSection aria-labelledby={`${id}-list`}>
           <S.ScheduleListHeading>
@@ -474,7 +465,7 @@ export default function ScheduleModal({
             </S.ScheduleEntries>
           )}
         </S.ScheduleListSection>
-      </S.ScheduleDialogBody>
-    </S.ScheduleDialog>
+      </S.ModalDialogBody>
+    </S.ModalDialog>
   );
 };
