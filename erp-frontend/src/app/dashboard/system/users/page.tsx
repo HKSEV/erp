@@ -4,6 +4,7 @@ import { useState } from "react";
 import { PageContainer, PageHeader, StatGrid, StatCard, Card, SearchBar, DataTable, StatusBadge, Button, Select } from "@/components/ui";
 import type { Column } from "@/components/ui";
 import useModal from "@/components/contexts/ModalContext";
+import type { Department, Position } from "@/app/types/Organization";
 
 // 시스템관리 > 사용자 권한 관리
 // 백엔드 API(/api/admin/members) 준비 전까지 샘플 데이터로 동작
@@ -13,8 +14,8 @@ interface MemberAccount {
   id: number;
   name: string;
   email: string;
-  companyName: string;
-  position: string;
+  department: Department;
+  position: Position;   // 직급 (역할(role)은 ERP 권한)
   role: UserRole;
   active: boolean;   // false: 정지된 계정 (로그인 불가)
   createdAt: string;
@@ -33,17 +34,15 @@ const CURRENT_USER_ID = 1;
 export default function Users() {
   const {openAlertModal} = useModal();
   const [members, setMembers] = useState<MemberAccount[]>([
-    {id: 1, name: "이상민", email: "admin@erp.com", companyName: "Smart ERP", position: "시스템 관리자", role: "ADMIN", active: true, createdAt: "2026-10-01"},
-    {id: 2, name: "김승훈", email: "kim@erp.com", companyName: "Smart ERP", position: "생산팀장", role: "MANAGER", active: true, createdAt: "2026-10-02"},
-    {id: 3, name: "박민수", email: "park@erp.com", companyName: "Smart ERP", position: "영업 사원", role: "USER", active: true, createdAt: "2026-10-08"},
-    {id: 4, name: "정지원", email: "jung@erp.com", companyName: "Smart ERP", position: "디자이너", role: "USER", active: false, createdAt: "2026-10-12"},
-    {id: 5, name: "최유리", email: "choi@erp.com", companyName: "Smart ERP", position: "재고 담당", role: "MANAGER", active: true, createdAt: "2026-10-20"},
+    {id: 1, name: "박민수", email: "park@erp.com", department: "영업팀", position: "사원", role: "ADMIN", active: true, createdAt: "2026-10-08"},
+    {id: 2, name: "정지원", email: "jung@erp.com", department: "디자인팀", position: "대리", role: "USER", active: false, createdAt: "2026-10-12"},
+    {id: 3, name: "최유리", email: "choi@erp.com", department: "자재팀", position: "과장", role: "MANAGER", active: true, createdAt: "2026-10-20"},
   ]);
 
-  // 검색어: 이름, 이메일에 포함되면 표시
+  // 검색어: 이름, 이메일, 부서에 포함되면 표시
   const [keyword, setKeyword] = useState("");
   const filteredMembers = members.filter((m) =>
-    [m.name, m.email].some((field) => field.toLowerCase().includes(keyword.toLowerCase()))
+    [m.name, m.email, m.department].some((field) => field.toLowerCase().includes(keyword.toLowerCase()))
   );
 
   const adminCount = members.filter((m) => m.role === "ADMIN" && m.active).length;
@@ -98,8 +97,9 @@ export default function Users() {
       m.id === CURRENT_USER_ID ? `${m.name} (나)` : m.name
     )},
     {key: "email", header: "이메일"},
-    {key: "position", header: "소속 · 직급", render: (m) => `${m.companyName} · ${m.position}`},
-    {key: "role", header: "역할", align: "center", width: "130px", render: (m) => (
+    {key: "department", header: "부서", width: "100px"},
+    {key: "position", header: "직급", width: "80px"},
+    {key: "role", header: "역할", align: "center", width: "120px", render: (m) => (
       // 자기 자신의 역할은 바꿀 수 없음
       <Select
       size="sm"
@@ -138,7 +138,7 @@ export default function Users() {
 
       <Card
       title="사용자 목록"
-      actions={<SearchBar label="사용자 검색" placeholder="이름·이메일 검색" onSearch={setKeyword}/>}
+      actions={<SearchBar label="사용자 검색" placeholder="이름·이메일·부서 검색" onSearch={setKeyword}/>}
       noPadding>
         <DataTable
         columns={columns}
