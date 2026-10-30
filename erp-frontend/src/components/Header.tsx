@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import { clearSession } from "@/app/lib/auth";
 import useModal from "./contexts/ModalContext";
 import * as S from "@/assets/css/Style.styles";
 
@@ -20,10 +20,7 @@ export const Header = ({isMenuOpen, onToggleMenu, onCloseMenu}: HeaderProps) => 
     openAlertModal(
       "로그아웃 하시겠습니까?",
       () => {
-        sessionStorage.removeItem("token");
-        localStorage.removeItem("token");
-        delete axios.defaults.headers.common["Authorization"];
-        document.cookie = "login_token=true; path=/; max-age=0; SameSite=Lax";
+        clearSession();
         openAlertModal(
           "로그아웃 되었습니다.",
           () => router.push("/"),

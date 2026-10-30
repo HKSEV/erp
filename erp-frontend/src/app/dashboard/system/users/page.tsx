@@ -4,28 +4,11 @@ import { useState } from "react";
 import { PageContainer, PageHeader, StatGrid, StatCard, Card, SearchBar, DataTable, StatusBadge, Button, Select } from "@/components/ui";
 import type { Column } from "@/components/ui";
 import useModal from "@/components/contexts/ModalContext";
-import type { Department, Position } from "@/app/types/Organization";
+import { ROLE_LABEL } from "@/app/types/Member";
+import type { MemberAccount, UserRole } from "@/app/types/Member";
 
 // 시스템관리 > 사용자 권한 관리
 // 백엔드 API(/api/admin/members) 준비 전까지 샘플 데이터로 동작
-type UserRole = "ADMIN" | "MANAGER" | "USER";
-
-interface MemberAccount {
-  id: number;
-  name: string;
-  email: string;
-  department: Department;
-  position: Position;   // 직급 (역할(role)은 ERP 권한)
-  role: UserRole;
-  active: boolean;   // false: 정지된 계정 (로그인 불가)
-  createdAt: string;
-};
-
-const ROLE_LABEL: Record<UserRole, string> = {
-  ADMIN: "관리자",
-  MANAGER: "매니저",
-  USER: "일반",
-};
 const ROLE_OPTIONS = (Object.keys(ROLE_LABEL) as UserRole[]).map((role) => ({value: role, label: ROLE_LABEL[role]}));
 
 // 로그인 정보에 사용자 id가 담기기 전까지 임시로 지정한 "내 계정"
