@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useId, useRef } from "react";
-import { Temporal } from "@js-temporal/polyfill";
+import { isAxiosError } from "axios";
+import api from "@/app/lib/api";
 import {
   FiCalendar,
   FiChevronDown,
@@ -32,84 +33,280 @@ interface ScheduleModalProps {
   setSchedules: React.Dispatch<React.SetStateAction<Schedule[]>>;
 };
 
+function getApiError(error: unknown, fallback: string): string {
+  if (!isAxiosError<{ message?: unknown }>(error))
+    return fallback;
+
+  if (error.response?.status === 401)
+    return "로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.";
+
+  const message = error.response?.data?.message;
+
+  return typeof message === "string" && message.trim()
+    ? message
+    : fallback;
+}
+
 export default function ScheduleModal({
   isOpen, onClose, year, month, selectedDate, schedules, setSchedules
 }: ScheduleModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const mountedRef = useRef(false);
+  const mutationRef = useRef(false);
   const id = useId();
+
   const [formContent, setFormContent] = useState("");
   const [formStatus, setFormStatus] = useState<Schedule["status"]>("대기");
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  const [isLoading, setIsLoading] = useState(isOpen);
+  const [isMutating, setIsMutating] = useState(false);
+  const isBusy = isLoading || isMutating;
+
   const {openAlertModal} = useModal();
+  const alertRef = useRef(openAlertModal);
+
+  // 알림 함수 변경 때문에 조회가 반복되지 않도록 보관합니다.
+  useEffect(() => {
+    alertRef.current = openAlertModal;
+  }, [openAlertModal]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (!isOpen || !dialog)
+    if (!isOpen || selectedDate === null || !dialog)
       return;
+
     const previousOverflow = document.body.style.overflow;
     if (!dialog.open)
       dialog.showModal();
+
     document.body.style.overflow = "hidden";
+
     return () => {
-      if (dialog.open) dialog.close();
+      if (dialog.open)
+        dialog.close();
       document.body.style.overflow = previousOverflow;
     };
-  }, [isOpen]);
+  }, [isOpen, selectedDate]);
 
-  if (!isOpen || selectedDate === null)
-    return null;
+  // 모달을 열면 해당 월의 DB 일정을 조회합니다.
+  useEffect(() => {
+    if (!isOpen || selectedDate === null)
+      return;
 
-  const entries = schedules.filter((sch) => (
-    sch.year === year && sch.month === month && sch.date === selectedDate
-  ));
+    const controller = new AbortController();
+
+    const load = async () => {
+      setIsLoading(true);
+
+      try {
+        const {data} = await api.get<Schedule[]>("/api/schedules", {
+          params: {year, month},
+          signal: controller.signal,
+        });
+
+        if (controller.signal.aborted)
+          return;
+
+        setSchedules((prev) => [
+          ...prev.filter(
+            (item) => item.year !== year || item.month !== month
+          ),
+          ...data,
+        ]);
+      } catch (err: unknown) {
+        if (!controller.signal.aborted) {
+          alertRef.current(
+            "일정 조회에 실패했습니다.",
+            undefined,
+            {
+              variant: "error",
+              description: getApiError(
+                err,
+                "모달을 다시 열어 목록을 확인해 주세요.",
+              ),
+            },
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted)
+          setIsLoading(false);
+      };
+    };
+
+    void load();
+
+    return () => controller.abort();
+  }, [isOpen, year, month, selectedDate, setSchedules]);
+
   const reset = () => {
     setFormContent("");
     setFormStatus("대기");
     setEditingId(null);
   };
 
-  const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const content = formContent.trim();
-    if (!content || !setSchedules)
-      return;
-    if (editingId) {
-      setSchedules((prev) => prev.map((sch) => (
-        sch.id === editingId
-          ? {...sch, content, status: formStatus}
-          : sch
-      )));
-    } else {
-      setSchedules((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          year,
-          month,
-          date: selectedDate,
-          content,
-          status: formStatus,
-          createdAt: Temporal.Now.plainTimeISO().toString().split(".")[0],
-        },
-      ]);
-    };
-    reset();
+  const handleClose = () => {
+    if (!mutationRef.current)
+      onClose();
   };
 
-  // const handleEdit = (sch: Schedule) => {
-  //   setFormContent(sch.content);
-  //   setFormStatus(sch.status);
-  //   setEditingId(sch.id);
-  // };
+  const handleEdit = (schedule: Schedule) => {
+    if (isLoading || mutationRef.current)
+      return;
 
-  const handleDelete = (id: string) => {
-    openAlertModal(
+    setFormContent(schedule.content);
+    setFormStatus(schedule.status);
+    setEditingId(schedule.id);
+  };
+
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (
+      !isOpen ||
+      selectedDate === null ||
+      isLoading ||
+      mutationRef.current
+    )
+      return;
+
+    const content = formContent.trim();
+
+    if (!content || content.length > 1000) {
+      alertRef.current(
+        "입력 내용을 확인해 주세요.",
+        undefined,
+        {
+          variant: "error",
+          description: "일정 내용은 1~1000자로 입력해 주세요.",
+        },
+      );
+      return;
+    };
+
+    const targetId = editingId;
+    mutationRef.current = true;
+    setIsMutating(true);
+
+    try {
+      const response = targetId !== null
+        ? await api.put<Schedule>(
+            "/api/schedules/" + encodeURIComponent(targetId),
+            {
+              content,
+              status: formStatus,
+            },
+          )
+        : await api.post<Schedule>("/api/schedules", {
+            year,
+            month,
+            date: selectedDate,
+            content,
+            status: formStatus,
+          });
+
+      if (!mountedRef.current)
+        return;
+
+      const saved = response.data;
+
+      // 서버 응답으로 등록하거나 기존 항목을 교체합니다.
+      setSchedules((prev) =>
+        prev.some((item) => item.id === saved.id)
+          ? prev.map((item) =>
+              item.id === saved.id ? saved : item,
+            )
+          : [...prev, saved],
+      );
+
+      reset();
+    } catch (err: unknown) {
+      if (mountedRef.current) {
+        alertRef.current(
+          targetId !== null
+            ? "일정 수정에 실패했습니다."
+            : "일정 등록에 실패했습니다.",
+          undefined,
+          {
+            variant: "error",
+            description: getApiError(
+              err,
+              "처리 결과를 확인하지 못했습니다. 모달을 다시 열어 확인해 주세요.",
+            ),
+          },
+        );
+      }
+    } finally {
+      mutationRef.current = false;
+
+      if (mountedRef.current)
+        setIsMutating(false);
+    };
+  };
+
+  const deleteSchedule = async (scheduleId: string) => {
+    if (
+      !mountedRef.current ||
+      isLoading ||
+      mutationRef.current
+    )
+      return;
+
+    mutationRef.current = true;
+    setIsMutating(true);
+
+    try {
+      await api.delete<void>(
+        "/api/schedules/" + encodeURIComponent(scheduleId),
+      );
+
+      if (!mountedRef.current)
+        return;
+
+      // 서버 삭제 성공 후 화면에서도 제거합니다.
+      setSchedules((prev) =>
+        prev.filter((item) => item.id !== scheduleId),
+      );
+
+      if (editingId === scheduleId)
+        reset();
+    } catch (error: unknown) {
+      if (mountedRef.current) {
+        alertRef.current(
+          "일정 삭제에 실패했습니다.",
+          undefined,
+          {
+            variant: "error",
+            description: getApiError(
+              error,
+              "처리 결과를 확인하지 못했습니다. 모달을 다시 열어 확인해 주세요.",
+            ),
+          },
+        );
+      }
+    } finally {
+      mutationRef.current = false;
+
+      if (mountedRef.current)
+        setIsMutating(false);
+    };
+  };
+
+  const handleDelete = (scheduleId: string) => {
+    if (isLoading || mutationRef.current)
+      return;
+
+    alertRef.current(
       "일정을 삭제하시겠습니까?",
       () => {
-        setSchedules((prev) => prev.filter((sch) => sch.id !== id));
-        if (editingId === id)
-          reset();
+        void deleteSchedule(scheduleId);
       },
       {
         variant: "confirm",
@@ -120,6 +317,16 @@ export default function ScheduleModal({
     );
   };
 
+  if (!isOpen || selectedDate === null)
+    return null;
+
+  const entries = schedules.filter(
+    (item) =>
+      item.year === year &&
+      item.month === month &&
+      item.date === selectedDate,
+  );
+
   return (
     <S.ScheduleDialog
     ref={dialogRef}
@@ -127,7 +334,7 @@ export default function ScheduleModal({
     aria-describedby={`${id}-description`}
     onCancel={(e) => {
       e.preventDefault();
-      onClose();
+      handleClose();
     }}
     onClick={(e) => {
       if (e.target !== e.currentTarget) return;
@@ -138,11 +345,11 @@ export default function ScheduleModal({
         e.clientY < rect.top ||
         e.clientY > rect.bottom
       )
-        onClose();
+        handleClose();
     }}>
       <S.ScheduleDialogHeader>
         <S.ScheduleDialogIcon aria-hidden="true">
-          <FiCalendar />
+          <FiCalendar/>
         </S.ScheduleDialogIcon>
         <S.ScheduleHeading>
           <S.ScheduleDialogTitle id={`${id}-title`}>
@@ -155,17 +362,23 @@ export default function ScheduleModal({
         <S.CloseButton
         type="button"
         aria-label="일정 모달 닫기"
-        onClick={onClose}
+        onClick={handleClose}
+        disabled={isMutating}
         style={{flexShrink: 0}}>
           <FiX aria-hidden="true"/>
         </S.CloseButton>
       </S.ScheduleDialogHeader>
       <S.ScheduleDialogBody>
-        <S.ScheduleForm onSubmit={handleSave}>
+        <S.ScheduleForm
+        aria-busy={isBusy}
+        onSubmit={handleSave}>
           {editingId && (
             <S.ScheduleEditing>
               선택한 일정을 수정하고 있습니다.
-              <button type="button" onClick={reset}>
+              <button
+              type="button"
+              disabled={isBusy}
+              onClick={reset}>
                 수정 취소
               </button>
             </S.ScheduleEditing>
@@ -176,6 +389,7 @@ export default function ScheduleModal({
               <S.ScheduleSelect
               id={`${id}-status`}
               value={formStatus}
+              disabled={isBusy}
               onChange={(e) => (
                 setFormStatus(e.target.value as Schedule["status"])
               )}>
@@ -191,7 +405,9 @@ export default function ScheduleModal({
             <S.ScheduleTextarea
             id={`${id}-content`}
             rows={4}
+            maxLength={1000}
             value={formContent}
+            disabled={isBusy}
             onChange={(e) => setFormContent(e.target.value)}
             placeholder="일정 내용을 입력해 주세요."
             required/>
@@ -200,12 +416,13 @@ export default function ScheduleModal({
             <S.ModalButton
             type="button"
             $isCancel
-            onClick={onClose}>
+            onClick={handleClose}
+            disabled={isMutating}>
               닫기
             </S.ModalButton>
             <S.ModalButton
             type="submit"
-            disabled={!formContent.trim()}>
+            disabled={isBusy || !formContent.trim()}>
               {editingId ? "수정" : "등록"}
             </S.ModalButton>
           </S.ScheduleActions>
@@ -238,18 +455,16 @@ export default function ScheduleModal({
                     type="button"
                     aria-label="일정 수정"
                     title="일정 수정"
-                    onClick={() => {
-                      setFormContent(sch.content);
-                      setFormStatus(sch.status);
-                      setEditingId(sch.id);
-                    }}>
-                      <FiEdit2 aria-hidden="true" />
+                    disabled={isBusy}
+                    onClick={() => handleEdit(sch)}>
+                      <FiEdit2 aria-hidden="true"/>
                     </S.ScheduleIconButton>
                     <S.ScheduleIconButton
                     type="button"
                     $danger
                     aria-label="일정 삭제"
                     title="일정 삭제"
+                    disabled={isBusy}
                     onClick={() => handleDelete(sch.id)}>
                       <FiTrash2 aria-hidden="true"/>
                     </S.ScheduleIconButton>

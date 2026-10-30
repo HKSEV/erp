@@ -22,7 +22,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class Schedule {
-
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -47,4 +46,9 @@ public class Schedule {
           updatable = false
   )
   private LocalDateTime createdAt;
+
+  public void update(String content, String status) {
+    this.content = content.strip();
+    this.status = status;
+  }
 }

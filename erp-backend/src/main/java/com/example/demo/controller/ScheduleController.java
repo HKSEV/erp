@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.ScheduleCreateDto;
 import com.example.demo.dto.ScheduleResponseDto;
+import com.example.demo.dto.ScheduleUpdateDto;
 import com.example.demo.service.ScheduleService;
 
 import jakarta.validation.Valid;
@@ -44,5 +45,26 @@ public class ScheduleController {
         memberId, year, month
       )
     );
+  }
+
+  @PutMapping("/{scheduleId}")
+  public ResponseEntity<ScheduleResponseDto> update(
+    @AuthenticationPrincipal Long memberId,
+    @PathVariable("scheduleId") Long scheduleId,
+    @Valid @RequestBody ScheduleUpdateDto dto
+  ) {
+    return ResponseEntity.ok(
+      scheduleService.update(memberId, scheduleId, dto)
+    );
+  }
+
+  @DeleteMapping("/{scheduleId}")
+  public ResponseEntity<Void> delete(
+    @AuthenticationPrincipal Long memberId,
+    @PathVariable("scheduleId") Long scheduleId
+  ) {
+    scheduleService.delete(memberId, scheduleId);
+
+    return ResponseEntity.noContent().build();
   }
 }

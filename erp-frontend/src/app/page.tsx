@@ -45,7 +45,7 @@ export default function Home() {
 
         const storage = rememberMe ? localStorage : sessionStorage;
         storage.setItem("token", token);
-        dispatch(setLogin(token));
+        dispatch(setLogin({token}));
 
         const attributes = ["path=/", "SameSite=Lax",];
         if (rememberMe)
