@@ -13,3 +13,5 @@ export { default as DataTable } from "./DataTable";
 export type { Column, CellVariant } from "./DataTable";
 export { default as ProgressBar } from "./ProgressBar";
 export { default as TextField, FormStack } from "./TextField";
+export { default as Select } from "./Select";
+export type { SelectOption } from "./Select";
