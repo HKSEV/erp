@@ -3,8 +3,6 @@
 import React from "react";
 import { PageContainer, PageHeader, Card, TextField, FormStack, Button } from "@/components/ui";
 
-// 시스템관리 > 회사 기본 정보 (기존 /dashboard/settings 화면에서 이동)
-// 메뉴 전환은 사이드바가 담당하므로 화면 안의 메뉴는 제거
 // 저장 API는 아직 없음 (REQ_SET_02)
 export default function CompanySettings() {
   return (
