@@ -22,6 +22,7 @@ import type { Column } from "@/components/ui";
 | `<Button variant="outline-secondary" size="sm">` | `<Button variant="secondary" size="sm">` |
 | `<Button variant="outline-danger" size="sm">` | `<Button variant="danger" size="sm">` |
 | `<div className="progress"><div className="progress-bar" style={{width: "65%"}}/></div>` | `<ProgressBar value={65} label="PRD-001 진행률"/>` |
+| `<Form.Select>` + `<option>` 직접 작성 | `<Select options={[{value: "USER", label: "일반"}]} value={role} onChange={…}/>` (표 안에서는 `size="sm"`) |
 
 ## 상태 색 (`tone`)
 

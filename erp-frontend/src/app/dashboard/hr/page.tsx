@@ -3,12 +3,13 @@
 import React, { useState } from "react";
 import { PageContainer, PageHeader, StatGrid, StatCard, Card, SearchBar, DataTable, StatusBadge, Button } from "@/components/ui";
 import type { Column, StatusTone } from "@/components/ui";
+import type { Department, Position } from "@/app/types/Organization";
 
 interface Employee {
   id: string;
   name: string;
-  department: string;
-  role: string;
+  department: Department;
+  position: Position;
   status: "active" | "leave" | "resigned";
   joinDate: string;
 };
@@ -19,7 +20,7 @@ export default function Hr() {
       id: "EMP-001",
       name: "김철수",
       department: "개발팀",
-      role: "수석 엔지니어",
+      position: "부장",
       status: "active",
       joinDate: "2020-03-02"
     },
@@ -27,7 +28,7 @@ export default function Hr() {
       id: "EMP-002",
       name: "이영희",
       department: "인사팀",
-      role: "팀장",
+      position: "과장",
       status: "active",
       joinDate: "2019-11-15"
     },
@@ -35,7 +36,7 @@ export default function Hr() {
       id: "EMP-003",
       name: "박민수",
       department: "영업팀",
-      role: "사원",
+      position: "사원",
       status: "leave",
       joinDate: "2022-07-01"
     },
@@ -43,7 +44,7 @@ export default function Hr() {
       id: "EMP-004",
       name: "정지원",
       department: "디자인팀",
-      role: "UI/UX 디자이너",
+      position: "대리",
       status: "active",
       joinDate: "2021-05-20"
     },
@@ -63,9 +64,10 @@ export default function Hr() {
 
   const columns: Column<Employee>[] = [
     {key: "id", header: "사번", variant: "code", width: "100px"},
-    {key: "name", header: "이름", variant: "primary", width: "100px"},
+    // 긴 글자 열이 없어 모두 고정 너비로 두고, 남는 공간은 열마다 비율대로 나눔
+    {key: "name", header: "이름", variant: "primary", width: "120px"},
     {key: "department", header: "부서", width: "110px"},
-    {key: "role", header: "직급/직책"},
+    {key: "position", header: "직급", width: "90px"},
     {key: "status", header: "상태", align: "center", width: "110px", render: (emp) => (
       <StatusBadge tone={STATUS[emp.status].tone}>{STATUS[emp.status].text}</StatusBadge>
     )},
