@@ -13,7 +13,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import { FiCalendar, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import CalendarMonthBody from "./CalendarMonthBody";
 import getHolidays from "@/app/api/holidays";
-import type { Schedule } from "../modal/ScheduleModal";
+import type { Schedule } from "@/app/types/Schedule";
 import * as S from "@/assets/css/Style.styles";
 import useModal from "../contexts/ModalContext";
 
@@ -196,7 +196,7 @@ export default function Calendar({
         let message =
           "일정을 불러오지 못했습니다. 다시 시도해 주세요.";
 
-        if (isAxiosError<{ message?: unknown }>(err)) {
+        if (isAxiosError<{message?: unknown}>(err)) {
           if (err.response?.status === 401) {
             message =
               "로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.";

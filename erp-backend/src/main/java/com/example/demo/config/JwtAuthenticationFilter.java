@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -27,19 +28,25 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-	private static final String SCHEDULE_PATH = "/api/schedules";
+	private static final List<String> AUTHENTICATED_PATHS = List.of(
+		"/api/schedules",
+		"/api/members/me",
+		"/api/members/change-password"
+	);
 
 	private final JwtProvider jwtProvider;
 	private final MemberRepository memberRepository;
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
+		if ("OPTIONS".equals(request.getMethod())) {
+			return true;
+		}
+
 		String path = request.getServletPath();
 
-		// 이번에 추가하는 일정 API에 JWT 인증을 적용합니다.
-		return !(
-			SCHEDULE_PATH.equals(path)
-				|| path.startsWith(SCHEDULE_PATH + "/")
+		return AUTHENTICATED_PATHS.stream().noneMatch(base ->
+			path.equals(base) || path.startsWith(base + "/")
 		);
 	}
 
@@ -80,13 +87,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 					"존재하지 않는 회원입니다."
 				));
 
+			if (!member.isActive()) {
+				throw new BadCredentialsException("사용이 중지된 계정입니다.");
+			}
+
 			// principal에 인증된 회원 ID를 저장합니다.
-			var authentication =
-				new UsernamePasswordAuthenticationToken(
-					member.getId(),
-					null,
-					List.of()
-				);
+			var authentication = new UsernamePasswordAuthenticationToken(
+				member.getId(),
+				null,
+				List.of(new SimpleGrantedAuthority(
+					"ROLE_" + member.getRole().name()
+				))
+			);
 
 			authentication.setDetails(
 				new WebAuthenticationDetailsSource()

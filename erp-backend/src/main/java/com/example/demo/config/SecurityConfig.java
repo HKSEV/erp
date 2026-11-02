@@ -2,9 +2,11 @@ package com.example.demo.config;
 
 import com.example.demo.repository.MemberRepository;
 
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -65,20 +67,26 @@ public class SecurityConfig {
       )
 
       .authorizeHttpRequests(auth -> auth
+        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+        .requestMatchers(
+          "/api/members/me",
+          "/api/members/me/**",
+          "/api/members/change-password",
+          "/api/members/change-password/**",
+          "/api/schedules",
+          "/api/schedules/**"
+        ).authenticated()
+
         .requestMatchers(
           "/api/members/**",
           "/api/production/**",
-          // 생산관리와 같은 방식: JWT 필터가 아직 일정 API에만 적용되어 있어 함께 공개
           "/api/inventory/**",
           "/api/hr/**",
           // TODO: 역할(role) 추가 후 PUT은 관리자만 가능하도록 변경
           "/api/company"
         ).permitAll()
-
-        .requestMatchers(
-          "/api/schedules",
-          "/api/schedules/**"
-        ).authenticated()
 
         .anyRequest().authenticated()
       )
@@ -105,6 +113,7 @@ public class SecurityConfig {
       "GET",
       "POST",
       "PUT",
+      "PATCH",
       "DELETE",
       "OPTIONS"
     ));

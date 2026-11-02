@@ -1,5 +1,6 @@
 package com.example.demo.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -37,6 +38,7 @@ public class Member {
   @Column(nullable = false, unique = true, length = 100)
   private String email;
 
+  @JsonIgnore
   @Column(nullable = false)
   private String password; // Spring Security BCrypt 등으로 암호화되어 저장됨
 
@@ -45,6 +47,18 @@ public class Member {
 
   @Column(length = 50)
   private String position;
+
+  @Column(length = 20)
+  private String department;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "MEMBER_ROLE", nullable = false, length = 20)
+  @Builder.Default
+  private MemberRole role = MemberRole.USER;
+
+  @Column(name = "IS_ACTIVE", nullable = false)
+  @Builder.Default
+  private boolean active = true;
 
   @Column(length = 20)
   private String tel;
@@ -62,4 +76,12 @@ public class Member {
 
   @UpdateTimestamp
   private LocalDateTime updatedAt; // 정보 수정일
+
+  @JsonIgnore
+  @Column(name = "PASSWORD_RESET_TOKEN_HASH", length = 64, unique = true)
+  private String passwordResetTokenHash;
+
+  @JsonIgnore
+  @Column(name = "PASSWORD_RESET_EXPIRES_AT")
+  private LocalDateTime passwordResetExpiresAt;
 }
