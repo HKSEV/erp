@@ -15,6 +15,10 @@ import AlertModal, { AlertModalOptions } from "../modal/AlertModal";
 
 import ProductionOrderModal from "../modal/ProductionOrderModal";
 import type { ProductionOrder } from "@/app/types/ProductionOrder";
+import InventoryItemModal from "../modal/InventoryItemModal";
+import type { InventoryItem } from "@/app/types/InventoryItem";
+import EmployeeModal from "../modal/EmployeeModal";
+import type { Employee } from "@/app/types/Employee";
 
 // ScheduleModal 설정 타입
 interface ScheduleModalConfig {
@@ -42,11 +46,31 @@ interface ProductionOrderModalConfig {
   onDeleted?: (orderId: string) => void;
 };
 
+// InventoryItemModal 설정 타입
+interface InventoryItemModalConfig {
+  isOpen: boolean;
+  item?: InventoryItem;
+  onCreated?: (item: InventoryItem) => void;
+  onUpdated?: (item: InventoryItem) => void;
+  onDeleted?: (itemId: string) => void;
+};
+
+// EmployeeModal 설정 타입
+interface EmployeeModalConfig {
+  isOpen: boolean;
+  employee?: Employee;
+  onCreated?: (employee: Employee) => void;
+  onUpdated?: (employee: Employee) => void;
+  onDeleted?: (employeeId: string) => void;
+};
+
 // Context 타입
 interface ModalContextType {
   scheduleModalConfig: ScheduleModalConfig;
   alertModalConfig: AlertModalConfig;
   productionOrderModalConfig: ProductionOrderModalConfig;
+  inventoryItemModalConfig: InventoryItemModalConfig;
+  employeeModalConfig: EmployeeModalConfig;
 
   openScheduleModal: (
     year: number,
@@ -68,6 +92,21 @@ interface ModalContextType {
     onCreated?: (order: ProductionOrder) => void,
     onUpdated?: (order: ProductionOrder) => void,
     onDeleted?: (orderId: string) => void
+  ) => void;
+
+  // item·employee가 없으면 신규 등록, 있으면 상세보기(수정·삭제)
+  openInventoryItemModal: (
+    item?: InventoryItem,
+    onCreated?: (item: InventoryItem) => void,
+    onUpdated?: (item: InventoryItem) => void,
+    onDeleted?: (itemId: string) => void
+  ) => void;
+
+  openEmployeeModal: (
+    employee?: Employee,
+    onCreated?: (employee: Employee) => void,
+    onUpdated?: (employee: Employee) => void,
+    onDeleted?: (employeeId: string) => void
   ) => void;
 };
 
@@ -93,6 +132,16 @@ export function ModalProvider({children}: {children: ReactNode}) {
   // ProductionOrderModal 상태
   const [productionOrderModalConfig, setProductionOrderModalConfig] =
     useState<ProductionOrderModalConfig>({
+      isOpen: false,
+    });
+  // InventoryItemModal 상태
+  const [inventoryItemModalConfig, setInventoryItemModalConfig] =
+    useState<InventoryItemModalConfig>({
+      isOpen: false,
+    });
+  // EmployeeModal 상태
+  const [employeeModalConfig, setEmployeeModalConfig] =
+    useState<EmployeeModalConfig>({
       isOpen: false,
     });
 
@@ -139,16 +188,50 @@ export function ModalProvider({children}: {children: ReactNode}) {
   });
   }, []);
 
+  const openInventoryItemModal = useCallback((
+    item?: InventoryItem,
+    onCreated?: (item: InventoryItem) => void,
+    onUpdated?: (item: InventoryItem) => void,
+    onDeleted?: (itemId: string) => void,
+  ) => {
+    setInventoryItemModalConfig({
+      isOpen: true,
+      item,
+      onCreated,
+      onUpdated,
+      onDeleted,
+    });
+  }, []);
+
+  const openEmployeeModal = useCallback((
+    employee?: Employee,
+    onCreated?: (employee: Employee) => void,
+    onUpdated?: (employee: Employee) => void,
+    onDeleted?: (employeeId: string) => void,
+  ) => {
+    setEmployeeModalConfig({
+      isOpen: true,
+      employee,
+      onCreated,
+      onUpdated,
+      onDeleted,
+    });
+  }, []);
+
   return (
     <ModalContext.Provider
     value={{
       scheduleModalConfig,
       alertModalConfig,
       productionOrderModalConfig,
+      inventoryItemModalConfig,
+      employeeModalConfig,
       updateScheduleModal,
       openScheduleModal,
       openAlertModal,
       openProductionOrderModal,
+      openInventoryItemModal,
+      openEmployeeModal,
     }}>
       {children}
       {/* 커스텀 모달 렌더링 */}
@@ -187,6 +270,30 @@ export function ModalProvider({children}: {children: ReactNode}) {
         onCreated={productionOrderModalConfig.onCreated}
         onUpdated={productionOrderModalConfig.onUpdated}
         onDeleted={productionOrderModalConfig.onDeleted}/>
+      )}
+
+      {inventoryItemModalConfig.isOpen && (
+        <InventoryItemModal
+        key={inventoryItemModalConfig.item?.id ?? "create"}
+        item={inventoryItemModalConfig.item}
+        onClose={() => setInventoryItemModalConfig(
+          (prev) => ({...prev, isOpen: false})
+        )}
+        onCreated={inventoryItemModalConfig.onCreated}
+        onUpdated={inventoryItemModalConfig.onUpdated}
+        onDeleted={inventoryItemModalConfig.onDeleted}/>
+      )}
+
+      {employeeModalConfig.isOpen && (
+        <EmployeeModal
+        key={employeeModalConfig.employee?.id ?? "create"}
+        employee={employeeModalConfig.employee}
+        onClose={() => setEmployeeModalConfig(
+          (prev) => ({...prev, isOpen: false})
+        )}
+        onCreated={employeeModalConfig.onCreated}
+        onUpdated={employeeModalConfig.onUpdated}
+        onDeleted={employeeModalConfig.onDeleted}/>
       )}
     </ModalContext.Provider>
   );
