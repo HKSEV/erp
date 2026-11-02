@@ -82,7 +82,7 @@ export default function ConditionalLayout({children}: {
   return (
     <ModalProvider>
       {isDashboard ? (
-        <AuthGuard key={pathname}>{content}</AuthGuard>
+        <AuthGuard>{content}</AuthGuard>
       ) : content}
     </ModalProvider>
   );

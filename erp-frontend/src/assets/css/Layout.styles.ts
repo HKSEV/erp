@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import * as C from "./common/Common.styles";
 
 export const PageWrapper = styled.div`
   display: flex;
@@ -52,4 +53,27 @@ export const ContentArea = styled.main`
   background-color: ${({theme}) => theme.colors.bg};
   overflow-y: auto;
   min-width: 0;
+`;
+export const AuthLoadingScreen = styled.main`
+  ${C.FlexCenter}
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  min-height: 100dvh;
+  padding: 1.5rem;
+  background-color: ${({theme}) => theme.colors.bg};
+  color: ${({theme}) => theme.colors.textMuted};
+`;
+export const AuthLoadingMessage = styled.p`
+  margin: 0;
+  max-width: 32rem;
+  font-size: ${({theme}) => theme.font.size.md};
+  line-height: 1.6;
+  text-align: center;
+  overflow-wrap: anywhere;
+`;
+export const AuthRetryButton = styled.button`
+  ${C.ButtonBase}
+  ${C.BlueButtonTheme}
+  width: auto;
 `;

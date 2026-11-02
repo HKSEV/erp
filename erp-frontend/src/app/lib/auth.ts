@@ -1,4 +1,4 @@
-// 로그인 정보 삭제: 토큰(로그인 유지 여부에 따라 둘 중 한 곳에 저장)과 화면 이동용 쿠키
+// 로그인 유지 여부에 따라 토큰을 한 곳에 저장하고 변경을 구독
 const AUTH_CHANGED_EVENT = "erp:auth-changed";
 
 export function getToken(): string | null {
@@ -9,8 +9,9 @@ export function getToken(): string | null {
     || window.localStorage.getItem("token");
 };
 
-export function getServerToken(): null {
-  return null;
+// 서버와 최초 hydration에서는 아직 브라우저 저장소를 확인하지 않은 상태
+export function getServerToken(): undefined {
+  return undefined;
 };
 
 export function subscribeToken(listener: () => void): () => void {

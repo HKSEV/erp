@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useSyncExternalStore } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { isAxiosError } from "axios";
 import api from "@/app/lib/api";
@@ -17,7 +17,6 @@ import * as S from "@/assets/css/Style.styles";
 
 interface Verification {
   token: string;
-  pathname: string;
   attempt: number;
   status: "success" | "error";
   message?: string;
@@ -26,9 +25,13 @@ interface Verification {
 export default function AuthGuard({children}: {
   children: React.ReactNode
 }) {
-  const token = useSyncExternalStore(
+  const token = useSyncExternalStore<string | null | undefined>(
     subscribeToken, getToken, getServerToken
   );
+
+  // 저장소를 확인하기 전에는 로그인 페이지로 이동하지 않음
+  if (token === undefined)
+    return <AuthStatus/>;
 
   return (
     <TokenVerification key={token ?? "anonymous"} token={token}>
@@ -42,7 +45,6 @@ function TokenVerification({children, token}: {
   token: string | null;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
   const dispatch = useDispatch();
   const [attempt, setAttempt] = useState(0);
   const [verification, setVerification] = useState<Verification | null>(null);
@@ -66,7 +68,7 @@ function TokenVerification({children, token}: {
           return;
 
         dispatch(setLogin({token, userInfo: data}));
-        setVerification({token, pathname, attempt, status: "success"});
+        setVerification({token, attempt, status: "success"});
       } catch (err: unknown) {
         if (controller.signal.aborted || getToken() !== token)
           return;
@@ -87,19 +89,16 @@ function TokenVerification({children, token}: {
           ? serverMessage
           : "로그인 정보를 확인하지 못했습니다. 다시 시도해 주세요.";
 
-        setVerification({
-          token, pathname, attempt, status: "error", message,
-        });
+        setVerification({token, attempt, status: "error", message});
       };
     };
 
     void verifyToken();
 
     return () => controller.abort();
-  }, [token, pathname, attempt, dispatch, router]);
+  }, [token, attempt, dispatch, router]);
 
   const isCurrent = verification?.token === token
-    && verification?.pathname === pathname
     && verification?.attempt === attempt;
 
   const isReady = Boolean(
@@ -114,20 +113,29 @@ function TokenVerification({children, token}: {
     : null;
 
   return (
-    <S.MemberContainer>
-      <S.MemberCard>
-        <S.MemberDescription role={error ? "alert" : "status"}>
-          {error || "로그인 정보를 확인하는 중입니다."}
-        </S.MemberDescription>
+    <AuthStatus
+    error={error}
+    onRetry={() => setAttempt((prev) => prev + 1)}/>
+  );
+};
 
-        {error && (
-          <S.MemberButton
-          type="button"
-          onClick={() => setAttempt((prev) => prev + 1)}>
-            다시 확인
-          </S.MemberButton>
-        )}
-      </S.MemberCard>
-    </S.MemberContainer>
+function AuthStatus({error, onRetry}: {
+  error?: string | null;
+  onRetry?: () => void;
+}) {
+  return (
+    <S.AuthLoadingScreen aria-busy={!error}>
+      {!error && <S.CalLoadingSpinner aria-hidden="true"/>}
+
+      <S.AuthLoadingMessage role={error ? "alert" : "status"}>
+        {error || "로그인 정보를 확인하는 중입니다."}
+      </S.AuthLoadingMessage>
+
+      {error && onRetry && (
+        <S.AuthRetryButton type="button" onClick={onRetry}>
+          다시 확인
+        </S.AuthRetryButton>
+      )}
+    </S.AuthLoadingScreen>
   );
 };
