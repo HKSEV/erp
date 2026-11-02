@@ -70,7 +70,9 @@ public class SecurityConfig {
           "/api/production/**",
           // 생산관리와 같은 방식: JWT 필터가 아직 일정 API에만 적용되어 있어 함께 공개
           "/api/inventory/**",
-          "/api/hr/**"
+          "/api/hr/**",
+          // TODO: 역할(role) 추가 후 PUT은 관리자만 가능하도록 변경
+          "/api/company"
         ).permitAll()
 
         .requestMatchers(
