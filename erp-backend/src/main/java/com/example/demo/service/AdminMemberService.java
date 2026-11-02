@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.AdminMemberResponseDto;
+import com.example.demo.dto.MemberProfileUpdateDto;
 import com.example.demo.entity.Member;
 import com.example.demo.entity.MemberRole;
 import com.example.demo.repository.AdminMemberRepository;
@@ -84,6 +85,28 @@ public class AdminMemberService {
     }
 
     member.setActive(active);
+    adminMemberRepository.flush();
+    return AdminMemberResponseDto.from(member);
+  }
+
+  @Transactional
+  public AdminMemberResponseDto updateProfile(
+    Long memberId,
+    MemberProfileUpdateDto dto
+  ) {
+    if (dto.department() == null && dto.position() == null) {
+      throw new ResponseStatusException(
+        HttpStatus.BAD_REQUEST, "변경할 부서 또는 직급을 선택해 주세요."
+      );
+    }
+
+    Member member = findMember(memberId);
+
+    if (dto.department() != null)
+      member.setDepartment(dto.department());
+    if (dto.position() != null)
+      member.setPosition(dto.position());
+
     adminMemberRepository.flush();
     return AdminMemberResponseDto.from(member);
   }
