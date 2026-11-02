@@ -49,6 +49,18 @@ public class Member {
   private String position;
 
   @Column(length = 20)
+  private String department;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 20)
+  @Builder.Default
+  private MemberRole role = MemberRole.USER;
+
+  @Column(name = "IS_ACTIVE", nullable = false)
+  @Builder.Default
+  private boolean active = true;
+
+  @Column(length = 20)
   private String tel;
 
   private String address;

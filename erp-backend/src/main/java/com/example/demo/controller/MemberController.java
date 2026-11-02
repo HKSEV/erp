@@ -1,10 +1,11 @@
 package com.example.demo.controller;
 
-import com.example.demo.config.JwtProvider;
 import com.example.demo.dto.*;
 import com.example.demo.service.MemberService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -16,7 +17,6 @@ import java.util.Map;
 public class MemberController {
 
   private final MemberService memberService;
-  private final JwtProvider jwtProvider;
 
   @PostMapping("/register")
   public ResponseEntity<String> register(@RequestBody MemberRegisterDto requestDto) {
@@ -40,6 +40,21 @@ public class MemberController {
     } catch (Exception e) {
       return ResponseEntity.internalServerError().body("로그인 처리 중 오류가 발생했습니다.");
     }
+  }
+
+  @GetMapping("/me")
+  public ResponseEntity<MemberProfileResponseDto> getMyProfile(
+    @AuthenticationPrincipal Long memberId
+  ) {
+    return ResponseEntity.ok(memberService.getMyProfile(memberId));
+  }
+
+  @PatchMapping("/me")
+  public ResponseEntity<MemberProfileResponseDto> updateMyContact(
+    @AuthenticationPrincipal Long memberId,
+    @Valid @RequestBody MemberContactUpdateDto dto
+  ) {
+    return ResponseEntity.ok(memberService.updateMyContact(memberId, dto));
   }
 
   // 비밀번호 찾기 (비밀번호 리셋)
@@ -81,18 +96,14 @@ public class MemberController {
 
   // 비밀번호 변경 (마이페이지용)
   @PostMapping("/change-password")
-  public ResponseEntity<?> changePassword(@RequestHeader("Authorization") String token,
-                                          @RequestBody PasswordChangeDto dto) {
-    try {
-      // "Bearer " 문자열 제거 후 토큰 파싱
-      String actualToken = token.substring(7);
-      // JwtProvider에 이메일 추출 메서드(getSubject)가 있다고 가정, 없을 경우 추가 필요
-      String email = jwtProvider.getEmailFromToken(actualToken);
+  public ResponseEntity<String> changePassword(
+    @AuthenticationPrincipal Long memberId,
+    @Valid @RequestBody PasswordChangeDto dto
+  ) {
+    memberService.changePassword(
+      memberId, dto.getOldPassword(), dto.getNewPassword()
+    );
 
-      memberService.changePassword(email, dto.getOldPassword(), dto.getNewPassword());
-      return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
-    } catch (Exception e) {
-      return ResponseEntity.badRequest().body(e.getMessage());
-    }
+    return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
   }
 }

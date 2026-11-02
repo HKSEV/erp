@@ -18,36 +18,99 @@ import { ROLE_LABEL } from "@/app/types/Member";
 import type { MemberProfile } from "@/app/types/Member";
 
 // 마이페이지: 계정 정보(읽기 전용), 연락처·주소 수정, 비밀번호 변경
-// 계정 정보·연락처는 백엔드 API(GET·PATCH /api/members/me) 준비 전까지 샘플 데이터로 동작
-const SAMPLE_PROFILE: MemberProfile = {
-  id: 1,
-  name: "박민수",
-  email: "park@erp.com",
-  department: "영업팀",
-  position: "사원",
-  role: "ADMIN",
-  active: true,
-  createdAt: "2026-10-08",
-  tel: "010-1234-5678",
-  address: "서울특별시 강남구 테헤란로 123",
-  detailAddress: "5층",
-};
-
 const TEL_PATTERN = /^01[016789]-?\d{3,4}-?\d{4}$/;
 
 type Contact = Pick<MemberProfile, "tel" | "address" | "detailAddress">;
-const pickContact = ({tel, address, detailAddress}: MemberProfile): Contact => ({tel, address, detailAddress});
+const pickContact = ({
+  tel, address, detailAddress
+}: MemberProfile): Contact => ({
+  tel: tel ?? "",
+  address: address ?? "",
+  detailAddress: detailAddress ?? "",
+});
+
+function getApiError(error: unknown, fallback: string): string {
+  if (isAxiosError<string | {message?: unknown}>(error)) {
+    const data = error.response?.data;
+
+    if (typeof data === "string" && data.trim())
+      return data;
+
+    if (data && typeof data === "object" && typeof data.message === "string")
+      return data.message;
+  };
+
+  return fallback;
+};
 
 export default function MyPage() {
   const router = useRouter();
   const {openAlertModal} = useModal();
 
   // 연락처: 저장된 값(profile)과 입력 중인 값(contact)을 따로 두고, 다를 때만 저장 가능
-  const [profile, setProfile] = useState(SAMPLE_PROFILE);
-  const [contact, setContact] = useState(() => pickContact(SAMPLE_PROFILE));
-  const saved = pickContact(profile);
-  const isDirty = (Object.keys(contact) as (keyof Contact)[]).some((key) => contact[key].trim() !== saved[key]);
-  const telError = contact.tel && !TEL_PATTERN.test(contact.tel.trim()) ? "010-0000-0000 형식으로 입력해 주세요." : undefined;
+  const [profile, setProfile] = useState<MemberProfile | null>(null);
+  const [contact, setContact] = useState<Contact>({
+    tel: "", address: "", detailAddress: "",
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadRetry, setLoadRetry] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const saveRef = useRef<AbortController | null>(null);
+
+  const saved: Contact = profile
+    ? pickContact(profile)
+    : {tel: "", address: "", detailAddress: ""};
+
+  const isDirty = profile !== null
+    && (Object.keys(contact) as (keyof Contact)[])
+      .some((key) => contact[key].trim() !== saved[key].trim());
+
+  const telError = contact.tel && !TEL_PATTERN.test(contact.tel.trim())
+    ? "010-0000-0000 형식으로 입력해 주세요."
+    : undefined;
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadProfile = async () => {
+      try {
+        const {data} = await api.get<MemberProfile>("/api/members/me", {
+          signal: controller.signal,
+        });
+
+        if (controller.signal.aborted)
+          return;
+
+        setProfile(data);
+        setContact(pickContact(data));
+      } catch (err: unknown) {
+        if (controller.signal.aborted)
+          return;
+
+        if (isAxiosError(err) && (
+          err.response?.status === 401 || err.response?.status === 403
+        )) {
+          clearSession();
+          router.replace("/");
+          return;
+        };
+
+        setLoadError(getApiError(err, "회원 정보를 불러오지 못했습니다."));
+      } finally {
+        if (!controller.signal.aborted)
+          setIsLoading(false);
+      };
+    };
+
+    void loadProfile();
+
+    return () => controller.abort();
+  }, [router, loadRetry]);
+
+  useEffect(() => () => {
+    saveRef.current?.abort();
+  }, []);
 
   const handleAddressSearch = async () => {
     try {
@@ -61,18 +124,60 @@ export default function MyPage() {
     };
   };
 
-  const handleSaveContact = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveContact = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!isDirty || telError)
+
+    if (!profile || !isDirty || telError || isBusy
+      || saveRef.current || requestRef.current)
       return;
-    // TODO: PATCH /api/members/me
-    setProfile((prev) => ({
-      ...prev,
-      tel: contact.tel.trim(),
-      address: contact.address,
-      detailAddress: contact.detailAddress.trim(),
-    }));
-    openAlertModal("연락처가 저장되었습니다.", undefined, {variant: "success"});
+
+    const controller = new AbortController();
+    saveRef.current = controller;
+    setIsSaving(true);
+
+    try {
+      const {data} = await api.patch<MemberProfile>(
+        "/api/members/me",
+        {
+          tel: contact.tel.trim(),
+          address: contact.address.trim(),
+          detailAddress: contact.detailAddress.trim(),
+        },
+        {signal: controller.signal}
+      );
+
+      if (controller.signal.aborted)
+        return;
+
+      setProfile(data);
+      setContact(pickContact(data));
+
+      openAlertModal("연락처가 저장되었습니다.", undefined, {
+        variant: "success",
+      });
+    } catch (err: unknown) {
+      if (controller.signal.aborted)
+        return;
+
+      if (isAxiosError(err) && (
+        err.response?.status === 401 || err.response?.status === 403
+      )) {
+        clearSession();
+        router.replace("/");
+        return;
+      };
+
+      openAlertModal(
+        getApiError(err, "연락처 저장에 실패했습니다."),
+        undefined,
+        {variant: "error"}
+      );
+    } finally {
+      if (!controller.signal.aborted) {
+        saveRef.current = null;
+        setIsSaving(false);
+      };
+    };
   };
 
   // 비밀번호: 입력하는 동안 바로 검사하고, 조건을 모두 만족해야 변경 버튼 활성화
@@ -80,6 +185,7 @@ export default function MyPage() {
     current: "", next: "", confirm: "",
   });
   const [isChanging, setIsChanging] = useState(false);
+  const isBusy = isSaving || isChanging;
   const requestRef = useRef<AbortController | null>(null);
 
   useEffect(() => () => {
@@ -101,12 +207,12 @@ export default function MyPage() {
     Boolean(password.current && password.next && password.confirm)
     && !nextError
     && !confirmError
-    && !isChanging;
+    && !isBusy;
 
   const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!canChangePassword || requestRef.current)
+    if (!canChangePassword || requestRef.current || saveRef.current)
       return;
 
     const controller = new AbortController();
@@ -151,6 +257,34 @@ export default function MyPage() {
     };
   };
 
+  if (!profile) {
+    return (
+      <PageContainer>
+        <PageHeader title="마이페이지" description="내 계정 정보를 관리합니다."/>
+        <CardStack style={{maxWidth: 720}}>
+          <Card title="계정 정보">
+            <p role={isLoading ? "status" : "alert"}>
+              {isLoading
+                ? "회원 정보를 불러오는 중입니다."
+                : loadError || "회원 정보를 불러오지 못했습니다."}
+            </p>
+            {!isLoading && (
+              <Button
+              variant="secondary"
+              onClick={() => {
+                setIsLoading(true);
+                setLoadError(null);
+                setLoadRetry((prev) => prev + 1);
+              }}>
+                다시 불러오기
+              </Button>
+            )}
+          </Card>
+        </CardStack>
+      </PageContainer>
+    );
+  };
+
   return (
     <PageContainer>
       <PageHeader
@@ -162,10 +296,10 @@ export default function MyPage() {
           <DescriptionList items={[
             {label: "이름", value: profile.name},
             {label: "이메일", value: profile.email},
-            {label: "부서", value: profile.department},
-            {label: "직급", value: profile.position},
+            {label: "부서", value: profile.department || "미등록"},
+            {label: "직급", value: profile.position || "미등록"},
             {label: "역할", value: ROLE_LABEL[profile.role]},
-            {label: "가입일", value: profile.createdAt},
+            {label: "가입일", value: profile.createdAt || "미등록"},
           ]}/>
         </Card>
 
@@ -199,7 +333,11 @@ export default function MyPage() {
               onChange={(e) => setContact((prev) => ({...prev, detailAddress: e.target.value}))}/>
               <FormActions>
                 <Button variant="secondary" disabled={!isDirty} onClick={() => setContact(saved)}>되돌리기</Button>
-                <Button type="submit" disabled={!isDirty || Boolean(telError)}>변경사항 저장</Button>
+                <Button
+                type="submit"
+                disabled={!isDirty || Boolean(telError) || isBusy}>
+                  {isSaving ? "저장 중..." : "변경사항 저장"}
+                </Button>
               </FormActions>
             </FormStack>
           </form>

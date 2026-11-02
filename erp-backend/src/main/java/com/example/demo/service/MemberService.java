@@ -1,17 +1,21 @@
 package com.example.demo.service;
 
 import com.example.demo.config.JwtProvider;
+import com.example.demo.dto.MemberContactUpdateDto;
 import com.example.demo.dto.MemberLoginDto;
+import com.example.demo.dto.MemberProfileResponseDto;
 import com.example.demo.dto.MemberRegisterDto;
 import com.example.demo.entity.Member;
 import com.example.demo.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -62,35 +66,93 @@ public class MemberService {
 
   public String login(MemberLoginDto dto) {
     Member member = memberRepository.findByEmail(dto.getEmail())
-            .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
+      .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
 
     if (!passwordEncoder.matches(dto.getPassword(), member.getPassword())) {
       throw new IllegalArgumentException("잘못된 비밀번호입니다.");
+    }
+
+    if (!member.isActive()) {
+      throw new IllegalArgumentException("사용이 중지된 계정입니다.");
     }
 
     // 비밀번호가 일치하면 JWT 토큰 생성 및 반환
     return jwtProvider.generateToken(member.getEmail());
   }
 
-  // 1. 임시 비밀번호 발급 및 메일 전송
-//  @Transactional
-//  public void sendTempPassword(String email) {
-//    Member member = memberRepository.findByEmail(email)
-//      .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
-//
-//    // 8자리 랜덤 임시 비밀번호 생성
-//    String tempPassword = UUID.randomUUID().toString().substring(0, 8);
-//
-//    // DB 비밀번호 업데이트
-//    member.setPassword(passwordEncoder.encode(tempPassword));
-//
-//    // 메일 발송
-//    SimpleMailMessage message = new SimpleMailMessage();
-//    message.setTo(email);
-//    message.setSubject("[ERP 시스템] 임시 비밀번호 발급 안내");
-//    message.setText("요청하신 임시 비밀번호는 [" + tempPassword + "] 입니다.\n로그인 후 마이페이지에서 반드시 비밀번호를 변경해 주세요.");
-//    mailSender.send(message);
-//  }
+  @Transactional(readOnly = true)
+  public MemberProfileResponseDto getMyProfile(Long memberId) {
+    Member member = findCurrentMember(memberId, false);
+    return MemberProfileResponseDto.from(member);
+  }
+
+  @Transactional
+  public MemberProfileResponseDto updateMyContact(
+    Long memberId,
+    MemberContactUpdateDto dto
+  ) {
+    if (dto == null || (dto.getTel() == null
+      && dto.getAddress() == null
+      && dto.getDetailAddress() == null)) {
+      throw new IllegalArgumentException("수정할 연락처 정보를 입력해 주세요.");
+    }
+
+    Member member = findCurrentMember(memberId, true);
+
+    String tel = dto.getTel() == null ? null : dto.getTel().strip();
+    String address = dto.getAddress() == null ? null : dto.getAddress().strip();
+    String detailAddress = dto.getDetailAddress() == null
+      ? null
+      : dto.getDetailAddress().strip();
+
+    if (tel != null && (tel.length() > 20
+      || (!tel.isEmpty() && !tel.matches("01[016789]-?[0-9]{3,4}-?[0-9]{4}")))) {
+      throw new IllegalArgumentException("휴대폰 번호 형식을 확인해 주세요.");
+    }
+
+    if ((address != null && address.length() > 255)
+      || (detailAddress != null && detailAddress.length() > 255)) {
+      throw new IllegalArgumentException("주소는 각각 255자 이내로 입력해 주세요.");
+    }
+
+    if (tel != null) {
+      member.setTel(tel);
+    }
+    if (address != null) {
+      member.setAddress(address);
+    }
+    if (detailAddress != null) {
+      member.setDetailAddress(detailAddress);
+    }
+
+    memberRepository.flush();
+    return MemberProfileResponseDto.from(member);
+  }
+
+  private Member findCurrentMember(Long memberId, boolean forUpdate) {
+    if (memberId == null) {
+      throw new ResponseStatusException(
+        HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."
+      );
+    }
+
+    Member member = (forUpdate
+      ? memberRepository.findByIdForUpdate(memberId)
+      : memberRepository.findById(memberId))
+      .orElseThrow(() -> new ResponseStatusException(
+        HttpStatus.NOT_FOUND, "회원 정보를 찾을 수 없습니다."
+      ));
+
+    if (!member.isActive()) {
+      throw new ResponseStatusException(
+        HttpStatus.FORBIDDEN, "사용이 중지된 계정입니다."
+      );
+    }
+
+    return member;
+  }
+
+  // 비밀번호 재설정 링크 발송
   @Transactional
   public void sendPasswordResetLink(String email) {
     if (email == null || email.isBlank() || email.strip().length() > 100) {
@@ -188,22 +250,29 @@ public class MemberService {
   // 2. 마이페이지 비밀번호 변경
   @Transactional
   public void changePassword(
-    String email,
+    Long memberId,
     String oldPassword,
     String newPassword
   ) {
-    Member member = memberRepository.findByEmail(email)
-      .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    Member member = findCurrentMember(memberId, true);
 
-    if (!passwordEncoder.matches(oldPassword, member.getPassword())) {
+    if (oldPassword == null
+      || !passwordEncoder.matches(oldPassword, member.getPassword())) {
       throw new IllegalArgumentException("기존 비밀번호가 일치하지 않습니다.");
     }
 
     validatePassword(newPassword);
 
+    if (passwordEncoder.matches(newPassword, member.getPassword())) {
+      throw new IllegalArgumentException(
+        "기존 비밀번호와 다른 비밀번호를 입력해 주세요."
+      );
+    }
+
     member.setPassword(passwordEncoder.encode(newPassword));
     member.setPasswordResetTokenHash(null);
     member.setPasswordResetExpiresAt(null);
+    memberRepository.flush();
   }
 
   private void validatePassword(String password) {

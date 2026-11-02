@@ -49,12 +49,6 @@ interface FormData {
   gender: string;
 };
 
-declare global {
-  interface Window {
-    daum: any;
-  }
-};
-
 export default function Member() {
   const {openAlertModal} = useModal();
   const router = useRouter();

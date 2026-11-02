@@ -22,7 +22,10 @@ export interface MemberAccount {
 };
 
 // 내 정보: 마이페이지 (GET /api/members/me 예정)
-export interface MemberProfile extends MemberAccount {
+export interface MemberProfile
+  extends Omit<MemberAccount, "department" | "position"> {
+  department: string | null;
+  position: string | null;
   tel: string;
   address: string;
   detailAddress: string;
