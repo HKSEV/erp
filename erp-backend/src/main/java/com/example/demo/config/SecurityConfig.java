@@ -3,10 +3,12 @@ package com.example.demo.config;
 import com.example.demo.repository.MemberRepository;
 
 import jakarta.servlet.DispatcherType;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -64,6 +66,17 @@ public class SecurityConfig {
             JwtAuthenticationFilter
               .writeUnauthorized(response)
         )
+        // 로그인은 했지만 권한(역할)이 부족한 경우
+        .accessDeniedHandler(
+          (request, response, accessDeniedException) -> {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setCharacterEncoding("UTF-8");
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.getWriter().write(
+              "{\"message\":\"관리자만 사용할 수 있습니다.\"}"
+            );
+          }
+        )
       )
 
       .authorizeHttpRequests(auth -> auth
@@ -79,13 +92,19 @@ public class SecurityConfig {
           "/api/schedules/**"
         ).authenticated()
 
+        // 시스템관리: 사용자 권한 관리와 회사 정보 수정은 관리자만
+        .requestMatchers(
+          "/api/admin",
+          "/api/admin/**"
+        ).hasRole("ADMIN")
+        .requestMatchers(HttpMethod.PUT, "/api/company").hasRole("ADMIN")
+        .requestMatchers(HttpMethod.GET, "/api/company").authenticated()
+
         .requestMatchers(
           "/api/members/**",
           "/api/production/**",
           "/api/inventory/**",
-          "/api/hr/**",
-          // TODO: 역할(role) 추가 후 PUT은 관리자만 가능하도록 변경
-          "/api/company"
+          "/api/hr/**"
         ).permitAll()
 
         .anyRequest().authenticated()

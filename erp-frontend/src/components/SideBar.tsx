@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import useCurrentMember from "@/app/lib/currentMember";
 import * as S from "@/assets/css/Style.styles";
 
 interface MenuItem {
@@ -12,6 +13,7 @@ interface MenuItem {
 interface MenuGroup {
   title: string;
   items: MenuItem[];
+  adminOnly?: boolean; // 관리자에게만 보이는 메뉴 (실제 차단은 백엔드 403)
 };
 
 const MENU_GROUPS: MenuGroup[] = [
@@ -26,6 +28,7 @@ const MENU_GROUPS: MenuGroup[] = [
   },
   {
     title: "시스템관리",
+    adminOnly: true,
     items: [
       { label: "사용자 권한 관리", href: "/dashboard/system/users" },
       { label: "회사 기본 정보", href: "/dashboard/system/company" },
@@ -45,10 +48,11 @@ interface SideBarProps {
 
 export const SideBar = ({onNavigate}: SideBarProps) => {
   const pathname = usePathname();
+  const {isAdmin} = useCurrentMember();
 
   return (
     <S.AsideContainer id="side-menu" aria-label="주 메뉴">
-      {MENU_GROUPS.map((group) => (
+      {MENU_GROUPS.filter((group) => !group.adminOnly || isAdmin).map((group) => (
         <S.MenuSection key={group.title}>
           <S.SectionTitle>{group.title}</S.SectionTitle>
           <S.MenuList>

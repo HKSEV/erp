@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import api from "@/app/lib/api";
+import useCurrentMember from "@/app/lib/currentMember";
 import type { Company } from "@/app/types/Company";
 import { PageContainer, PageHeader, Card, TextField, FormStack, FormActions, Button } from "@/components/ui";
 import useModal from "@/components/contexts/ModalContext";
@@ -24,6 +25,9 @@ const formatBusinessNumber = (value: string) => {
 
 export default function CompanySettings() {
   const {openAlertModal} = useModal();
+  const {isAdmin, isLoading: isMemberLoading} = useCurrentMember();
+  // 수정은 관리자만 (일반 회원은 읽기 전용, 실제 차단은 백엔드 403)
+  const isReadOnly = !isMemberLoading && !isAdmin;
 
   // 저장된 값(saved)과 입력 중인 값(form)을 따로 두고, 다를 때만 저장 가능
   const [saved, setSaved] = useState(EMPTY_COMPANY);
@@ -64,7 +68,7 @@ export default function CompanySettings() {
   const emailError = form.email && !EMAIL_PATTERN.test(form.email.trim())
     ? "올바른 이메일 형식으로 입력해 주세요." : undefined;
   const isFilled = Boolean(form.name.trim() && form.businessNumber && form.email.trim());
-  const canSave = isDirty && isFilled && !nameError && !businessNumberError && !emailError && !isSaving && !isLoading;
+  const canSave = isAdmin && isDirty && isFilled && !nameError && !businessNumberError && !emailError && !isSaving && !isLoading;
 
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -82,8 +86,9 @@ export default function CompanySettings() {
       setForm(company);
       openAlertModal("회사 정보가 저장되었습니다.", undefined, {variant: "success"});
     } catch (err) {
-      // 400: 백엔드가 보낸 안내 문구(예: 사업자 등록번호 형식), 그 밖의 오류는 공통 문구
-      const message = isAxiosError<{message?: unknown}>(err) && err.response?.status === 400 && typeof err.response.data?.message === "string"
+      // 400·403: 백엔드가 보낸 안내 문구(예: 사업자 등록번호 형식, 관리자 전용), 그 밖의 오류는 공통 문구
+      const status = isAxiosError(err) ? err.response?.status : undefined;
+      const message = isAxiosError<{message?: unknown}>(err) && (status === 400 || status === 403) && typeof err.response?.data?.message === "string"
         ? err.response.data.message
         : "회사 정보 저장에 실패했습니다.";
       openAlertModal(message, undefined, {variant: "error"});
@@ -96,7 +101,7 @@ export default function CompanySettings() {
     <PageContainer>
       <PageHeader
       title="회사 기본 정보"
-      description="시스템에 표시되는 회사 정보를 관리합니다."/>
+      description={isReadOnly ? "회사 정보는 관리자만 수정할 수 있습니다." : "시스템에 표시되는 회사 정보를 관리합니다."}/>
 
       <div style={{maxWidth: 640}}>
         <Card title="기본 정보">
@@ -111,6 +116,7 @@ export default function CompanySettings() {
               value={form.name}
               error={nameError}
               disabled={isLoading}
+              readOnly={isReadOnly}
               onChange={(e) => setForm((prev) => ({...prev, name: e.target.value}))}/>
               <TextField
               id="business-number"
@@ -120,8 +126,9 @@ export default function CompanySettings() {
               placeholder="000-00-00000"
               value={form.businessNumber}
               error={businessNumberError}
-              hint="- 없이 숫자만 입력해도 됩니다."
+              hint={isReadOnly ? undefined : "- 없이 숫자만 입력해도 됩니다."}
               disabled={isLoading}
+              readOnly={isReadOnly}
               onChange={(e) => setForm((prev) => ({...prev, businessNumber: formatBusinessNumber(e.target.value)}))}/>
               <TextField
               id="company-email"
@@ -133,13 +140,16 @@ export default function CompanySettings() {
               value={form.email}
               error={emailError}
               disabled={isLoading}
+              readOnly={isReadOnly}
               onChange={(e) => setForm((prev) => ({...prev, email: e.target.value}))}/>
-              <FormActions>
-                <Button variant="secondary" disabled={!isDirty || isSaving} onClick={() => setForm(saved)}>되돌리기</Button>
-                <Button type="submit" disabled={!canSave}>
-                  {isSaving ? "저장 중…" : "변경사항 저장"}
-                </Button>
-              </FormActions>
+              {!isReadOnly && (
+                <FormActions>
+                  <Button variant="secondary" disabled={!isDirty || isSaving} onClick={() => setForm(saved)}>되돌리기</Button>
+                  <Button type="submit" disabled={!canSave}>
+                    {isSaving ? "저장 중…" : "변경사항 저장"}
+                  </Button>
+                </FormActions>
+              )}
             </FormStack>
           </form>
         </Card>
