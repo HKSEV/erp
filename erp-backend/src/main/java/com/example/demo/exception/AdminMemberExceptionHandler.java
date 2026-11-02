@@ -27,13 +27,13 @@ public class AdminMemberExceptionHandler {
 			.body(Map.of("message", message));
 	}
 
-	// 없는 역할 값(예: "OWNER")이나 true/false가 아닌 값
+	// 없는 역할 값(예: "OWNER")이나 true/false가 아닌 값, 문자가 아닌 부서·직급
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	public ResponseEntity<Map<String, String>> handleInvalidBody(
 		HttpMessageNotReadableException exception
 	) {
 		return ResponseEntity.badRequest().body(Map.of(
-			"message", "역할 또는 계정 상태 값을 확인해 주세요."
+			"message", "요청 값을 확인해 주세요."
 		));
 	}
 

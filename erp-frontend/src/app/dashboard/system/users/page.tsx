@@ -9,9 +9,20 @@ import type { Column } from "@/components/ui";
 import useModal from "@/components/contexts/ModalContext";
 import { ROLE_LABEL } from "@/app/types/Member";
 import type { MemberAccount, UserRole } from "@/app/types/Member";
+import { DEPARTMENTS, POSITIONS } from "@/app/types/Organization";
+import type { SelectOption } from "@/components/ui";
 
 // 시스템관리 > 사용자 권한 관리 (관리자 전용, /api/admin/members)
 const ROLE_OPTIONS = (Object.keys(ROLE_LABEL) as UserRole[]).map((role) => ({value: role, label: ROLE_LABEL[role]}));
+
+// 부서·직급 선택칸: 비어 있으면 "선택", 목록에 없는 예전 값(회원가입 자유 입력)은 그대로 보여 줌
+const toOptions = (list: readonly string[], current: string | null): SelectOption[] => [
+  ...(!current ? [{value: "", label: "선택", disabled: true}] : []),
+  ...(current && !list.includes(current) ? [{value: current, label: current, disabled: true}] : []),
+  ...list.map((value) => ({value, label: value})),
+];
+// 확인창 문구용 (부서를 / 직급을)
+const PROFILE_OBJECT = {department: "부서를", position: "직급을"} as const;
 
 // 백엔드가 보낸 안내 문구(예: 관리자는 최소 1명), 없으면 공통 문구
 function getApiError(error: unknown, fallback: string): string {
@@ -73,7 +84,7 @@ export default function Users() {
   const isLastAdmin = (member: MemberAccount) => member.role === "ADMIN" && member.active && adminCount === 1;
 
   // 변경 요청: 성공하면 서버가 돌려준 값으로 목록의 해당 행을 바꿈
-  const requestUpdate = async (member: MemberAccount, action: "role" | "active", body: object, failTitle: string) => {
+  const requestUpdate = async (member: MemberAccount, action: "role" | "active" | "profile", body: object, failTitle: string) => {
     setPendingId(member.id);
     try {
       const {data} = await api.patch<MemberAccount>(`/api/admin/members/${member.id}/${action}`, body);
@@ -102,6 +113,21 @@ export default function Users() {
       {
         variant: "confirm",
         description: `${ROLE_LABEL[member.role]} → ${ROLE_LABEL[role]}`,
+        confirmText: "변경",
+        cancelText: "취소",
+      },
+    );
+  };
+
+  // 부서·직급은 관리자가 지정 (회원가입·마이페이지에서는 바꿀 수 없음)
+  const changeProfile = (member: MemberAccount, field: "department" | "position", value: string) => {
+    const target = PROFILE_OBJECT[field];
+    openAlertModal(
+      `${member.name}님의 ${target} 변경할까요?`,
+      () => void requestUpdate(member, "profile", {[field]: value}, `${target} 변경하지 못했습니다.`),
+      {
+        variant: "confirm",
+        description: `${member[field] || "없음"} → ${value}`,
         confirmText: "변경",
         cancelText: "취소",
       },
@@ -138,8 +164,24 @@ export default function Users() {
       isMe(m) ? `${m.name} (나)` : m.name
     )},
     {key: "email", header: "이메일"},
-    {key: "department", header: "부서", width: "100px", render: (m) => m.department || "-"},
-    {key: "position", header: "직급", width: "80px", render: (m) => m.position || "-"},
+    {key: "department", header: "부서", align: "center", width: "120px", render: (m) => (
+      <Select
+      size="sm"
+      aria-label={`${m.name} 부서`}
+      options={toOptions(DEPARTMENTS, m.department)}
+      value={m.department ?? ""}
+      disabled={pendingId === m.id}
+      onChange={(e) => changeProfile(m, "department", e.target.value)}/>
+    )},
+    {key: "position", header: "직급", align: "center", width: "100px", render: (m) => (
+      <Select
+      size="sm"
+      aria-label={`${m.name} 직급`}
+      options={toOptions(POSITIONS, m.position)}
+      value={m.position ?? ""}
+      disabled={pendingId === m.id}
+      onChange={(e) => changeProfile(m, "position", e.target.value)}/>
+    )},
     {key: "role", header: "역할", align: "center", width: "120px", render: (m) => (
       // 자기 자신의 역할은 바꿀 수 없음
       <Select

@@ -6,6 +6,7 @@ import { FiChevronDown } from "react-icons/fi";
 export interface SelectOption {
   value: string;
   label: string;
+  disabled?: boolean;  // 예: 값이 비어 있을 때 보여 주는 "선택" 안내
 };
 
 interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "size"> {
@@ -19,7 +20,7 @@ export default function Select({options, size = "md", ...rest}: SelectProps) {
     <Wrapper>
       <StyledSelect $size={size} {...rest}>
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
+          <option key={opt.value} value={opt.value} disabled={opt.disabled}>{opt.label}</option>
         ))}
       </StyledSelect>
       <Arrow aria-hidden="true"/>
