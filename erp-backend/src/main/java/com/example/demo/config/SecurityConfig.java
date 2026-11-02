@@ -89,7 +89,13 @@ public class SecurityConfig {
           "/api/members/change-password",
           "/api/members/change-password/**",
           "/api/schedules",
-          "/api/schedules/**"
+          "/api/schedules/**",
+          "/api/production",
+          "/api/production/**",
+          "/api/inventory",
+          "/api/inventory/**",
+          "/api/hr",
+          "/api/hr/**"
         ).authenticated()
 
         // 시스템관리: 사용자 권한 관리와 회사 정보 수정은 관리자만

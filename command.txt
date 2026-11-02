@@ -8,6 +8,9 @@ npm install -D tailwindcss postcss autoprefixer
 npm install -D @tailwindcss/postcss tailwindcss
 npm install @reduxjs/toolkit react-redux
 
+npm install --save @stylexjs/stylex
+npm install --save-dev @stylejs/babel-plugin @stylexjs/postcss-plugin postcss
+
 ORACLE DB 명령
 ALTER SESSION SET "_ORACLE_SCRIPT"=TRUE;
 CREATE USER "ERP_USR" IDENTIFIED BY "1234";

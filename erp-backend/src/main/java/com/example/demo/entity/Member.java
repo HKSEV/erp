@@ -42,8 +42,8 @@ public class Member {
   @Column(nullable = false)
   private String password; // Spring Security BCrypt 등으로 암호화되어 저장됨
 
-  @Column(length = 100)
-  private String companyName;
+//  @Column(length = 100)
+//  private String companyName;
 
   @Column(length = 50)
   private String position;

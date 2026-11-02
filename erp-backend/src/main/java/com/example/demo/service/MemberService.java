@@ -53,7 +53,7 @@ public class MemberService {
       .lastName(dto.getLastName())
       .email(dto.getEmail())
       .password(passwordEncoder.encode(dto.getPassword())) // 암호화
-      .companyName(dto.getCompanyName())
+      .department(dto.getDepartment())
       .position(dto.getPosition())
       .tel(dto.getTel())
       .address(dto.getAddress())

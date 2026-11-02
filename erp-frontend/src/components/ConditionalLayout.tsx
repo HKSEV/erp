@@ -7,6 +7,7 @@ import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { SideBar } from "./SideBar";
 import { ModalProvider } from "./contexts/ModalContext";
+import AuthGuard from "./AuthGuard";
 import * as S from "@/assets/css/Style.styles";
 
 export default function ConditionalLayout({children}: {
@@ -26,6 +27,8 @@ export default function ConditionalLayout({children}: {
     "/manual"
   ];
   const isHidden = hiddenPaths.includes(pathname);
+  const isDashboard = pathname === "/dashboard"
+    || pathname.startsWith("/dashboard/");
   // 모바일 사이드바 서랍 열림 상태 (헤더 버튼과 사이드바가 함께 사용)
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const closeMenu = () => setIsMenuOpen(false);
@@ -34,6 +37,7 @@ export default function ConditionalLayout({children}: {
   useEffect(() => {
     if (!isMenuOpen)
       return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape")
         setIsMenuOpen(false);
@@ -42,35 +46,44 @@ export default function ConditionalLayout({children}: {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isMenuOpen]);
 
+  const content = (
+    <S.PageWrapper>
+      {!isHidden ? (
+        <>
+          <S.TopArea>
+            <Header
+            isMenuOpen={isMenuOpen}
+            onToggleMenu={() => setIsMenuOpen((prev) => !prev)}
+            onCloseMenu={closeMenu}/>
+          </S.TopArea>
+
+          <S.MainContent $isHidden={isHidden}>
+            <S.LnbWrapper $isOpen={isMenuOpen}>
+              <SideBar onNavigate={closeMenu}/>
+            </S.LnbWrapper>
+
+            {isMenuOpen && <S.DrawerBackdrop onClick={closeMenu}/>}
+
+            <S.ContentArea>
+              {children}
+            </S.ContentArea>
+          </S.MainContent>
+
+          <Footer/>
+        </>
+      ) : (
+        <S.MainContent $isHidden={isHidden}>
+          {children}
+        </S.MainContent>
+      )}
+    </S.PageWrapper>
+  );
+
   return (
     <ModalProvider>
-      <S.PageWrapper>
-        {/* isHidden이 false일 때만 헤더 푸터 표시 */}
-        {!isHidden ? (
-          <>
-            <S.TopArea>
-              <Header
-              isMenuOpen={isMenuOpen}
-              onToggleMenu={() => setIsMenuOpen((prev) => !prev)}
-              onCloseMenu={closeMenu}/>
-            </S.TopArea>
-            <S.MainContent $isHidden={isHidden}>
-              <S.LnbWrapper $isOpen={isMenuOpen}>
-                <SideBar onNavigate={closeMenu}/>
-              </S.LnbWrapper>
-              {isMenuOpen && <S.DrawerBackdrop onClick={closeMenu}/>}
-              <S.ContentArea>
-                {children}
-              </S.ContentArea>
-            </S.MainContent>
-            <Footer/>
-          </>
-        ) : (
-          <S.MainContent $isHidden={isHidden}>
-            {children}
-          </S.MainContent>
-        )}
-      </S.PageWrapper>
+      {isDashboard ? (
+        <AuthGuard key={pathname}>{content}</AuthGuard>
+      ) : content}
     </ModalProvider>
   );
 };

@@ -12,7 +12,18 @@ import {
 } from "@/app/lib/password";
 import { clearSession } from "@/app/lib/auth";
 import { searchAddress } from "@/app/lib/postcode";
-import { PageContainer, PageHeader, Card, CardStack, DescriptionList, TextField, FormStack, FormActions, FieldWithButton, Button } from "@/components/ui";
+import {
+  PageContainer,
+  PageHeader,
+  Card,
+  CardStack,
+  DescriptionList,
+  TextField,
+  FormStack,
+  FormActions,
+  FieldWithButton,
+  Button
+} from "@/components/ui";
 import useModal from "@/components/contexts/ModalContext";
 import { ROLE_LABEL } from "@/app/types/Member";
 import type { MemberProfile } from "@/app/types/Member";

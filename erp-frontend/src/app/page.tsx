@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { isAxiosError } from "axios";
-import api from "@/app/lib/api";
 import {
   FiMail,
   FiLock,
@@ -14,6 +13,8 @@ import {
 } from "react-icons/fi";
 import { FaUser } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
+import api from "@/app/lib/api";
+import { saveToken } from "@/app/lib/auth";
 import useModal from "@/components/contexts/ModalContext";
 import * as S from "@/assets/css/Style.styles";
 import { setLogin } from "@/store/authSlice";
@@ -28,54 +29,71 @@ export default function Home() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const requestRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => {
+    requestRef.current?.abort();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (requestRef.current)
+      return;
+
+    const controller = new AbortController();
+    requestRef.current = controller;
     setIsLoading(true);
+
     try {
-      // 백엔드 로그인 API 호출
-      const response = await api.post("/api/members/login", {
-        email, password,
-      });
-      if (response.status === 200) {
-        // 1. 백엔드에서 발급한 JWT 토큰을 localStorage에 저장
-        const token = response.data.token;
-        // 이전 로그인 정보가 반대쪽 저장소에 남지 않도록 정리
-        localStorage.removeItem("token");
-        sessionStorage.removeItem("token");
-
-        const storage = rememberMe ? localStorage : sessionStorage;
-        storage.setItem("token", token);
-        dispatch(setLogin({token}));
-
-        const attributes = ["path=/", "SameSite=Lax",];
-        if (rememberMe)
-          attributes.push("max-age=3600");
-        if (window.location.protocol === "https:")
-          attributes.push("Secure");
-        document.cookie = `login_token=true; ${attributes.join("; ")}`;
-
-        openAlertModal(
-          "로그인 성공!",
-          () => router.push("/dashboard"),
-          {
-            variant: "success",
-            description: "정상적으로 로그인되었습니다.\n서비스를 이용해 보세요.",
-          },
-        );
-      };
-    } catch (err) {
-      console.error("로그인 에러: ", err);
-      openAlertModal(
-        "로그인에 실패했습니다.",
-        undefined,
-        {
-          variant: "error",
-          description: "이메일 또는 비밀번호를 확인해 주세요.",
-        },
+      const {data} = await api.post<{token: string}>(
+        "/api/members/login",
+        {email: email.trim(), password},
+        {signal: controller.signal}
       );
+
+      if (controller.signal.aborted)
+        return;
+
+      const token = data?.token;
+
+      if (typeof token !== "string" || !token.trim()) {
+        openAlertModal("로그인 응답에 토큰이 없습니다.", undefined, {
+          variant: "error",
+        });
+        return;
+      };
+
+      saveToken(token, rememberMe);
+      dispatch(setLogin({token}));
+
+      openAlertModal(
+        "로그인 성공!",
+        () => router.replace("/dashboard"),
+        {
+          variant: "success",
+          description: "정상적으로 로그인되었습니다.\n서비스를 이용해 보세요.",
+        }
+      );
+    } catch (err: unknown) {
+      if (controller.signal.aborted)
+        return;
+
+      const data = isAxiosError<string | {message?: unknown}>(err)
+        ? err.response?.data
+        : undefined;
+
+      const serverMessage = typeof data === "string" ? data : data?.message;
+      const message = typeof serverMessage === "string" && serverMessage.trim()
+        ? serverMessage
+        : "로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+
+      openAlertModal(message, undefined, {variant: "error"});
     } finally {
-      setIsLoading(false);
+      if (!controller.signal.aborted) {
+        requestRef.current = null;
+        setIsLoading(false);
+      };
     };
   };
 

@@ -2,35 +2,24 @@
 
 // 먼저 로그인한 토큰과 사용자 상태를 관리할 슬라이스
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import type { MemberProfile } from "@/app/types/Member";
 
 interface AuthState {
   token: string | null; // JWT 토큰 문자열이 들어가거나 없으면 null
   isAuthenticated: boolean; // 로그인 여부
-  userInfo: {
-    email: string;
-    firstName: string;
-    lastName: string;
-    companyName: string;
-  } | null;
+  userInfo: MemberProfile | null;
 };
 /**
  * Authentication(인증)
  * Authorization(인가/권한부여)
  * Accounting(회계/과금)
  */
-const storage: Storage | null =
-  typeof window === "undefined"
-    ? null
-    : window.localStorage.getItem("token")
-      ? window.localStorage
-      : window.sessionStorage;
 
-const token = storage?.getItem("token") ?? null;
 const initialState: AuthState = {
   // SSR 환경에서 에러가 나지 않도록 window 객체 존재 여부를 확인한 뒤 
   // localStorage의 토큰을 가져옴
-  token: token,
-  isAuthenticated: !!token,
+  token: null,
+  isAuthenticated: false,
   userInfo: null,
 };
 
@@ -42,20 +31,17 @@ export const AuthSlice = createSlice({
     // 로그인 성공
     setLogin: (state, action: PayloadAction<{
       token: string;
-      userInfo?: any;
+      userInfo?: MemberProfile;
     }>) => {
       state.token = action.payload.token;
       state.isAuthenticated = true;
-      if (action.payload.userInfo)
-        state.userInfo = action.payload.userInfo
-      storage?.setItem("token", action.payload.token);
+      state.userInfo = action.payload.userInfo ?? null;
     },
     // 로그아웃
     setLogout: (state) => {
       state.token = null;
       state.isAuthenticated = false;
       state.userInfo = null;
-      storage?.removeItem("token");
     },
   }
 });

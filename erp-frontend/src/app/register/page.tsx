@@ -14,7 +14,7 @@ import {
   FiPhone,
   FiInstagram,
 } from "react-icons/fi";
-import { FaRegBuilding } from "react-icons/fa";
+import { FaUsers } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import api from "@/app/lib/api";
 import {
@@ -41,7 +41,7 @@ interface FormData {
   email: string;
   password: string;
   passwordConfirm: string;
-  companyName: string;
+  department: string;
   position: string;
   tel: string;
   address: string;
@@ -60,7 +60,7 @@ export default function Member() {
     email: "",
     password: "",
     passwordConfirm: "",
-    companyName: "",
+    department: "",
     position: "",
     tel: "",
     address: "",
@@ -310,7 +310,9 @@ export default function Member() {
             </S.MemberField>
           </S.MemberFieldRow>
 
-          <S.MemberHint id="register-password-hint">
+          <S.MemberHint
+          id="register-password-hint"
+          style={{margin: "0 auto"}}>
             <FiInfo aria-hidden="true"/>
             <span>{PASSWORD_RULE_MESSAGE}</span>
           </S.MemberHint>
@@ -340,18 +342,18 @@ export default function Member() {
 
           <S.MemberFieldRow>
             <S.MemberField>
-              <S.MemberInputLabel htmlFor="companyName">
-                회사명
+              <S.MemberInputLabel htmlFor="department">
+                부서
               </S.MemberInputLabel>
               <S.MemberInputWrapper>
-                <FaRegBuilding aria-hidden="true"/>
+                <FaUsers aria-hidden="true"/>
                 <S.MemberInput
-                id="companyName"
-                name="companyName"
+                id="department"
+                name="department"
                 type="text"
-                placeholder="회사명"
+                placeholder="부서"
                 autoComplete="organization"
-                value={formData.companyName}
+                value={formData.department}
                 onChange={handleChange}/>
               </S.MemberInputWrapper>
             </S.MemberField>

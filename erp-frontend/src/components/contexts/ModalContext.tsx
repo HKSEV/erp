@@ -3,10 +3,13 @@
 import React, {
   createContext,
   useState,
+  useEffect,
   useContext,
   useCallback,
   ReactNode
 } from "react";
+
+import { getToken, subscribeToken } from "@/app/lib/auth";
 
 import ScheduleModal from "../modal/ScheduleModal";
 import type { Schedule } from "@/app/types/Schedule";
@@ -15,10 +18,13 @@ import AlertModal, { AlertModalOptions } from "../modal/AlertModal";
 
 import ProductionOrderModal from "../modal/ProductionOrderModal";
 import type { ProductionOrder } from "@/app/types/ProductionOrder";
+
 import InventoryItemModal from "../modal/InventoryItemModal";
 import type { InventoryItem } from "@/app/types/InventoryItem";
+
 import EmployeeModal from "../modal/EmployeeModal";
 import type { Employee } from "@/app/types/Employee";
+
 
 // ScheduleModal 설정 타입
 interface ScheduleModalConfig {
@@ -144,6 +150,31 @@ export function ModalProvider({children}: {children: ReactNode}) {
     useState<EmployeeModalConfig>({
       isOpen: false,
     });
+
+  useEffect(() => {
+    let currentToken = getToken();
+
+    return subscribeToken(() => {
+      const nextToken = getToken();
+
+      if (nextToken === currentToken)
+        return;
+
+      currentToken = nextToken;
+
+      setScheduleModalConfig((prev) => ({
+        ...prev,
+        isOpen: false,
+        schedules: [],
+        setSchedules: undefined,
+      }));
+
+      setProductionOrderModalConfig({isOpen: false});
+      setInventoryItemModalConfig({isOpen: false});
+      setEmployeeModalConfig({isOpen: false});
+      setAlertModalConfig({isOpen: false, message: ""});
+    });
+  }, []);
 
   // ScheduleModal 열기 함수
   const openScheduleModal = useCallback((
