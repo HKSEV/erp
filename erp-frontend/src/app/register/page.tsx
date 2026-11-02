@@ -1,14 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useDispatch } from "react-redux";
-import axios from "axios";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Script from "next/script";
+import { isAxiosError } from "axios";
 import {
   FiUserPlus,
   FiMail,
   FiLock,
+  FiInfo,
   FiEye,
   FiEyeOff,
   FiBriefcase,
@@ -17,8 +16,16 @@ import {
 } from "react-icons/fi";
 import { FaRegBuilding } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
+import api from "@/app/lib/api";
+import {
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_RULE_MESSAGE,
+  getPasswordError,
+} from "@/app/lib/password";
+import { searchAddress } from "@/app/lib/postcode";
+import useModal from "@/components/contexts/ModalContext";
 import * as S from "@/assets/css/Style.styles";
-import { setLogin } from "@/store/authSlice";
 
 const handleInstargramLogin = () => {
 
@@ -49,8 +56,10 @@ declare global {
 };
 
 export default function Member() {
+  const {openAlertModal} = useModal();
   const router = useRouter();
-  const dispatch = useDispatch();
+  const requestRef = useRef<AbortController | null>(null);
+
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
     lastName: "",
@@ -68,86 +77,107 @@ export default function Member() {
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const genderOptions = [
-    { value: "male", label: "남성" },
-    { value: "female", label: "여성" },
-    { value: "other", label: "기타" },
+    {value: "male", label: "남성"},
+    {value: "female", label: "여성"},
+    {value: "other", label: "기타"},
   ];
+
+  useEffect(() => () => {
+    requestRef.current?.abort();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const {name, value} = e.target;
     setFormData((prev) => ({...prev, [name]: value}));
   };
 
-  const handleAddressSearch = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!window.daum || !window.daum.Postcode)
-      return;
+  const handleAddressSearch = async () => {
+    try {
+      const address = await searchAddress();
 
-    new window.daum.Postcode({
-      oncomplete: (data: any) => {
-        let fullAddress = data.address
-        let extraAddress = "";
-        
-        // 도로명 주소(R)
-        if (data.addressType === "R") {
-          if (data.bname !== "")
-            extraAddress += data.bname;
-          if (data.buildingName !== "")
-            extraAddress += extraAddress !== ""
-            ? `, ${data.buildingName}` : data.buildingName;
-          
-          fullAddress += extraAddress !== "" ? ` (${extraAddress})` : "";
-        };
+      if (!address)
+        return;
 
-        setFormData((prev) => ({
-          ...prev, address: fullAddress, detailAddress: ""
-        }));
-      }
-    }).open(); // 팝업창 실행
+      setFormData((prev) => ({...prev, address, detailAddress: ""}));
+      document.getElementById("detailAddress")?.focus();
+    } catch {
+      openAlertModal("주소 검색을 불러오지 못했습니다.", undefined, {
+        variant: "error",
+      });
+    };
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true)
 
-    if (formData.password !== formData.passwordConfirm) {
-      alert("비밀번호가 일치하지 않습니다. 다시 확인해 주세요.");
+    if (requestRef.current)
+      return;
+
+    const passwordError = getPasswordError(formData.password);
+
+    if (passwordError) {
+      openAlertModal(passwordError, undefined, {variant: "error"});
       return;
     };
 
+    const {passwordConfirm, ...payload} = formData;
+
+    if (payload.password !== passwordConfirm) {
+      openAlertModal("비밀번호가 일치하지 않습니다.", undefined, {
+        variant: "error",
+      });
+      return;
+    };
+
+    const controller = new AbortController();
+    requestRef.current = controller;
+    setIsLoading(true);
+
     try {
-      const response = await axios.post("/api/members/register", formData);
-      if (response.status === 200 || response.status === 201) {
-        console.log("등록 성공: ", response.data);
-        alert("회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.");
-        // 만약 백엔드에서 가입과 동시에 토큰을 내려준다면 바로 전역 상태에 저장
-        const token = response.data.token;
-        if (token) {
-          dispatch(setLogin({token}));
-          axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-          router.push("/");
-        } else {
-          router.push("/");
-        };
-      };
-    } catch (err: any) {
-      if (err.response && err.response.data) {
-        console.error("에러: ", err.response);
-        alert(err.response.data.message);
-      } else {
-        console.error("네트워크 에러: ", err.message);
-        alert("로그인중 오류가 발생했습니다");
-      };
+      await api.post<string>(
+        "/api/members/register",
+        {...payload, email: payload.email.trim()},
+        {signal: controller.signal}
+      );
+
+      if (controller.signal.aborted)
+        return;
+
+      openAlertModal(
+        "회원가입이 완료되었습니다.",
+        () => router.push("/"),
+        {
+          variant: "success",
+          description: "등록한 계정으로 로그인해 주세요.",
+        }
+      );
+    } catch (err: unknown) {
+      if (controller.signal.aborted)
+        return;
+
+      const data = isAxiosError<string | {message?: string}>(err)
+        ? err.response?.data
+        : undefined;
+
+      const message = typeof data === "string"
+        ? data
+        : data?.message || "회원가입에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+
+      openAlertModal(message, undefined, {variant: "error"});
     } finally {
-      setIsLoading(false);
+      if (!controller.signal.aborted) {
+        requestRef.current = null;
+        setIsLoading(false);
+      };
     };
   };
 
   return (
     <S.MemberContainer>
       {/* Next.js Script 컴포넌트를 사용한 비동기 로드 */}
-      <Script
+      {/* <Script
       src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"
-      strategy="lazyOnload"/>
+      strategy="lazyOnload"/> */}
       <S.MemberCard aria-labelledby="register-title">
         <S.MemberHeader>
           <S.MemberIcon aria-hidden="true">
@@ -230,6 +260,10 @@ export default function Member() {
                 autoComplete="new-password"
                 value={formData.password}
                 onChange={handleChange}
+                minLength={PASSWORD_MIN_LENGTH}
+                maxLength={PASSWORD_MAX_LENGTH}
+                aria-describedby="register-password-hint"
+                disabled={isLoading}
                 required/>
                 <S.MemberPasswordToggle
                 type="button"
@@ -259,6 +293,10 @@ export default function Member() {
                 autoComplete="new-password"
                 value={formData.passwordConfirm}
                 onChange={handleChange}
+                minLength={PASSWORD_MIN_LENGTH}
+                maxLength={PASSWORD_MAX_LENGTH}
+                aria-describedby="register-password-hint"
+                disabled={isLoading}
                 required/>
                 <S.MemberPasswordToggle
                 type="button"
@@ -277,6 +315,11 @@ export default function Member() {
               </S.MemberInputWrapper>
             </S.MemberField>
           </S.MemberFieldRow>
+
+          <S.MemberHint id="register-password-hint">
+            <FiInfo aria-hidden="true"/>
+            <span>{PASSWORD_RULE_MESSAGE}</span>
+          </S.MemberHint>
 
           <S.MemberField>
             <S.MemberInputLabel as="span" id="gender-label">
@@ -359,14 +402,14 @@ export default function Member() {
             </S.MemberInputLabel>
             <S.MemberAddressRow>
               <S.MemberInputWrapper>
-                  <S.MemberInput
-                  id="address"
-                  name="address"
-                  type="text"
-                  placeholder="주소를 검색해 주세요"
-                  value={formData.address}
-                  onChange={handleChange}
-                  readOnly/>
+                <S.MemberInput
+                id="address"
+                name="address"
+                type="text"
+                placeholder="주소를 검색해 주세요"
+                value={formData.address}
+                onChange={handleChange}
+                readOnly/>
               </S.MemberInputWrapper>
               <S.MemberSearchButton
               type="button"

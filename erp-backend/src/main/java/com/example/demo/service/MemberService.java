@@ -37,6 +37,7 @@ public class MemberService {
 
   @Transactional
   public void register(MemberRegisterDto dto) {
+    validatePassword(dto.getPassword());
     // 이메일 중복 체크
     if (memberRepository.existsByEmail(dto.getEmail())) {
       throw new IllegalArgumentException("이미 사용중인 이메일입니다.");
@@ -142,13 +143,7 @@ public class MemberService {
       throw invalidResetLink();
     }
 
-    if (newPassword == null || newPassword.isBlank()
-      || newPassword.length() < 8 || newPassword.length() > 64
-      || newPassword.getBytes(StandardCharsets.UTF_8).length > 72) {
-      throw new IllegalArgumentException(
-        "비밀번호는 8~64자, UTF-8 기준 72바이트 이하로 입력해 주세요."
-      );
-    }
+    validatePassword(newPassword);
 
     String hash = hashResetToken(token);
 
@@ -192,7 +187,11 @@ public class MemberService {
 
   // 2. 마이페이지 비밀번호 변경
   @Transactional
-  public void changePassword(String email, String oldPassword, String newPassword) {
+  public void changePassword(
+    String email,
+    String oldPassword,
+    String newPassword
+  ) {
     Member member = memberRepository.findByEmail(email)
       .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
@@ -200,8 +199,22 @@ public class MemberService {
       throw new IllegalArgumentException("기존 비밀번호가 일치하지 않습니다.");
     }
 
+    validatePassword(newPassword);
+
     member.setPassword(passwordEncoder.encode(newPassword));
     member.setPasswordResetTokenHash(null);
     member.setPasswordResetExpiresAt(null);
+  }
+
+  private void validatePassword(String password) {
+    if (password == null
+      || password.matches("[\\s\\p{Z}\\uFEFF]*")
+      || password.length() < 8
+      || password.length() > 64
+      || password.getBytes(StandardCharsets.UTF_8).length > 72) {
+      throw new IllegalArgumentException(
+        "비밀번호는 8~64자, UTF-8 기준 72바이트 이하로 입력해 주세요."
+      );
+    }
   }
 }

@@ -38,6 +38,7 @@ public class Member {
   @Column(nullable = false, unique = true, length = 100)
   private String email;
 
+  @JsonIgnore
   @Column(nullable = false)
   private String password; // Spring Security BCrypt 등으로 암호화되어 저장됨
 

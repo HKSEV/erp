@@ -2,8 +2,14 @@
 
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import axios from "axios";
+import { isAxiosError } from "axios";
 import { FiLock, FiCheck, FiInfo, FiArrowLeft } from "react-icons/fi";
+import api from "@/app/lib/api";
+import {
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_MAX_LENGTH,
+  getPasswordError,
+} from "@/app/lib/password";
 import useModal from "@/components/contexts/ModalContext";
 import * as S from "@/assets/css/Style.styles";
 
@@ -70,24 +76,18 @@ function ResetPasswordForm({token}: {token: string}) {
     if (!hasToken) {
       showError("올바른 재설정 링크로 다시 접속해 주세요.");
       return;
-    }
+    };
 
-    if (
-      !newPassword.trim()
-      || newPassword.length < 8
-      || newPassword.length > 64
-      || new TextEncoder().encode(newPassword).length > 72
-    ) {
-      showError(
-        "비밀번호는 8~64자, UTF-8 기준 72바이트 이하로 입력해 주세요."
-      );
+    const passwordError = getPasswordError(newPassword);
+    if (passwordError) {
+      showError(passwordError);
       return;
-    }
+    };
 
     if (newPassword !== passwordConfirm) {
       showError("비밀번호가 일치하지 않습니다.");
       return;
-    }
+    };
 
     const controller = new AbortController();
     requestRef.current = controller;
@@ -95,7 +95,7 @@ function ResetPasswordForm({token}: {token: string}) {
     setError("");
 
     try {
-      await axios.post(
+      await api.post(
         "/api/members/reset-password",
         {token, newPassword},
         {signal: controller.signal}
@@ -119,7 +119,7 @@ function ResetPasswordForm({token}: {token: string}) {
     } catch (err: unknown) {
       if (controller.signal.aborted) return;
 
-      const data = axios.isAxiosError<string | { message?: string }>(err)
+      const data = isAxiosError<string | {message?: string}>(err)
         ? err.response?.data
         : undefined;
 
@@ -133,8 +133,8 @@ function ResetPasswordForm({token}: {token: string}) {
       if (!controller.signal.aborted) {
         requestRef.current = null;
         setIsLoading(false);
-      }
-    }
+      };
+    };
   };
 
   return (
@@ -187,26 +187,24 @@ function ResetPasswordForm({token}: {token: string}) {
                 </S.MemberInputLabel>
 
                 <S.MemberInputWrapper $disabled={isLoading}>
-                  <FiLock aria-hidden="true" />
-
+                  <FiLock aria-hidden="true"/>
                   <S.MemberInput
-                    id={field.id}
-                    name={field.id}
-                    type="password"
-                    placeholder={field.label}
-                    autoComplete="new-password"
-                    value={field.value}
-                    onChange={(e) => field.setValue(e.target.value)}
-                    minLength={8}
-                    maxLength={64}
-                    disabled={isLoading}
-                    aria-describedby={
-                      error
-                        ? "reset-password-error"
-                        : "reset-password-hint"
-                    }
-                    required
-                  />
+                  id={field.id}
+                  name={field.id}
+                  type="password"
+                  placeholder={field.label}
+                  autoComplete="new-password"
+                  value={field.value}
+                  onChange={(e) => field.setValue(e.target.value)}
+                  minLength={PASSWORD_MIN_LENGTH}
+                  maxLength={PASSWORD_MAX_LENGTH}
+                  disabled={isLoading}
+                  aria-describedby={
+                    error
+                      ? "reset-password-error"
+                      : "reset-password-hint"
+                  }
+                  required/>
                 </S.MemberInputWrapper>
               </S.MemberField>
             ))}

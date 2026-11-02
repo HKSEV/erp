@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import axios from "axios";
+import { isAxiosError } from "axios";
 import { FiLock, FiMail, FiInfo, FiArrowLeft } from "react-icons/fi";
+import api from "@/app/lib/api";
 import useModal from "@/components/contexts/ModalContext";
 import * as S from "@/assets/css/Style.styles";
 
@@ -11,7 +11,6 @@ export default function ForgotPassword() {
   const {openAlertModal} = useModal();
   const requestRef = useRef<AbortController | null>(null);
 
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -30,13 +29,14 @@ export default function ForgotPassword() {
     setIsLoading(true);
 
     try {
-      await axios.post(
+      await api.post(
         "/api/members/forgot-password",
-        { email: email.trim() },
-        { signal: controller.signal }
+        {email: email.trim()},
+        {signal: controller.signal}
       );
 
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted)
+        return;
 
       openAlertModal(
         "입력한 이메일로 가입된 계정이 있다면 재설정 링크가 발송됩니다.",
@@ -46,11 +46,12 @@ export default function ForgotPassword() {
           description: "메일함과 스팸함을 확인해 주세요.",
         }
       );
-    } catch (error: unknown) {
-      if (controller.signal.aborted) return;
+    } catch (err: unknown) {
+      if (controller.signal.aborted)
+        return;
 
-      const data = axios.isAxiosError<string | { message?: string }>(error)
-        ? error.response?.data
+      const data = isAxiosError<string | {message?: string}>(err)
+        ? err.response?.data
         : undefined;
 
       const message = typeof data === "string"
@@ -58,7 +59,7 @@ export default function ForgotPassword() {
         : data?.message
           || "메일 요청에 실패했습니다. 잠시 후 다시 시도해 주세요.";
 
-      openAlertModal(message, undefined, { variant: "error" });
+      openAlertModal(message, undefined, {variant: "error"});
     } finally {
       if (!controller.signal.aborted) {
         requestRef.current = null;

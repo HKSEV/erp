@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import { isAxiosError } from "axios";
 import api from "@/app/lib/api";
+import {
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_RULE_MESSAGE,
+  getPasswordError,
+} from "@/app/lib/password";
 import { clearSession } from "@/app/lib/auth";
 import { searchAddress } from "@/app/lib/postcode";
 import { PageContainer, PageHeader, Card, CardStack, DescriptionList, TextField, FormStack, FormActions, FieldWithButton, Button } from "@/components/ui";
@@ -70,33 +76,78 @@ export default function MyPage() {
   };
 
   // 비밀번호: 입력하는 동안 바로 검사하고, 조건을 모두 만족해야 변경 버튼 활성화
-  const [password, setPassword] = useState({current: "", next: "", confirm: ""});
+  const [password, setPassword] = useState({
+    current: "", next: "", confirm: "",
+  });
   const [isChanging, setIsChanging] = useState(false);
-  const nextError = password.next && password.next === password.current ? "기존 비밀번호와 다른 비밀번호를 입력해 주세요." : undefined;
-  const confirmError = password.confirm && password.confirm !== password.next ? "새 비밀번호가 일치하지 않습니다." : undefined;
-  const canChangePassword = Boolean(password.current && password.next && password.confirm) && !nextError && !confirmError && !isChanging;
+  const requestRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => {
+    requestRef.current?.abort();
+  }, []);
+
+  const nextError = password.next
+    ? getPasswordError(password.next)
+      || (password.next === password.current
+        ? "기존 비밀번호와 다른 비밀번호를 입력해 주세요."
+        : undefined)
+    : undefined;
+
+  const confirmError = password.confirm && password.confirm !== password.next
+    ? "새 비밀번호가 일치하지 않습니다."
+    : undefined;
+
+  const canChangePassword =
+    Boolean(password.current && password.next && password.confirm)
+    && !nextError
+    && !confirmError
+    && !isChanging;
 
   const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!canChangePassword)
+
+    if (!canChangePassword || requestRef.current)
       return;
+
+    const controller = new AbortController();
+    requestRef.current = controller;
     setIsChanging(true);
+
     try {
-      await api.post("/api/members/change-password", {oldPassword: password.current, newPassword: password.next});
-      // 기존 토큰은 바로 지우고, 확인을 누르면 로그인 화면으로 이동
+      await api.post(
+        "/api/members/change-password",
+        {oldPassword: password.current, newPassword: password.next},
+        {signal: controller.signal}
+      );
+
+      if (controller.signal.aborted)
+        return;
+
+      setPassword({current: "", next: "", confirm: ""});
       clearSession();
+
       openAlertModal("비밀번호가 변경되었습니다.", () => router.push("/"), {
         variant: "success",
         description: "보안을 위해 다시 로그인해 주세요.",
       });
-    } catch (err) {
-      // 400: 백엔드가 보낸 안내 문구(예: 기존 비밀번호 불일치), 그 밖의 오류는 공통 문구
-      const message = axios.isAxiosError(err) && err.response?.status === 400 && typeof err.response.data === "string"
-        ? err.response.data
-        : "비밀번호 변경에 실패했습니다.";
+    } catch (err: unknown) {
+      if (controller.signal.aborted)
+        return;
+
+      const data = isAxiosError<string | {message?: string}>(err)
+        ? err.response?.data
+        : undefined;
+
+      const message = typeof data === "string"
+        ? data
+        : data?.message || "비밀번호 변경에 실패했습니다.";
+
       openAlertModal(message, undefined, {variant: "error"});
     } finally {
-      setIsChanging(false);
+      if (!controller.signal.aborted) {
+        requestRef.current = null;
+        setIsChanging(false);
+      };
     };
   };
 
@@ -159,11 +210,15 @@ export default function MyPage() {
             <FormStack>
               <TextField
               id="current-password"
-              label="현재(또는 임시) 비밀번호"
+              label="현재 비밀번호"
               type="password"
               autoComplete="current-password"
               value={password.current}
-              onChange={(e) => setPassword((prev) => ({...prev, current: e.target.value}))}/>
+              onChange={(e) => setPassword((prev) => (
+                {...prev, current: e.target.value}
+              ))}
+              disabled={isChanging}
+              required/>
               <TextField
               id="new-password"
               label="새 비밀번호"
@@ -171,8 +226,14 @@ export default function MyPage() {
               autoComplete="new-password"
               value={password.next}
               error={nextError}
-              hint="기존 비밀번호와 다른 비밀번호를 사용해 주세요."
-              onChange={(e) => setPassword((prev) => ({...prev, next: e.target.value}))}/>
+              hint={PASSWORD_RULE_MESSAGE}
+              minLength={PASSWORD_MIN_LENGTH}
+              maxLength={PASSWORD_MAX_LENGTH}
+              onChange={(e) => setPassword((prev) => (
+                {...prev, next: e.target.value}
+              ))}
+              disabled={isChanging}
+              required/>
               <TextField
               id="confirm-password"
               label="새 비밀번호 확인"
@@ -180,7 +241,13 @@ export default function MyPage() {
               autoComplete="new-password"
               value={password.confirm}
               error={confirmError}
-              onChange={(e) => setPassword((prev) => ({...prev, confirm: e.target.value}))}/>
+              minLength={PASSWORD_MIN_LENGTH}
+              maxLength={PASSWORD_MAX_LENGTH}
+              onChange={(e) => setPassword((prev) => (
+                {...prev, confirm: e.target.value}
+              ))}
+              disabled={isChanging}
+              required/>
               <FormActions>
                 <Button type="submit" disabled={!canChangePassword}>
                   {isChanging ? "변경 중…" : "비밀번호 변경"}

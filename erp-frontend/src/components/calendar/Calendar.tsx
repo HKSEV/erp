@@ -196,7 +196,7 @@ export default function Calendar({
         let message =
           "일정을 불러오지 못했습니다. 다시 시도해 주세요.";
 
-        if (isAxiosError<{ message?: unknown }>(err)) {
+        if (isAxiosError<{message?: unknown}>(err)) {
           if (err.response?.status === 401) {
             message =
               "로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.";

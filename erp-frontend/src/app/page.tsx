@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
-import axios from "@/app/lib/api";
+import { isAxiosError } from "axios";
+import api from "@/app/lib/api";
 import {
   FiMail,
   FiLock,
@@ -33,7 +34,7 @@ export default function Home() {
     setIsLoading(true);
     try {
       // 백엔드 로그인 API 호출
-      const response = await axios.post("/api/members/login", {
+      const response = await api.post("/api/members/login", {
         email, password,
       });
       if (response.status === 200) {
@@ -53,9 +54,6 @@ export default function Home() {
         if (window.location.protocol === "https:")
           attributes.push("Secure");
         document.cookie = `login_token=true; ${attributes.join("; ")}`;
-
-        // 2. 이후 모든 axios 요청 헤더에 JWT 토큰을 자동 포함하도록 설정
-        // axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
         openAlertModal(
           "로그인 성공!",
