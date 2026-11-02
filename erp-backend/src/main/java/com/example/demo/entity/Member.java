@@ -52,7 +52,7 @@ public class Member {
   private String department;
 
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false, length = 20)
+  @Column(name = "MEMBER_ROLE", nullable = false, length = 20)
   @Builder.Default
   private MemberRole role = MemberRole.USER;
 
