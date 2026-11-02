@@ -13,7 +13,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import { FiCalendar, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import CalendarMonthBody from "./CalendarMonthBody";
 import getHolidays from "@/app/api/holidays";
-import type { Schedule } from "../modal/ScheduleModal";
+import type { Schedule } from "@/app/types/Schedule";
 import * as S from "@/assets/css/Style.styles";
 import useModal from "../contexts/ModalContext";
 

@@ -1,10 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.config.JwtProvider;
-import com.example.demo.dto.MemberLoginDto;
-import com.example.demo.dto.MemberRegisterDto;
-import com.example.demo.dto.PasswordChangeDto;
-import com.example.demo.dto.TokenResponseDto;
+import com.example.demo.dto.*;
 import com.example.demo.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -45,14 +42,40 @@ public class MemberController {
     }
   }
 
-  // 비밀번호 찾기 (임시 비밀번호 발송)
+  // 비밀번호 찾기 (비밀번호 리셋)
   @PostMapping("/forgot-password")
-  public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
+  public ResponseEntity<String> forgotPassword(
+    @RequestBody Map<String, String> request
+  ) {
     try {
-      memberService.sendTempPassword(request.get("email"));
-      return ResponseEntity.ok("임시 비밀번호가 이메일로 발송되었습니다.");
-    } catch (Exception e) {
+      memberService.sendPasswordResetLink(request.get("email"));
+
+      return ResponseEntity.ok(
+        "입력한 이메일로 가입된 계정이 있다면 재설정 링크가 발송됩니다."
+      );
+    } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest().body(e.getMessage());
+    } catch (Exception e) {
+      return ResponseEntity.internalServerError()
+        .body("재설정 메일 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    }
+  }
+
+  @PostMapping("/reset-password")
+  public ResponseEntity<String> resetPassword(
+    @RequestBody PasswordResetDto dto
+  ) {
+    try {
+      memberService.resetPassword(dto.getToken(), dto.getNewPassword());
+
+      return ResponseEntity.ok(
+        "비밀번호가 변경되었습니다. 새 비밀번호로 로그인해 주세요."
+      );
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().body(e.getMessage());
+    } catch (Exception e) {
+      return ResponseEntity.internalServerError()
+        .body("비밀번호 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.");
     }
   }
 
