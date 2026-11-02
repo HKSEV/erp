@@ -67,7 +67,10 @@ public class SecurityConfig {
       .authorizeHttpRequests(auth -> auth
         .requestMatchers(
           "/api/members/**",
-          "/api/production/**"
+          "/api/production/**",
+          // 생산관리와 같은 방식: JWT 필터가 아직 일정 API에만 적용되어 있어 함께 공개
+          "/api/inventory/**",
+          "/api/hr/**"
         ).permitAll()
 
         .requestMatchers(

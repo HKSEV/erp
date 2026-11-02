@@ -1,61 +1,76 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import api from "@/app/lib/api";
+import type { InventoryItem } from "@/app/types/InventoryItem";
+import useModal from "@/components/contexts/ModalContext";
 import { PageContainer, PageHeader, StatGrid, StatCard, Card, SearchBar, DataTable, StatusBadge, Button } from "@/components/ui";
 import type { Column, StatusTone } from "@/components/ui";
 
-interface InventoryItem {
-  id:string;
-  name: string;
-  category: string;
-  stock: number;
-  unitPrice: number;
-  status: "normal" | "low" | "out";
-};
-
 export default function Inventory() {
-  const [items, setItems] = useState<InventoryItem[]>([
-    {
-      id: "INV-1001",
-      name: "알루미늄 프레임 A형",
-      category: "원자재",
-      stock: 1250,
-      unitPrice: 15000,
-      status: "normal"
-    },
-    {
-      id: "INV-1002",
-      name: "공업용 모터 250W",
-      category: "부품",
-      stock: 12,
-      unitPrice: 85000,
-      status: "low"
-    },
-    {
-      id: "INV-1003",
-      name: "제어용 메인보드 v2",
-      category: "부품",
-      stock: 0,
-      unitPrice: 120000,
-      status: "out"
-    },
-    {
-      id: "INV-1004",
-      name: "포장용 종이박스 (대)",
-      category: "포장재",
-      stock: 5000,
-      unitPrice: 800,
-      status: "normal"
-    },
-    {
-      id: "INV-1005",
-      name: "스틸 볼트 M8",
-      category: "소모품",
-      stock: 45,
-      unitPrice: 150,
-      status: "low"
-    },
-  ]);
+  const {openInventoryItemModal} = useModal();
+  const [items, setItems] = useState<InventoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const deletedItemIdsRef = useRef(new Set<string>());
+
+  // 화면이 처음 열릴 때 품목 목록 조회
+  // 응답 전에 화면을 벗어나면(abort) 상태를 바꾸지 않음
+  useEffect(() => {
+    const controller = new AbortController();
+
+    api.get<InventoryItem[]>("/api/inventory/items", {
+      signal: controller.signal
+    }).then(({data}) => {
+      if (controller.signal.aborted)
+        return;
+
+      // 최초 조회가 늦게 끝나도 방금 등록한 품목을 유지합니다.
+      setItems((prev) => {
+        const existingIds = new Set(
+          prev.map((item) => item.id),
+        );
+
+        return [
+          ...prev,
+          ...data.filter((item) => (
+            !existingIds.has(item.id) &&
+            !deletedItemIdsRef.current.has(item.id)
+          )),
+        ];
+      });
+    }).catch((err: unknown) => {
+      if (!controller.signal.aborted)
+        console.error("품목 목록을 불러오는 중 오류 발생:", err);
+    }).finally(() => {
+      if (!controller.signal.aborted)
+        setIsLoading(false);
+    });
+
+    return () => controller.abort();
+  }, []);
+
+  const handleItem = (item?: InventoryItem) => {
+    openInventoryItemModal(
+      item,
+      (savedItem) => {
+        setItems((prev) => [
+          savedItem,
+          ...prev.filter((item) => item.id !== savedItem.id)
+        ]);
+      },
+      (savedItem) => {
+        setItems((prev) => prev.map((item) =>
+          item.id === savedItem.id ? savedItem : item,
+        ));
+      },
+      (itemId) => {
+        deletedItemIdsRef.current.add(itemId);
+        setItems((prev) =>
+          prev.filter((item) => item.id !== itemId),
+        );
+      },
+    );
+  };
 
   // 검색어: 품목 코드 또는 품목명에 포함되면 표시
   const [keyword, setKeyword] = useState("");
@@ -74,15 +89,18 @@ export default function Inventory() {
     {key: "name", header: "품목명", variant: "primary"},
     {key: "category", header: "분류", width: "90px"},
     {key: "stock", header: "현재고", align: "right", width: "90px", render: (item) => item.stock.toLocaleString()},
+    {key: "safetyStock", header: "적정재고", align: "right", width: "90px", render: (item) => item.safetyStock.toLocaleString()},
     {key: "unitPrice", header: "단가 (원)", align: "right", width: "110px", render: (item) => item.unitPrice.toLocaleString()},
     {key: "status", header: "상태", align: "center", width: "120px", render: (item) => (
       <StatusBadge tone={STATUS[item.status].tone}>{STATUS[item.status].text}</StatusBadge>
     )},
-    {key: "actions", header: "관리", align: "center", width: "150px", render: () => (
-      <>
-        <Button variant="secondary" size="sm">수정</Button>{" "}
-        <Button variant="danger" size="sm">삭제</Button>
-      </>
+    {key: "actions", header: "관리", align: "center", width: "110px", render: (item) => (
+      <Button
+      variant="secondary"
+      size="sm"
+      onClick={() => handleItem(item)}>
+        상세보기
+      </Button>
     )},
   ];
 
@@ -91,7 +109,9 @@ export default function Inventory() {
       <PageHeader
       title="재고관리"
       description="품목별 현재고와 재고 상태를 확인하고 관리합니다."
-      actions={<Button>+ 신규 품목 등록</Button>}/>
+      actions={
+      <Button onClick={() => handleItem()}>+ 신규 품목 등록</Button>
+      }/>
 
       <StatGrid>
         <StatCard label="총 등록 품목" value={items.length} unit="개" tone="accent"/>
@@ -110,7 +130,11 @@ export default function Inventory() {
         columns={columns}
         rows={filteredItems}
         rowKey={(item) => item.id}
-        emptyText={keyword ? `"${keyword}"에 해당하는 품목이 없습니다.` : "등록된 품목이 없습니다."}/>
+        emptyText={
+          isLoading ? "품목 목록을 불러오는 중입니다."
+          : keyword ? `"${keyword}"에 해당하는 품목이 없습니다.`
+          : "등록된 품목이 없습니다."
+        }/>
       </Card>
     </PageContainer>
   );

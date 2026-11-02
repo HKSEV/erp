@@ -1,60 +1,86 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import api from "@/app/lib/api";
+import type { Employee } from "@/app/types/Employee";
+import useModal from "@/components/contexts/ModalContext";
 import { PageContainer, PageHeader, StatGrid, StatCard, Card, SearchBar, DataTable, StatusBadge, Button } from "@/components/ui";
 import type { Column, StatusTone } from "@/components/ui";
-import type { Department, Position } from "@/app/types/Organization";
-
-interface Employee {
-  id: string;
-  name: string;
-  department: Department;
-  position: Position;
-  status: "active" | "leave" | "resigned";
-  joinDate: string;
-};
 
 export default function Hr() {
-  const [employees, setEmployees] = useState<Employee[]>([
-    {
-      id: "EMP-001",
-      name: "김철수",
-      department: "개발팀",
-      position: "부장",
-      status: "active",
-      joinDate: "2020-03-02"
-    },
-    {
-      id: "EMP-002",
-      name: "이영희",
-      department: "인사팀",
-      position: "과장",
-      status: "active",
-      joinDate: "2019-11-15"
-    },
-    {
-      id: "EMP-003",
-      name: "박민수",
-      department: "영업팀",
-      position: "사원",
-      status: "leave",
-      joinDate: "2022-07-01"
-    },
-    {
-      id: "EMP-004",
-      name: "정지원",
-      department: "디자인팀",
-      position: "대리",
-      status: "active",
-      joinDate: "2021-05-20"
-    },
-  ]);
+  const {openEmployeeModal} = useModal();
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const deletedEmployeeIdsRef = useRef(new Set<string>());
+
+  // 화면이 처음 열릴 때 직원 목록 조회
+  // 응답 전에 화면을 벗어나면(abort) 상태를 바꾸지 않음
+  useEffect(() => {
+    const controller = new AbortController();
+
+    api.get<Employee[]>("/api/hr/employees", {
+      signal: controller.signal
+    }).then(({data}) => {
+      if (controller.signal.aborted)
+        return;
+
+      // 최초 조회가 늦게 끝나도 방금 등록한 직원을 유지합니다.
+      setEmployees((prev) => {
+        const existingIds = new Set(
+          prev.map((emp) => emp.id),
+        );
+
+        return [
+          ...prev,
+          ...data.filter((emp) => (
+            !existingIds.has(emp.id) &&
+            !deletedEmployeeIdsRef.current.has(emp.id)
+          )),
+        ];
+      });
+    }).catch((err: unknown) => {
+      if (!controller.signal.aborted)
+        console.error("직원 목록을 불러오는 중 오류 발생:", err);
+    }).finally(() => {
+      if (!controller.signal.aborted)
+        setIsLoading(false);
+    });
+
+    return () => controller.abort();
+  }, []);
+
+  const handleEmployee = (employee?: Employee) => {
+    openEmployeeModal(
+      employee,
+      (savedEmployee) => {
+        setEmployees((prev) => [
+          savedEmployee,
+          ...prev.filter((emp) => emp.id !== savedEmployee.id)
+        ]);
+      },
+      (savedEmployee) => {
+        setEmployees((prev) => prev.map((emp) =>
+          emp.id === savedEmployee.id ? savedEmployee : emp,
+        ));
+      },
+      (employeeId) => {
+        deletedEmployeeIdsRef.current.add(employeeId);
+        setEmployees((prev) =>
+          prev.filter((emp) => emp.id !== employeeId),
+        );
+      },
+    );
+  };
 
   // 검색어: 사번, 이름, 부서에 포함되면 표시
   const [keyword, setKeyword] = useState("");
   const filteredEmployees = employees.filter((emp) =>
     [emp.id, emp.name, emp.department].some((field) => field.toLowerCase().includes(keyword.toLowerCase()))
   );
+
+  // 이번 달 신규 입사: 입사일(YYYY-MM-DD)이 이번 달(YYYY-MM)로 시작
+  const now = new Date();
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
   const STATUS: Record<Employee["status"], {tone: StatusTone; text: string}> = {
     active: {tone: "success", text: "재직중"},
@@ -72,8 +98,13 @@ export default function Hr() {
       <StatusBadge tone={STATUS[emp.status].tone}>{STATUS[emp.status].text}</StatusBadge>
     )},
     {key: "joinDate", header: "입사일", align: "center", width: "120px"},
-    {key: "actions", header: "관리", align: "center", width: "90px", render: () => (
-      <Button variant="secondary" size="sm">수정</Button>
+    {key: "actions", header: "관리", align: "center", width: "110px", render: (emp) => (
+      <Button
+      variant="secondary"
+      size="sm"
+      onClick={() => handleEmployee(emp)}>
+        상세보기
+      </Button>
     )},
   ];
 
@@ -82,11 +113,13 @@ export default function Hr() {
       <PageHeader
       title="인사관리"
       description="임직원 정보와 재직 상태를 관리합니다."
-      actions={<Button>+ 신규 직원 등록</Button>}/>
+      actions={
+      <Button onClick={() => handleEmployee()}>+ 신규 직원 등록</Button>
+      }/>
 
       <StatGrid>
-        <StatCard label="총 임직원 수" value={employees.length} unit="명" tone="accent"/>
-        <StatCard label="이번 달 신규 입사" value={0} unit="명"/>
+        <StatCard label="총 임직원 수" value={employees.filter((emp) => emp.status !== "resigned").length} unit="명" tone="accent"/>
+        <StatCard label="이번 달 신규 입사" value={employees.filter((emp) => emp.joinDate.startsWith(thisMonth)).length} unit="명"/>
         <StatCard label="현재 휴직자" value={employees.filter((emp) => emp.status === "leave").length} unit="명" tone="warning"/>
       </StatGrid>
 
@@ -98,7 +131,11 @@ export default function Hr() {
         columns={columns}
         rows={filteredEmployees}
         rowKey={(emp) => emp.id}
-        emptyText={keyword ? `"${keyword}"에 해당하는 임직원이 없습니다.` : "등록된 임직원이 없습니다."}/>
+        emptyText={
+          isLoading ? "직원 목록을 불러오는 중입니다."
+          : keyword ? `"${keyword}"에 해당하는 임직원이 없습니다.`
+          : "등록된 임직원이 없습니다."
+        }/>
       </Card>
     </PageContainer>
   );
