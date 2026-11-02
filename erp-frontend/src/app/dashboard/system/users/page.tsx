@@ -1,39 +1,92 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { isAxiosError } from "axios";
+import api from "@/app/lib/api";
+import useCurrentMember from "@/app/lib/currentMember";
 import { PageContainer, PageHeader, StatGrid, StatCard, Card, SearchBar, DataTable, StatusBadge, Button, Select } from "@/components/ui";
 import type { Column } from "@/components/ui";
 import useModal from "@/components/contexts/ModalContext";
 import { ROLE_LABEL } from "@/app/types/Member";
 import type { MemberAccount, UserRole } from "@/app/types/Member";
 
-// 시스템관리 > 사용자 권한 관리
-// 백엔드 API(/api/admin/members) 준비 전까지 샘플 데이터로 동작
+// 시스템관리 > 사용자 권한 관리 (관리자 전용, /api/admin/members)
 const ROLE_OPTIONS = (Object.keys(ROLE_LABEL) as UserRole[]).map((role) => ({value: role, label: ROLE_LABEL[role]}));
 
-// 로그인 정보에 사용자 id가 담기기 전까지 임시로 지정한 "내 계정"
-const CURRENT_USER_ID = 1;
+// 백엔드가 보낸 안내 문구(예: 관리자는 최소 1명), 없으면 공통 문구
+function getApiError(error: unknown, fallback: string): string {
+  if (isAxiosError<{message?: unknown}>(error)) {
+    if (error.response?.status === 401)
+      return "로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.";
+
+    const message = error.response?.data?.message;
+    if (typeof message === "string" && message.trim())
+      return message;
+  };
+
+  return fallback;
+};
 
 export default function Users() {
   const {openAlertModal} = useModal();
-  const [members, setMembers] = useState<MemberAccount[]>([
-    {id: 1, name: "박민수", email: "park@erp.com", department: "영업팀", position: "사원", role: "ADMIN", active: true, createdAt: "2026-10-08"},
-    {id: 2, name: "정지원", email: "jung@erp.com", department: "디자인팀", position: "대리", role: "USER", active: false, createdAt: "2026-10-12"},
-    {id: 3, name: "최유리", email: "choi@erp.com", department: "자재팀", position: "과장", role: "MANAGER", active: true, createdAt: "2026-10-20"},
-  ]);
+  const {member: me} = useCurrentMember();
+  const [members, setMembers] = useState<MemberAccount[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [pendingId, setPendingId] = useState<number | null>(null);
+
+  // 화면이 처음 열릴 때 사용자 목록 조회
+  // 응답 전에 화면을 벗어나면(abort) 상태를 바꾸지 않음
+  useEffect(() => {
+    const controller = new AbortController();
+
+    api.get<MemberAccount[]>("/api/admin/members", {
+      signal: controller.signal
+    }).then(({data}) => {
+      if (!controller.signal.aborted)
+        setMembers(data);
+    }).catch((err: unknown) => {
+      if (controller.signal.aborted)
+        return;
+      // 403(관리자 아님)은 예상된 응답이라 안내 문구만 표시
+      if (!isAxiosError(err) || err.response?.status !== 403)
+        console.error("사용자 목록을 불러오는 중 오류 발생:", err);
+      setLoadError(getApiError(err, "사용자 목록을 불러오지 못했습니다."));
+    }).finally(() => {
+      if (!controller.signal.aborted)
+        setIsLoading(false);
+    });
+
+    return () => controller.abort();
+  }, []);
 
   // 검색어: 이름, 이메일, 부서에 포함되면 표시
   const [keyword, setKeyword] = useState("");
   const filteredMembers = members.filter((m) =>
-    [m.name, m.email, m.department].some((field) => field.toLowerCase().includes(keyword.toLowerCase()))
+    [m.name, m.email, m.department ?? ""].some((field) => field.toLowerCase().includes(keyword.toLowerCase()))
   );
 
   const adminCount = members.filter((m) => m.role === "ADMIN" && m.active).length;
-  const update = (id: number, changes: Partial<MemberAccount>) =>
-    setMembers((prev) => prev.map((m) => (m.id === id ? {...m, ...changes} : m)));
+  const isMe = (member: MemberAccount) => member.id === me?.id;
 
-  // 마지막 관리자가 권한을 잃으면 아무도 이 화면에 들어올 수 없으므로 막음
+  // 마지막 관리자가 권한을 잃으면 아무도 이 화면에 들어올 수 없으므로 막음 (서버에서도 한 번 더 검사)
   const isLastAdmin = (member: MemberAccount) => member.role === "ADMIN" && member.active && adminCount === 1;
+
+  // 변경 요청: 성공하면 서버가 돌려준 값으로 목록의 해당 행을 바꿈
+  const requestUpdate = async (member: MemberAccount, action: "role" | "active", body: object, failTitle: string) => {
+    setPendingId(member.id);
+    try {
+      const {data} = await api.patch<MemberAccount>(`/api/admin/members/${member.id}/${action}`, body);
+      setMembers((prev) => prev.map((m) => (m.id === data.id ? data : m)));
+    } catch (err) {
+      openAlertModal(failTitle, undefined, {
+        variant: "error",
+        description: getApiError(err, "잠시 후 다시 시도해 주세요."),
+      });
+    } finally {
+      setPendingId(null);
+    };
+  };
 
   const changeRole = (member: MemberAccount, role: UserRole) => {
     if (isLastAdmin(member) && role !== "ADMIN") {
@@ -45,7 +98,7 @@ export default function Users() {
     }
     openAlertModal(
       `${member.name}님의 역할을 변경할까요?`,
-      () => update(member.id, {role}),
+      () => void requestUpdate(member, "role", {role}, "역할을 변경하지 못했습니다."),
       {
         variant: "confirm",
         description: `${ROLE_LABEL[member.role]} → ${ROLE_LABEL[role]}`,
@@ -65,7 +118,12 @@ export default function Users() {
     }
     openAlertModal(
       member.active ? `${member.name}님의 계정을 정지할까요?` : `${member.name}님의 계정 정지를 해제할까요?`,
-      () => update(member.id, {active: !member.active}),
+      () => void requestUpdate(
+        member,
+        "active",
+        {active: !member.active},
+        member.active ? "계정을 정지하지 못했습니다." : "계정 정지를 해제하지 못했습니다.",
+      ),
       {
         variant: "confirm",
         description: member.active ? "정지된 계정은 로그인할 수 없습니다." : "다시 로그인할 수 있게 됩니다.",
@@ -77,11 +135,11 @@ export default function Users() {
 
   const columns: Column<MemberAccount>[] = [
     {key: "name", header: "이름", variant: "primary", width: "120px", render: (m) => (
-      m.id === CURRENT_USER_ID ? `${m.name} (나)` : m.name
+      isMe(m) ? `${m.name} (나)` : m.name
     )},
     {key: "email", header: "이메일"},
-    {key: "department", header: "부서", width: "100px"},
-    {key: "position", header: "직급", width: "80px"},
+    {key: "department", header: "부서", width: "100px", render: (m) => m.department || "-"},
+    {key: "position", header: "직급", width: "80px", render: (m) => m.position || "-"},
     {key: "role", header: "역할", align: "center", width: "120px", render: (m) => (
       // 자기 자신의 역할은 바꿀 수 없음
       <Select
@@ -89,7 +147,7 @@ export default function Users() {
       aria-label={`${m.name} 역할`}
       options={ROLE_OPTIONS}
       value={m.role}
-      disabled={m.id === CURRENT_USER_ID}
+      disabled={isMe(m) || pendingId === m.id}
       onChange={(e) => changeRole(m, e.target.value as UserRole)}/>
     )},
     {key: "active", header: "상태", align: "center", width: "120px", render: (m) => (
@@ -100,7 +158,7 @@ export default function Users() {
       <Button
       size="sm"
       variant={m.active ? "danger" : "secondary"}
-      disabled={m.id === CURRENT_USER_ID}
+      disabled={isMe(m) || pendingId === m.id}
       onClick={() => toggleActive(m)}>
         {m.active ? "정지" : "해제"}
       </Button>
@@ -127,7 +185,12 @@ export default function Users() {
         columns={columns}
         rows={filteredMembers}
         rowKey={(m) => String(m.id)}
-        emptyText={keyword ? `"${keyword}"에 해당하는 사용자가 없습니다.` : "등록된 사용자가 없습니다."}/>
+        emptyText={
+          isLoading ? "사용자 목록을 불러오는 중입니다."
+          : loadError ? loadError
+          : keyword ? `"${keyword}"에 해당하는 사용자가 없습니다.`
+          : "등록된 사용자가 없습니다."
+        }/>
       </Card>
     </PageContainer>
   );

@@ -31,7 +31,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	private static final List<String> AUTHENTICATED_PATHS = List.of(
 		"/api/schedules",
 		"/api/members/me",
-		"/api/members/change-password"
+		"/api/members/change-password",
+		"/api/admin",
+		"/api/company"
 	);
 
 	private final JwtProvider jwtProvider;
