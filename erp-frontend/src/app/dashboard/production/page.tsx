@@ -13,6 +13,19 @@ export default function Production() {
   const [isLoading, setIsLoading] = useState(true);
   const deletedOrderIdsRef = useRef(new Set<string>());
 
+  // 현황은 검색 결과가 아닌 전체 오더를 기준으로 집계
+  const progressCount = orders.filter((order) =>
+    order.status === "progress"
+  ).length;
+
+  const planningCount = orders.filter((order) =>
+    order.status === "planning"
+  ).length;
+
+  const completedCount = orders.filter((order) =>
+    order.status === "completed"
+  ).length;
+
   // 화면이 처음 열릴 때 오더 목록 조회
   // 응답 전에 화면을 벗어나면(ignore) 상태를 바꾸지 않음
   useEffect(() => {
@@ -125,9 +138,20 @@ export default function Production() {
       }/>
 
       <StatGrid>
-        <StatCard label="진행중인 오더" value={2} unit="건" tone="accent"/>
-        <StatCard label="생산 대기" value={1} unit="건"/>
-        <StatCard label="이번 달 완료" value={1} unit="건" tone="success"/>
+        <StatCard
+        label="진행중인 오더"
+        value={progressCount}
+        unit="건"
+        tone="accent"/>
+        <StatCard
+        label="생산 대기"
+        value={planningCount}
+        unit="건"/>
+        <StatCard
+        label="생산완료"
+        value={completedCount}
+        unit="건"
+        tone="success"/>
       </StatGrid>
 
       <Card
