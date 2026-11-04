@@ -3,7 +3,7 @@
 // 개인정보처리방침·사용자 매뉴얼 같은 문서형 페이지 공통 스타일
 // 서버 컴포넌트(app/(info)/layout.tsx)에서 쓰기 때문에 "use client" 필요
 import styled from "styled-components";
-import Link from "next/link";
+import { HeaderLogo } from "./NavButton";
 
 export const InfoWrapper = styled.div`
   min-height: 100vh;
@@ -16,13 +16,14 @@ export const InfoTopBar = styled.header`
   padding: 0 1.5rem;
   background-color: ${({theme}) => theme.colors.dark};
   box-shadow: ${({theme}) => theme.shadow.header};
+
+  /* 메인 헤더(HeaderContainer)와 같은 여백 */
+  @media (max-width: 768px) {
+    padding: 0 1rem;
+  }
 `;
-export const InfoLogo = styled(Link)`
-  color: ${({theme}) => theme.colors.onDark};
-  font-size: 1.25rem;
-  font-weight: ${({theme}) => theme.font.weight.bold};
-  text-decoration: none;
-`;
+// 메인 헤더 로고와 같은 스타일 (글자 크기·자간·말줄임)
+export const InfoLogo = HeaderLogo;
 // 본문: 읽기 좋은 폭으로 가운데 정렬, 기본 태그(h1, h2, p, ul, table)에 문서 스타일 적용
 export const InfoContent = styled.main`
   max-width: 760px;

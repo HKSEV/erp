@@ -48,14 +48,14 @@ export default function ProductionOrderModal({
 
   const mountedRef = useRef(false);
   const mutationRef = useRef(false);
-  const submittingRef = useRef(false);
-  const orderIdRef = useRef<string | null>(null);
   const alertRef = useRef(openAlertModal);
 
   const [form, setForm] = useState({
     productName: order?.productName ?? "",
     quantity: order?.quantity?.toString() ?? "1",
     status: order?.status ?? "planning",
+    // 완료(100%) 오더를 생산중으로 되돌리면 0부터 다시 입력
+    progress: order && order.progress < 100 ? order.progress.toString() : "0",
     dueDate: order?.dueDate ?? "",
   });
   const [action, setAction] = useState<"save"|"delete"|null>(null);
@@ -151,6 +151,20 @@ export default function ProductionOrderModal({
       return;
     };
 
+    const progress = Number(form.progress);
+
+    if (
+      isEditing &&
+      form.status === "progress" &&
+      (!Number.isInteger(progress) || progress < 0 || progress > 99)
+    ) {
+      showError(
+        "입력 내용을 확인해 주세요.",
+        "진행률은 0~99 사이의 정수로 입력해 주세요.",
+      );
+      return;
+    };
+
     if (!form.dueDate) {
       showError(
         "입력 내용을 확인해 주세요.",
@@ -164,6 +178,8 @@ export default function ProductionOrderModal({
         productName,
         quantity,
         status: isEditing ? form.status : "planning",
+        // 생산대기·생산완료는 서버가 0·100으로 정함
+        progress: isEditing && form.status === "progress" ? progress : null,
         dueDate: form.dueDate,
       };
 
@@ -308,6 +324,20 @@ export default function ProductionOrderModal({
             {value: "completed", label: "생산완료"},
           ]}/>
         </S.ModalField>
+      )}
+
+      {isEditing && form.status === "progress" && (
+        <TextField
+        id={id + "-progress"}
+        name="progress"
+        label="진행률 (%)"
+        type="number"
+        min={0}
+        max={99}
+        step={1}
+        value={form.progress}
+        onChange={(e) => updateField("progress", e.target.value)}
+        required/>
       )}
 
       <TextField

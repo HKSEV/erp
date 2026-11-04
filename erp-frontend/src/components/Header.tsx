@@ -2,7 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { clearSession } from "@/app/lib/auth";
+import useCurrentMember from "@/app/lib/currentMember";
 import useModal from "./contexts/ModalContext";
+import ErpTitle from "./ErpTitle";
 import * as S from "@/assets/css/Style.styles";
 
 interface HeaderProps {
@@ -14,6 +16,7 @@ interface HeaderProps {
 export const Header = ({isMenuOpen, onToggleMenu, onCloseMenu}: HeaderProps) => {
   const router = useRouter();
   const {openAlertModal} = useModal();
+  const {member} = useCurrentMember();
 
   const handleLogout = () => {
     onCloseMenu();
@@ -49,12 +52,13 @@ export const Header = ({isMenuOpen, onToggleMenu, onCloseMenu}: HeaderProps) => 
       </S.HeaderMobileMenuToggle>
 
       <S.HeaderLogo href="/dashboard">
-        Apple iPhone Smart ERP
+        <ErpTitle/>
       </S.HeaderLogo>
 
       {/* 사용자 영역: 업무 메뉴는 사이드바에서만 제공 */}
       <S.HeaderUserSection>
-        <S.HeaderUserName>관리자님 환영합니다</S.HeaderUserName>
+        {/* 이름을 불러오기 전에는 비워 둠 */}
+        <S.HeaderUserName>{member ? `${member.name}님 환영합니다` : ""}</S.HeaderUserName>
         <S.HeaderUserLink href="/dashboard/mypage">내 정보</S.HeaderUserLink>
         <S.HeaderLogoutButton type="button" onClick={handleLogout}>
           로그아웃

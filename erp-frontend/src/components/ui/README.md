@@ -60,5 +60,5 @@ const columns: Column<InventoryItem>[] = [
 
 ## 주의
 
-- 기존 `S.Button`(`@/assets/css/Style.styles`)은 로그인·회원가입 화면에서 쓰고 있어 그대로 둡니다. 업무 화면에서는 이 폴더의 `Button`을 씁니다.
+- 업무 화면의 버튼은 이 폴더의 `Button`을 씁니다. 로그인·회원가입 화면은 `Member.styles.ts`의 `MemberButton`을 씁니다.
 - 공통 컴포넌트는 `Style.styles.ts`에 넣지 않습니다. 기존 스타일과 이름이 겹치는 문제를 피하기 위해서입니다.

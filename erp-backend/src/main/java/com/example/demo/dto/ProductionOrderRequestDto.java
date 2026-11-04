@@ -19,6 +19,11 @@ public record ProductionOrderRequestDto(
 	)
 	String status,
 
+	// 생산중일 때만 사용 (생산대기는 0, 생산완료는 100으로 고정)
+	@Min(value = 0, message = "진행률은 0~99 사이로 입력해 주세요.")
+	@Max(value = 99, message = "진행률은 0~99 사이로 입력해 주세요.")
+	Integer progress,
+
 	@NotNull(message = "납기일을 선택해 주세요.")
 	LocalDate dueDate
 ) {

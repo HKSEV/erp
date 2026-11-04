@@ -88,10 +88,13 @@ public class ProductionOrderService {
     int previous = order.getProgress() == null
       ? 0 : Math.max(0, order.getProgress());
 
+    // 생산중: 입력한 진행률, 입력이 없으면 기존 값 유지 (완료에서 되돌리면 0)
     int progress = switch (dto.status()) {
       case "planning" -> 0;
       case "completed" -> 100;
-      default -> previous >= 100 ? 0 : previous;
+      default -> dto.progress() != null
+        ? dto.progress()
+        : previous >= 100 ? 0 : previous;
     };
 
     order.setProductName(dto.productName().strip());
