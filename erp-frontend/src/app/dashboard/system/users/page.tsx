@@ -10,19 +10,10 @@ import useModal from "@/components/contexts/ModalContext";
 import { ROLE_LABEL } from "@/app/types/Member";
 import type { MemberAccount, UserRole } from "@/app/types/Member";
 import { DEPARTMENTS, POSITIONS } from "@/app/types/Organization";
-import type { SelectOption } from "@/components/ui";
+import type { Employee } from "@/app/types/Employee";
 
 // 시스템관리 > 사용자 권한 관리 (관리자 전용, /api/admin/members)
 const ROLE_OPTIONS = (Object.keys(ROLE_LABEL) as UserRole[]).map((role) => ({value: role, label: ROLE_LABEL[role]}));
-
-// 부서·직급 선택칸: 비어 있으면 "선택", 목록에 없는 예전 값(회원가입 자유 입력)은 그대로 보여 줌
-const toOptions = (list: readonly string[], current: string | null): SelectOption[] => [
-  ...(!current ? [{value: "", label: "선택", disabled: true}] : []),
-  ...(current && !list.includes(current) ? [{value: current, label: current, disabled: true}] : []),
-  ...list.map((value) => ({value, label: value})),
-];
-// 확인창 문구용 (부서를 / 직급을)
-const PROFILE_OBJECT = {department: "부서를", position: "직급을"} as const;
 
 // 백엔드가 보낸 안내 문구(예: 관리자는 최소 1명), 없으면 공통 문구
 function getApiError(error: unknown, fallback: string): string {
@@ -42,6 +33,7 @@ export default function Users() {
   const {openAlertModal} = useModal();
   const {member: me} = useCurrentMember();
   const [members, setMembers] = useState<MemberAccount[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<number | null>(null);
@@ -51,11 +43,14 @@ export default function Users() {
   useEffect(() => {
     const controller = new AbortController();
 
-    api.get<MemberAccount[]>("/api/admin/members", {
-      signal: controller.signal
-    }).then(({data}) => {
-      if (!controller.signal.aborted)
-        setMembers(data);
+    Promise.all([
+      api.get<MemberAccount[]>("/api/admin/members", {signal: controller.signal}),
+      api.get<Employee[]>("/api/hr/employees", {signal: controller.signal}),
+    ]).then(([memberResponse, employeeResponse]) => {
+      if (!controller.signal.aborted) {
+        setMembers(memberResponse.data);
+        setEmployees(employeeResponse.data);
+      }
     }).catch((err: unknown) => {
       if (controller.signal.aborted)
         return;
@@ -71,6 +66,23 @@ export default function Users() {
     return () => controller.abort();
   }, []);
 
+  const linkedIds = new Set(members.map((member) => member.employeeId));
+  const availableEmployees = employees.filter((employee) =>
+    employee.status !== "resigned" && !linkedIds.has(employee.id)
+  );
+
+  const employeeOptions = [
+    {
+      value: "",
+      label: availableEmployees.length ? "직원 선택" : "연결 가능한 직원 없음",
+      disabled: true,
+    },
+    ...availableEmployees.map((employee) => ({
+      value: employee.id,
+      label: `${employee.name} (${employee.id}) · ${employee.department} ${employee.position}`,
+    })),
+  ];
+
   // 검색어: 이름, 이메일, 부서에 포함되면 표시
   const [keyword, setKeyword] = useState("");
   const filteredMembers = members.filter((m) =>
@@ -84,7 +96,7 @@ export default function Users() {
   const isLastAdmin = (member: MemberAccount) => member.role === "ADMIN" && member.active && adminCount === 1;
 
   // 변경 요청: 성공하면 서버가 돌려준 값으로 목록의 해당 행을 바꿈
-  const requestUpdate = async (member: MemberAccount, action: "role" | "active" | "profile", body: object, failTitle: string) => {
+  const requestUpdate = async (member: MemberAccount, action: "role" | "active" | "employee", body: object, failTitle: string) => {
     setPendingId(member.id);
     try {
       const {data} = await api.patch<MemberAccount>(`/api/admin/members/${member.id}/${action}`, body);
@@ -97,6 +109,29 @@ export default function Users() {
     } finally {
       setPendingId(null);
     };
+  };
+
+  const linkEmployee = (member: MemberAccount, employeeId: string) => {
+    const employee = availableEmployees.find((item) => item.id === employeeId);
+
+    if (!employee || member.employeeId || pendingId !== null)
+      return;
+
+    openAlertModal(
+      `${member.name}님의 계정을 직원과 연결할까요?`,
+      () => void requestUpdate(
+        member,
+        "employee",
+        {employeeId},
+        "직원과 계정을 연결하지 못했습니다.",
+      ),
+      {
+        variant: "confirm",
+        description: `${member.email}\n${employee.name} (${employee.id}) · ${employee.department} ${employee.position}`,
+        confirmText: "연결",
+        cancelText: "취소",
+      },
+    );
   };
 
   const changeRole = (member: MemberAccount, role: UserRole) => {
@@ -113,21 +148,6 @@ export default function Users() {
       {
         variant: "confirm",
         description: `${ROLE_LABEL[member.role]} → ${ROLE_LABEL[role]}`,
-        confirmText: "변경",
-        cancelText: "취소",
-      },
-    );
-  };
-
-  // 부서·직급은 관리자가 지정 (회원가입·마이페이지에서는 바꿀 수 없음)
-  const changeProfile = (member: MemberAccount, field: "department" | "position", value: string) => {
-    const target = PROFILE_OBJECT[field];
-    openAlertModal(
-      `${member.name}님의 ${target} 변경할까요?`,
-      () => void requestUpdate(member, "profile", {[field]: value}, `${target} 변경하지 못했습니다.`),
-      {
-        variant: "confirm",
-        description: `${member[field] || "없음"} → ${value}`,
         confirmText: "변경",
         cancelText: "취소",
       },
@@ -164,24 +184,19 @@ export default function Users() {
       isMe(m) ? `${m.name} (나)` : m.name
     )},
     {key: "email", header: "이메일"},
-    {key: "department", header: "부서", align: "center", width: "120px", render: (m) => (
-      <Select
-      size="sm"
-      aria-label={`${m.name} 부서`}
-      options={toOptions(DEPARTMENTS, m.department)}
-      value={m.department ?? ""}
-      disabled={pendingId === m.id}
-      onChange={(e) => changeProfile(m, "department", e.target.value)}/>
+    {key: "employeeId", header: "연결 직원", width: "260px", render: (m) => (
+      m.employeeId ? `${m.employeeName ?? ""} (${m.employeeId})` : (
+        <Select
+        size="sm"
+        aria-label={`${m.name} 연결 직원`}
+        options={employeeOptions}
+        value=""
+        disabled={pendingId !== null || availableEmployees.length === 0}
+        onChange={(e) => linkEmployee(m, e.target.value)}/>
+      )
     )},
-    {key: "position", header: "직급", align: "center", width: "100px", render: (m) => (
-      <Select
-      size="sm"
-      aria-label={`${m.name} 직급`}
-      options={toOptions(POSITIONS, m.position)}
-      value={m.position ?? ""}
-      disabled={pendingId === m.id}
-      onChange={(e) => changeProfile(m, "position", e.target.value)}/>
-    )},
+    {key: "department", header: "부서", align: "center", width: "120px", render: (m) => m.department ?? "미연결"},
+    {key: "position", header: "직급", align: "center", width: "100px", render: (m) => m.position ?? "미연결"},
     {key: "role", header: "역할", align: "center", width: "120px", render: (m) => (
       // 자기 자신의 역할은 바꿀 수 없음
       <Select
@@ -193,14 +208,17 @@ export default function Users() {
       onChange={(e) => changeRole(m, e.target.value as UserRole)}/>
     )},
     {key: "active", header: "상태", align: "center", width: "120px", render: (m) => (
-      <StatusBadge tone={m.active ? "success" : "danger"}>{m.active ? "사용 중" : "정지"}</StatusBadge>
+      <StatusBadge
+      tone={m.active ? "success" : "danger"}>
+        {m.employeeStatus === "resigned" ? "퇴사 정지" : m.active ? "사용 중" : "정지"}
+      </StatusBadge>
     )},
     {key: "createdAt", header: "가입일", align: "center", width: "120px"},
     {key: "actions", header: "관리", align: "center", width: "100px", render: (m) => (
       <Button
       size="sm"
       variant={m.active ? "danger" : "secondary"}
-      disabled={isMe(m) || pendingId === m.id}
+      disabled={isMe(m) || pendingId === m.id || m.employeeStatus === "resigned"}
       onClick={() => toggleActive(m)}>
         {m.active ? "정지" : "해제"}
       </Button>

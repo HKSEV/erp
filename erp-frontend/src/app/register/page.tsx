@@ -10,11 +10,9 @@ import {
   FiInfo,
   FiEye,
   FiEyeOff,
-  FiBriefcase,
   FiPhone,
   FiInstagram,
 } from "react-icons/fi";
-import { FaUsers } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import api from "@/app/lib/api";
 import {
@@ -41,8 +39,6 @@ interface FormData {
   email: string;
   password: string;
   passwordConfirm: string;
-  department: string;
-  position: string;
   tel: string;
   address: string;
   detailAddress: string;
@@ -60,8 +56,6 @@ export default function Member() {
     email: "",
     password: "",
     passwordConfirm: "",
-    department: "",
-    position: "",
     tel: "",
     address: "",
     detailAddress: "",
@@ -339,41 +333,6 @@ export default function Member() {
               ))}
             </S.MemberGenderWrapper>
           </S.MemberField>
-
-          <S.MemberFieldRow>
-            <S.MemberField>
-              <S.MemberInputLabel htmlFor="department">
-                부서
-              </S.MemberInputLabel>
-              <S.MemberInputWrapper>
-                <FaUsers aria-hidden="true"/>
-                <S.MemberInput
-                id="department"
-                name="department"
-                type="text"
-                placeholder="부서"
-                autoComplete="organization"
-                value={formData.department}
-                onChange={handleChange}/>
-              </S.MemberInputWrapper>
-            </S.MemberField>
-            <S.MemberField>
-              <S.MemberInputLabel htmlFor="position">
-                직급
-              </S.MemberInputLabel>
-              <S.MemberInputWrapper>
-                <FiBriefcase aria-hidden="true"/>
-                <S.MemberInput
-                id="position"
-                name="position"
-                type="text"
-                placeholder="직급"
-                autoComplete="organization-title"
-                value={formData.position}
-                onChange={handleChange}/>
-              </S.MemberInputWrapper>
-            </S.MemberField>
-          </S.MemberFieldRow>
 
           <S.MemberField>
             <S.MemberInputLabel htmlFor="tel">

@@ -26,4 +26,7 @@ public interface AdminMemberRepository extends JpaRepository<Member, Long> {
   Optional<Member> findByIdForUpdate(
     @Param("memberId") Long memberId
   );
+
+  @Query("select m from Member m left join fetch m.employee order by m.id")
+  List<Member> findAllWithEmployee();
 }

@@ -2,7 +2,11 @@ package com.example.demo.service;
 
 import com.example.demo.dto.EmployeeRequestDto;
 import com.example.demo.entity.Employee;
+import com.example.demo.entity.Member;
+import com.example.demo.entity.MemberRole;
+import com.example.demo.repository.AdminMemberRepository;
 import com.example.demo.repository.EmployeeRepository;
+import com.example.demo.repository.MemberRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +23,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EmployeeService {
   private static final ZoneId ZONE = ZoneId.of("Asia/Seoul");
+  private final AdminMemberRepository adminMemberRepository;
   private final EmployeeRepository employeeRepository;
+  private final MemberRepository memberRepository;
   private final DocumentNumberService documentNumberService;
 
   @PersistenceContext
@@ -49,23 +55,52 @@ public class EmployeeService {
     String employeeId,
     EmployeeRequestDto dto
   ) {
-    Employee employee = findEmployee(employeeId);
-    apply(employee, dto);
+    boolean resigning = "resigned".equals(dto.status());
+    List<Member> activeAdmins = resigning
+      ? adminMemberRepository.findActiveByRoleForUpdate(MemberRole.ADMIN)
+      : List.of();
 
+    Employee employee = findEmployee(employeeId);
+
+    if (resigning)
+      suspendLinkedAccount(employeeId, activeAdmins.size());
+
+    apply(employee, dto);
     employeeRepository.flush();
+
     return employee;
+  }
+
+  private void suspendLinkedAccount(String employeeId, int activeAdminCount) {
+    memberRepository.findByEmployeeIdForUpdate(employeeId).ifPresent(member -> {
+      if (member.isActive() && member.getRole() == MemberRole.ADMIN
+        && activeAdminCount <= 1) {
+        throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
+          "마지막 관리자와 연결된 직원입니다. 다른 관리자를 지정한 뒤 퇴사 처리해 주세요."
+        );
+      }
+
+      member.setActive(false);
+    });
   }
 
   @Transactional
   public void deleteEmployee(String employeeId) {
     Employee employee = findEmployee(employeeId);
 
+    if (memberRepository.existsByEmployee_Id(employeeId)) {
+      throw new ResponseStatusException(
+        HttpStatus.CONFLICT, "계정과 연결된 직원은 퇴사로 처리해 주세요."
+      );
+    }
+
     employeeRepository.delete(employee);
     employeeRepository.flush();
   }
 
   private Employee findEmployee(String employeeId) {
-    return employeeRepository.findById(employeeId)
+    return employeeRepository.findByIdForUpdate(employeeId)
       .orElseThrow(() -> new ResponseStatusException(
         HttpStatus.NOT_FOUND,
         "직원을 찾을 수 없습니다."

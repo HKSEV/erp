@@ -2,6 +2,7 @@ package com.example.demo.dto;
 
 import com.example.demo.entity.Member;
 import com.example.demo.entity.MemberRole;
+import com.example.demo.entity.Employee;
 
 // 시스템관리 > 사용자 권한 관리 목록 한 줄 (비밀번호·연락처는 내보내지 않음)
 public record AdminMemberResponseDto(
@@ -10,17 +11,25 @@ public record AdminMemberResponseDto(
 	String email,
 	String department,
 	String position,
+	String employeeId,
+	String employeeName,
+	String employeeStatus,
 	MemberRole role,
 	boolean active,
 	String createdAt
 ) {
 	public static AdminMemberResponseDto from(Member member) {
+		Employee employee = member.getEmployee();
+
 		return new AdminMemberResponseDto(
 			member.getId(),
 			text(member.getLastName()) + text(member.getFirstName()),
 			member.getEmail(),
 			member.getDepartment(),
 			member.getPosition(),
+			employee == null ? null : employee.getId(),
+			employee == null ? null : employee.getName(),
+			employee == null ? null : employee.getStatus(),
 			member.getRole(),
 			member.isActive(),
 			member.getCreatedAt() == null

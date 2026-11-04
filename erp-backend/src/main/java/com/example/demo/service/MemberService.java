@@ -53,8 +53,6 @@ public class MemberService {
       .lastName(dto.getLastName())
       .email(dto.getEmail())
       .password(passwordEncoder.encode(dto.getPassword())) // 암호화
-      .department(dto.getDepartment())
-      .position(dto.getPosition())
       .tel(dto.getTel())
       .address(dto.getAddress())
       .detailAddress(dto.getDetailAddress())
@@ -160,7 +158,7 @@ public class MemberService {
     }
 
     Member member = memberRepository
-      .findByEmailForPasswordReset(email.strip())
+      .findByEmailForUpdate(email.strip())
       .orElse(null);
 
     // 가입 여부와 관계없이 컨트롤러에서 같은 안내를 반환합니다.

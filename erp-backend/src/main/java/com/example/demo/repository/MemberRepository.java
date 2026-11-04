@@ -12,6 +12,7 @@ import java.util.Optional;
 public interface MemberRepository extends JpaRepository<Member, Long> {
   Optional<Member> findByEmail(String email);
   boolean existsByEmail(String email);
+  boolean existsByEmployee_Id(String employeeId);
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("select m from Member m where m.id = :memberId")
@@ -21,7 +22,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("select m from Member m where m.email = :email")
-  Optional<Member> findByEmailForPasswordReset(
+  Optional<Member> findByEmailForUpdate(
     @Param("email") String email
   );
 
@@ -29,5 +30,11 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
   @Query("select m from Member m where m.passwordResetTokenHash = :hash")
   Optional<Member> findByResetTokenHashForUpdate(
     @Param("hash") String hash
+  );
+
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Query("select m from Member m where m.employee.id = :employeeId")
+  Optional<Member> findByEmployeeIdForUpdate(
+    @Param("employeeId") String employeeId
   );
 }

@@ -45,11 +45,11 @@ public class Member {
 //  @Column(length = 100)
 //  private String companyName;
 
-  @Column(length = 50)
-  private String position;
-
-  @Column(length = 20)
-  private String department;
+  @JsonIgnore
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "EMP_ID", unique = true,
+    foreignKey = @ForeignKey(name = "FK_MEMBERS_EMPLOYEE"))
+  private Employee employee;
 
   @Enumerated(EnumType.STRING)
   @Column(name = "MEMBER_ROLE", nullable = false, length = 20)
@@ -84,4 +84,16 @@ public class Member {
   @JsonIgnore
   @Column(name = "PASSWORD_RESET_EXPIRES_AT")
   private LocalDateTime passwordResetExpiresAt;
+
+  public String getDepartment() {
+    return employee == null ? null : employee.getDepartment();
+  }
+
+  public String getPosition() {
+    return employee == null ? null : employee.getPosition();
+  }
+
+  public boolean hasResignedEmployee() {
+    return employee != null && "resigned".equals(employee.getStatus());
+  }
 }

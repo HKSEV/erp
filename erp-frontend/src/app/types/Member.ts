@@ -1,3 +1,5 @@
+import type { Employee } from "./Employee";
+
 // ERP 권한 (직급과는 별개)
 export type UserRole = "ADMIN" | "MANAGER" | "USER";
 
@@ -15,6 +17,9 @@ export interface MemberAccount {
   email: string;
   department: string | null;
   position: string | null;   // 직급
+  employeeId: string | null;
+  employeeName: string | null;
+  employeeStatus: Employee["status"] | null;
   role: UserRole;
   active: boolean;      // false: 정지된 계정 (로그인 불가)
   createdAt: string;
@@ -22,9 +27,7 @@ export interface MemberAccount {
 
 // 내 정보: 마이페이지 (GET /api/members/me 예정)
 export interface MemberProfile
-  extends Omit<MemberAccount, "department" | "position"> {
-  department: string | null;
-  position: string | null;
+  extends Omit<MemberAccount, "employeeId" | "employeeName" | "employeeStatus"> {
   tel: string;
   address: string;
   detailAddress: string;

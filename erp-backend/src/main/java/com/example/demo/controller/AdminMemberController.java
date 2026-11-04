@@ -1,9 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.AdminMemberResponseDto;
-import com.example.demo.dto.MemberActiveUpdateDto;
-import com.example.demo.dto.MemberProfileUpdateDto;
-import com.example.demo.dto.MemberRoleUpdateDto;
+import com.example.demo.dto.*;
 import com.example.demo.service.AdminMemberService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -50,13 +47,13 @@ public class AdminMemberController {
     );
   }
 
-  @PatchMapping("/{memberId}/profile")
-  public ResponseEntity<AdminMemberResponseDto> updateProfile(
+  @PatchMapping("/{memberId}/employee")
+  public ResponseEntity<AdminMemberResponseDto> linkEmployee(
     @PathVariable("memberId") Long memberId,
-    @Valid @RequestBody MemberProfileUpdateDto dto
+    @Valid @RequestBody MemberEmployeeLinkDto dto
   ) {
     return ResponseEntity.ok(
-      adminMemberService.updateProfile(memberId, dto)
+      adminMemberService.linkEmployee(memberId, dto.employeeId())
     );
   }
 }

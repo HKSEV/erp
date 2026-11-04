@@ -1,12 +1,13 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.AdminMemberResponseDto;
-import com.example.demo.dto.MemberProfileUpdateDto;
+import com.example.demo.entity.Employee;
 import com.example.demo.entity.Member;
 import com.example.demo.entity.MemberRole;
 import com.example.demo.repository.AdminMemberRepository;
+import com.example.demo.repository.EmployeeRepository;
+import com.example.demo.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,10 +20,12 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class AdminMemberService {
   private final AdminMemberRepository adminMemberRepository;
+  private final EmployeeRepository employeeRepository;
+  private final MemberRepository memberRepository;
 
   @Transactional(readOnly = true)
   public List<AdminMemberResponseDto> getMembers() {
-    return adminMemberRepository.findAll(Sort.by("id")).stream()
+    return adminMemberRepository.findAllWithEmployee().stream()
       .map(AdminMemberResponseDto::from)
       .toList();
   }
@@ -75,6 +78,12 @@ public class AdminMemberService {
       .findActiveByRoleForUpdate(MemberRole.ADMIN);
     Member member = findMember(memberId);
 
+    if (active && member.hasResignedEmployee()) {
+      throw new ResponseStatusException(
+        HttpStatus.CONFLICT, "퇴사한 직원의 계정은 사용할 수 없습니다."
+      );
+    }
+
     if (member.isActive() == active)
       return AdminMemberResponseDto.from(member);
 
@@ -90,24 +99,38 @@ public class AdminMemberService {
   }
 
   @Transactional
-  public AdminMemberResponseDto updateProfile(
-    Long memberId,
-    MemberProfileUpdateDto dto
-  ) {
-    if (dto.department() == null && dto.position() == null) {
-      throw new ResponseStatusException(
-        HttpStatus.BAD_REQUEST, "변경할 부서 또는 직급을 선택해 주세요."
-      );
-    }
+  public AdminMemberResponseDto linkEmployee(Long memberId, String employeeId) {
+    // 퇴사 처리와 같은 순서로 관리자, 직원, 계정 행을 잠급니다.
+    adminMemberRepository.findActiveByRoleForUpdate(MemberRole.ADMIN);
+
+    Employee employee = employeeRepository.findByIdForUpdate(employeeId.strip())
+      .orElseThrow(() -> new ResponseStatusException(
+        HttpStatus.NOT_FOUND, "직원 정보를 찾을 수 없습니다."
+      ));
 
     Member member = findMember(memberId);
 
-    if (dto.department() != null)
-      member.setDepartment(dto.department());
-    if (dto.position() != null)
-      member.setPosition(dto.position());
+    if (member.getEmployee() != null) {
+      throw new ResponseStatusException(
+        HttpStatus.CONFLICT, "이미 직원과 연결된 계정입니다."
+      );
+    }
 
+    if ("resigned".equals(employee.getStatus())) {
+      throw new ResponseStatusException(
+        HttpStatus.CONFLICT, "퇴사한 직원은 계정에 연결할 수 없습니다."
+      );
+    }
+
+    if (memberRepository.existsByEmployee_Id(employee.getId())) {
+      throw new ResponseStatusException(
+        HttpStatus.CONFLICT, "다른 계정에 연결된 직원입니다."
+      );
+    }
+
+    member.setEmployee(employee);
     adminMemberRepository.flush();
+
     return AdminMemberResponseDto.from(member);
   }
 

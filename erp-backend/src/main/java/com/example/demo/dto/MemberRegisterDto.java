@@ -10,8 +10,6 @@ public class MemberRegisterDto {
   private String lastName;
   private String email;
   private String password;
-  private String department;
-  private String position;
   private String tel;
   private String address;
   private String detailAddress;

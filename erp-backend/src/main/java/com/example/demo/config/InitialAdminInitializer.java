@@ -37,8 +37,13 @@ public class InitialAdminInitializer implements ApplicationRunner {
     if (!adminMemberRepository.findActiveByRoleForUpdate(MemberRole.ADMIN).isEmpty())
       return;
 
-    memberRepository.findByEmail(email).ifPresentOrElse(
+    memberRepository.findByEmailForUpdate(email).ifPresentOrElse(
       member -> {
+        if (member.hasResignedEmployee()) {
+          log.warn("퇴사한 직원의 계정은 첫 관리자로 지정할 수 없습니다.");
+          return;
+        }
+
         member.setRole(MemberRole.ADMIN);
         member.setActive(true);
         log.info("첫 관리자를 지정했습니다. (회원 번호: {})", member.getId());
