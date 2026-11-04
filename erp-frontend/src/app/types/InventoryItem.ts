@@ -1,5 +1,5 @@
 // 목록을 바꾸면 백엔드 InventoryItemRequestDto의 @Pattern도 같이 변경
-export const INVENTORY_CATEGORIES = ["원자재", "부품", "포장재", "소모품"] as const;
+export const INVENTORY_CATEGORIES = ["원자재", "부품", "포장재", "소모품", "제품"] as const;
 export type InventoryCategory = typeof INVENTORY_CATEGORIES[number];
 
 export interface InventoryItem {

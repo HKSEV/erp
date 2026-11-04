@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,19 +28,21 @@ public class ProductionOrderController {
 
   @PostMapping
   public ResponseEntity<ProductionOrder> createOrder(
+    @AuthenticationPrincipal Long memberId,
     @Valid @RequestBody ProductionOrderRequestDto dto
   ) {
     return ResponseEntity.status(HttpStatus.CREATED)
-      .body(productionOrderService.createOrder(dto));
+      .body(productionOrderService.createOrder(dto, memberId));
   }
 
   @PutMapping("/{orderId}")
   public ResponseEntity<ProductionOrder> updateOrder(
+    @AuthenticationPrincipal Long memberId,
     @PathVariable("orderId") String orderId,
     @Valid @RequestBody ProductionOrderRequestDto dto
   ) {
     return ResponseEntity.ok(
-      productionOrderService.updateOrder(orderId, dto)
+      productionOrderService.updateOrder(orderId, dto, memberId)
     );
   }
 

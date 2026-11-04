@@ -10,6 +10,7 @@ import useModal from "@/components/contexts/ModalContext";
 import { Button, Select, TextField } from "@/components/ui";
 import * as S from "@/assets/css/Style.styles";
 import FormModal from "./FormModal";
+import StockMovementPanel from "./StockMovementPanel";
 
 interface InventoryItemModalProps {
   item?: InventoryItem;
@@ -144,8 +145,9 @@ export default function InventoryItemModal({
       return;
     };
 
+    // 현재고는 등록할 때만 입력 (이후에는 입출고로만 변경)
     if (
-      !Number.isInteger(stock) || stock < 0 || stock > MAX_QUANTITY ||
+      (!isEditing && (!Number.isInteger(stock) || stock < 0 || stock > MAX_QUANTITY)) ||
       !Number.isInteger(safetyStock) || safetyStock < 0 || safetyStock > MAX_QUANTITY
     ) {
       showError(
@@ -167,7 +169,7 @@ export default function InventoryItemModal({
       const payload = {
         name,
         category: form.category,
-        stock,
+        ...(isEditing ? {} : {stock}),
         safetyStock,
         unitPrice,
       };
@@ -252,7 +254,7 @@ export default function InventoryItemModal({
     description={
       isEditing
         ? "품목 정보를 수정하거나 삭제할 수 있습니다."
-        : "품목명, 분류, 재고, 단가를 입력하세요. 재고 상태는 자동으로 계산됩니다."
+        : "품목명, 분류, 재고, 단가를 입력하세요. 재고 상태는 자동으로 계산됩니다. 생산 오더에는 분류가 제품인 품목만 선택할 수 있습니다."
     }
     icon={<FiBox/>}
     isSubmitting={isSubmitting}
@@ -305,7 +307,13 @@ export default function InventoryItemModal({
       min={0}
       max={MAX_QUANTITY}
       step={1}
+      hint={
+        isEditing
+          ? "현재고는 아래 입출고 등록으로만 바뀝니다."
+          : "등록할 때 입력한 수량은 기초 재고로 기록되고, 이후에는 입출고로만 바꿀 수 있습니다."
+      }
       value={form.stock}
+      readOnly={isEditing}
       onChange={(e) => updateField("stock", e.target.value)}
       required/>
 
@@ -333,6 +341,19 @@ export default function InventoryItemModal({
       value={form.unitPrice}
       onChange={(e) => updateField("unitPrice", e.target.value)}
       required/>
+
+      {item && (
+        <StockMovementPanel
+        itemId={item.id}
+        disabled={isSubmitting}
+        onChanged={(changed) => {
+          setForm((prev) => ({...prev, stock: changed.stock.toString()}));
+          onUpdated?.(changed);
+        }}
+        onError={(title, message, err) =>
+          showError(title, err ? getApiError(err) : message)
+        }/>
+      )}
 
       {isEditing && (
         <Button

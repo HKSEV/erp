@@ -2,7 +2,10 @@ package com.example.demo.service;
 
 import com.example.demo.dto.InventoryItemRequestDto;
 import com.example.demo.entity.InventoryItem;
+import com.example.demo.entity.StockMovementType;
 import com.example.demo.repository.InventoryItemRepository;
+import com.example.demo.repository.ProductionOrderRepository;
+import com.example.demo.repository.StockMovementRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +23,9 @@ import java.util.List;
 public class InventoryItemService {
   private static final ZoneId ZONE = ZoneId.of("Asia/Seoul");
   private final InventoryItemRepository itemRepository;
+  private final StockMovementRepository movementRepository;
+  private final ProductionOrderRepository productionOrderRepository;
+  private final StockMovementService stockMovementService;
   private final DocumentNumberService documentNumberService;
 
   @PersistenceContext
@@ -31,15 +37,29 @@ public class InventoryItemService {
   }
 
   @Transactional
-  public InventoryItem createItem(InventoryItemRequestDto dto) {
+  public InventoryItem createItem(InventoryItemRequestDto dto, Long memberId) {
+    if (dto.stock() == null) {
+      throw new ResponseStatusException(
+        HttpStatus.BAD_REQUEST, "현재고를 입력해 주세요."
+      );
+    }
+
     InventoryItem item = new InventoryItem();
     item.setId(documentNumberService.nextItemId());
     item.setCreatedAt(LocalDateTime.now(ZONE).withNano(0));
+    item.changeStock(0);
     apply(item, dto);
 
     // 기존 데이터를 덮어쓰지 않도록 INSERT만 수행합니다.
     entityManager.persist(item);
     entityManager.flush();
+
+    // 입력한 현재고는 기초 재고 이력으로 남깁니다.
+    if (dto.stock() > 0) {
+      stockMovementService.record(
+        item, StockMovementType.INITIAL, dto.stock(), null, "품목 등록", memberId
+      );
+    }
 
     return item;
   }
@@ -49,43 +69,52 @@ public class InventoryItemService {
     String itemId,
     InventoryItemRequestDto dto
   ) {
-    InventoryItem item = findInventoryItem(itemId);
-    apply(item, dto);
+    // 현재고는 바꾸지 않습니다. (입출고로만 변경)
+    InventoryItem item = stockMovementService.lockItem(itemId);
+    boolean usedByOrders = productionOrderRepository.existsByItem_Id(itemId);
 
+    if (usedByOrders && !item.getCategory().equals(dto.category())) {
+      throw new ResponseStatusException(
+        HttpStatus.CONFLICT, "생산 오더에 사용 중인 품목은 분류를 바꿀 수 없습니다."
+      );
+    }
+
+    String previousName = item.getName();
+    apply(item, dto);
     itemRepository.flush();
+
+    if (usedByOrders && !previousName.equals(item.getName()))
+      productionOrderRepository.renameProduct(itemId, item.getName());
+
     return item;
   }
 
   @Transactional
   public void deleteItem(String itemId) {
-    InventoryItem item = findInventoryItem(itemId);
+    InventoryItem item = stockMovementService.lockItem(itemId);
 
+    if (productionOrderRepository.existsByItem_Id(itemId)) {
+      throw new ResponseStatusException(
+        HttpStatus.CONFLICT, "생산 오더에 사용 중인 품목은 삭제할 수 없습니다."
+      );
+    }
+
+    // 품목을 지우면 그 품목의 입출고 이력도 함께 지웁니다.
+    movementRepository.deleteByItemId(itemId);
     itemRepository.delete(item);
     itemRepository.flush();
-  }
-
-  private InventoryItem findInventoryItem(String itemId) {
-    return itemRepository.findById(itemId)
-      .orElseThrow(() -> new ResponseStatusException(
-        HttpStatus.NOT_FOUND,
-        "품목을 찾을 수 없습니다."
-      ));
   }
 
   private void apply(
     InventoryItem item,
     InventoryItemRequestDto dto
   ) {
-    // 재고 상태는 입력받지 않고 현재고·적정재고로 계산합니다.
-    String status = dto.stock() == 0 ? "out"
-      : dto.stock() < dto.safetyStock() ? "low"
-      : "normal";
-
     item.setName(dto.name().strip());
     item.setCategory(dto.category());
-    item.setStock(dto.stock());
     item.setSafetyStock(dto.safetyStock());
     item.setUnitPrice(dto.unitPrice());
-    item.setStatus(status);
+
+    // 적정재고가 바뀌면 재고 상태를 다시 계산합니다.
+    item.refreshStatus();
   }
 }

@@ -22,8 +22,10 @@ public class InventoryItem {
   private String name;
 
   @Column(name = "CATEGORY", nullable = false, length = 20)
-  private String category; // 원자재, 부품, 포장재, 소모품
+  private String category; // 원자재, 부품, 포장재, 소모품, 제품
 
+  // 현재고는 입출고 기록(StockMovementService)으로만 바꿉니다.
+  @Setter(AccessLevel.NONE)
   @Column(name = "STOCK", nullable = false)
   private Integer stock; // 현재고
 
@@ -33,10 +35,24 @@ public class InventoryItem {
   @Column(name = "UNIT_PRICE", nullable = false)
   private Long unitPrice; // 단가 (원)
 
+  @Setter(AccessLevel.NONE)
   @Column(name = "STATUS", length = 20)
   private String status; // normal, low, out (현재고·적정재고로 계산)
 
   @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
   @Column(name = "CREATED_AT", updatable = false)
   private LocalDateTime createdAt; // 한국 시간 기준 등록 시각
+
+  // 현재고를 바꾸고 재고 상태를 다시 계산합니다.
+  public void changeStock(int stock) {
+    this.stock = stock;
+    refreshStatus();
+  }
+
+  // 재고 상태는 입력받지 않고 현재고·적정재고로 계산합니다.
+  public void refreshStatus() {
+    this.status = stock == 0 ? "out"
+      : stock < safetyStock ? "low"
+      : "normal";
+  }
 }

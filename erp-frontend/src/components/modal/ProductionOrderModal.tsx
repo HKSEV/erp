@@ -4,6 +4,7 @@ import React, { useEffect, useId, useRef, useState } from "react";
 import { isAxiosError } from "axios";
 import { FiPackage, FiTrash2 } from "react-icons/fi";
 import api from "@/app/lib/api";
+import type { InventoryItem } from "@/app/types/InventoryItem";
 import type { ProductionOrder } from "@/app/types/ProductionOrder";
 import useModal from "@/components/contexts/ModalContext";
 import { Button, Select, TextField } from "@/components/ui";
@@ -45,13 +46,17 @@ export default function ProductionOrderModal({
   const {openAlertModal} = useModal();
   const id = useId();
   const isEditing = order !== undefined;
+  // 생산완료된 오더는 제품 재고에 반영되어 수정하지 않음
+  const isLocked = order?.status === "completed";
+  // 연결 기능 이전에 완료된 오더(품목 없음)는 재고에 반영되지 않았으므로 삭제 가능
+  const canDelete = isEditing && (!isLocked || order.itemId === null);
 
   const mountedRef = useRef(false);
   const mutationRef = useRef(false);
   const alertRef = useRef(openAlertModal);
 
   const [form, setForm] = useState({
-    productName: order?.productName ?? "",
+    itemId: order?.itemId ?? "",
     quantity: order?.quantity?.toString() ?? "1",
     status: order?.status ?? "planning",
     // 완료(100%) 오더를 생산중으로 되돌리면 0부터 다시 입력
@@ -61,6 +66,53 @@ export default function ProductionOrderModal({
   const [action, setAction] = useState<"save"|"delete"|null>(null);
   const [error, setError] = useState<string | null>(null);
   const isSubmitting = action !== null;
+
+  // 생산할 품목: 재고관리의 제품
+  const [products, setProducts] = useState<InventoryItem[]>([]);
+  // 잠긴 오더는 품목을 바꿀 수 없으므로 목록을 조회하지 않음
+  const [productsLoading, setProductsLoading] = useState(!isLocked);
+
+  useEffect(() => {
+    if (isLocked)
+      return;
+
+    const controller = new AbortController();
+
+    api.get<InventoryItem[]>("/api/inventory/items", {
+      signal: controller.signal,
+    }).then(({data}) => {
+      if (!controller.signal.aborted)
+        setProducts(data.filter((item) => item.category === "제품"));
+    }).catch((err: unknown) => {
+      if (!controller.signal.aborted)
+        console.error("제품 목록을 불러오는 중 오류 발생:", err);
+    }).finally(() => {
+      if (!controller.signal.aborted)
+        setProductsLoading(false);
+    });
+
+    return () => controller.abort();
+  }, [isLocked]);
+
+  const productOptions = [
+    {
+      value: "",
+      label: productsLoading
+        ? "제품 목록을 불러오는 중..."
+        : products.length
+          ? "제품 선택"
+          : "등록된 제품이 없습니다",
+      disabled: true,
+    },
+    // 잠긴 오더는 목록을 조회하지 않으므로 저장된 제품명을 그대로 표시
+    ...(order?.itemId && !products.some((item) => item.id === order.itemId)
+      ? [{value: order.itemId, label: order.productName + " (" + order.itemId + ")"}]
+      : []),
+    ...products.map((item) => ({
+      value: item.id,
+      label: item.name + " (" + item.id + ") · 현재고 " + item.stock.toLocaleString(),
+    })),
+  ];
 
   useEffect(() => {
     alertRef.current = openAlertModal;
@@ -125,16 +177,15 @@ export default function ProductionOrderModal({
     e.preventDefault();
 
     // 연속 클릭이나 Enter 입력에 의한 중복 요청 방지
-    if (mutationRef.current)
+    if (mutationRef.current || isLocked)
       return;
 
-    const productName = form.productName.trim();
     const quantity = Number(form.quantity);
 
-    if (!productName || productName.length > 100) {
+    if (!form.itemId) {
       showError(
         "입력 내용을 확인해 주세요.",
-        "제품명은 1~100자로 입력해 주세요.",
+        "생산할 제품을 선택해 주세요.",
       );
       return;
     }
@@ -173,9 +224,12 @@ export default function ProductionOrderModal({
       return;
     };
 
-    void runMutation("save", async () => {
+    // 생산완료로 바꾸면 재고가 늘고 되돌릴 수 없으므로 한 번 더 확인
+    const completing = isEditing && form.status === "completed";
+
+    const save = () => void runMutation("save", async () => {
       const payload = {
-        productName,
+        itemId: form.itemId,
         quantity,
         status: isEditing ? form.status : "planning",
         // 생산대기·생산완료는 서버가 0·100으로 정함
@@ -210,11 +264,34 @@ export default function ProductionOrderModal({
           variant: "success",
           description:
             "오더 번호: " + data.id +
-            "\n제품명: " + data.productName,
+            "\n제품명: " + data.productName +
+            (completing
+              ? "\n제품 재고에 " + data.quantity.toLocaleString() + "개가 반영되었습니다."
+              : ""),
           confirmText: "확인",
         },
       );
     });
+
+    if (!completing) {
+      save();
+      return;
+    }
+
+    const product = products.find((item) => item.id === form.itemId);
+
+    alertRef.current(
+      "생산완료로 저장하시겠습니까?",
+      save,
+      {
+        variant: "confirm",
+        description:
+          (product?.name ?? "제품") + " 재고가 " + quantity.toLocaleString() + "개 늘어납니다."
+          + "\n완료된 오더는 수정하거나 삭제할 수 없습니다.",
+        confirmText: "완료 처리",
+        cancelText: "취소",
+      },
+    );
   };
 
   const handleDelete = () => {
@@ -261,10 +338,16 @@ export default function ProductionOrderModal({
     noValidate
     title={isEditing ? "생산 오더 상세보기" : "신규 생산 오더 등록"}
     description={
-      isEditing
-        ? "오더 정보를 수정하거나 삭제할 수 있습니다."
-        : "제품명, 수량, 납기일을 입력하세요. 생산대기 상태로 등록됩니다."
+      isLocked
+        ? "생산완료된 오더는 제품 재고에 반영되어 수정할 수 없습니다."
+        : order && !order.itemId
+          ? "기존 제품명: " + order.productName + ". 생산할 제품을 선택한 뒤 저장해 주세요."
+          : isEditing
+            ? "오더 정보를 수정하거나 삭제할 수 있습니다. 생산완료로 바꾸면 제품 재고가 늘어납니다."
+            : "생산할 제품, 수량, 납기일을 입력하세요. 생산대기 상태로 등록됩니다."
     }
+    hideSubmit={isLocked}
+    cancelText={isLocked ? "닫기" : "취소"}
     icon={<FiPackage/>}
     isSubmitting={isSubmitting}
     error={error}
@@ -285,16 +368,20 @@ export default function ProductionOrderModal({
         readOnly/>
       )}
 
-      <TextField
-      id={id + "-productName"}
-      name="productName"
-      label="제품명"
-      placeholder="예: 공업용 모터 250W"
-      value={form.productName}
-      onChange={(e) => updateField("productName", e.target.value)}
-      maxLength={100}
-      required
-      autoFocus/>
+      <S.ModalField>
+        <S.ModalLabel htmlFor={id + "-itemId"}>
+          생산할 제품
+        </S.ModalLabel>
+
+        <Select
+        id={id + "-itemId"}
+        value={form.itemId}
+        disabled={isLocked}
+        onChange={(e) => updateField("itemId", e.target.value)}
+        options={productOptions}
+        required
+        autoFocus/>
+      </S.ModalField>
 
       <TextField
       id={id + "-quantity"}
@@ -305,6 +392,7 @@ export default function ProductionOrderModal({
       max={2147483647}
       step={1}
       value={form.quantity}
+      readOnly={isLocked}
       onChange={(e) => updateField("quantity", e.target.value)}
       required/>
 
@@ -317,6 +405,7 @@ export default function ProductionOrderModal({
           <Select
           id={id + "-status"}
           value={form.status}
+          disabled={isLocked}
           onChange={(e) => updateField("status", e.target.value)}
           options={[
             {value: "planning", label: "생산대기"},
@@ -346,10 +435,11 @@ export default function ProductionOrderModal({
       label="납기일"
       type="date"
       value={form.dueDate}
+      readOnly={isLocked}
       onChange={(e) => updateField("dueDate", e.target.value)}
       required/>
 
-      {isEditing && (
+      {canDelete && (
         <Button
         variant="danger"
         disabled={isSubmitting}

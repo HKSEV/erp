@@ -1,7 +1,10 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.ProductionOrderRequestDto;
+import com.example.demo.entity.InventoryItem;
 import com.example.demo.entity.ProductionOrder;
+import com.example.demo.entity.StockMovementType;
+import com.example.demo.repository.InventoryItemRepository;
 import com.example.demo.repository.ProductionOrderRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -19,7 +22,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductionOrderService {
   private static final ZoneId ZONE = ZoneId.of("Asia/Seoul");
+  private static final String PRODUCT_CATEGORY = "제품";
   private final ProductionOrderRepository productionOrderRepository;
+  private final InventoryItemRepository itemRepository;
+  private final StockMovementService stockMovementService;
   private final DocumentNumberService documentNumberService;
 
   @PersistenceContext
@@ -31,15 +37,18 @@ public class ProductionOrderService {
   }
 
   @Transactional
-  public ProductionOrder createOrder(ProductionOrderRequestDto dto) {
+  public ProductionOrder createOrder(ProductionOrderRequestDto dto, Long memberId) {
     ProductionOrder order = new ProductionOrder();
     order.setId(documentNumberService.nextOrderId());
     order.setCreatedAt(LocalDateTime.now(ZONE).withNano(0));
-    apply(order, dto);
+    boolean completing = apply(order, dto);
 
     // 기존 오더를 덮어쓰지 않도록 INSERT만 수행합니다.
     entityManager.persist(order);
     entityManager.flush();
+
+    if (completing)
+      addProducedStock(order, memberId);
 
     return order;
   }
@@ -47,12 +56,24 @@ public class ProductionOrderService {
   @Transactional
   public ProductionOrder updateOrder(
     String orderId,
-    ProductionOrderRequestDto dto
+    ProductionOrderRequestDto dto,
+    Long memberId
   ) {
     ProductionOrder order = findOrder(orderId);
-    apply(order, dto);
 
+    // 생산완료된 오더는 재고에 반영되었으므로 바꾸지 않습니다.
+    if ("completed".equals(order.getStatus())) {
+      throw new ResponseStatusException(
+        HttpStatus.CONFLICT, "생산완료된 오더는 수정할 수 없습니다."
+      );
+    }
+
+    boolean completing = apply(order, dto);
     productionOrderRepository.flush();
+
+    if (completing)
+      addProducedStock(order, memberId);
+
     return order;
   }
 
@@ -60,19 +81,58 @@ public class ProductionOrderService {
   public void deleteOrder(String orderId) {
     ProductionOrder order = findOrder(orderId);
 
+    // 제품 재고에 반영된 오더는 지우지 않습니다. (연결 기능 이전에 완료된 오더는 삭제 가능)
+    if ("completed".equals(order.getStatus()) && order.getItem() != null) {
+      throw new ResponseStatusException(
+        HttpStatus.CONFLICT,
+        "생산완료된 오더는 재고에 반영되어 삭제할 수 없습니다."
+      );
+    }
+
     productionOrderRepository.delete(order);
     productionOrderRepository.flush();
   }
 
+  // 같은 오더를 동시에 완료 처리해 재고가 두 번 늘지 않도록 행을 잠급니다.
   private ProductionOrder findOrder(String orderId) {
-    return productionOrderRepository.findById(orderId)
+    return productionOrderRepository.findForUpdate(orderId)
       .orElseThrow(() -> new ResponseStatusException(
         HttpStatus.NOT_FOUND,
         "생산 오더를 찾을 수 없습니다."
       ));
   }
 
-  private void apply(
+  // 처음 읽을 때부터 잠가야 생산완료 시 최신 현재고에 더합니다.
+  // (잠그기 전에 읽어 둔 품목은 잠근 뒤에도 예전 값이 남아 있음)
+  private InventoryItem findProduct(String itemId) {
+    InventoryItem item = itemRepository.findByIdForUpdate(itemId.strip())
+      .orElseThrow(() -> new ResponseStatusException(
+        HttpStatus.NOT_FOUND, "선택한 품목을 찾을 수 없습니다."
+      ));
+
+    if (!PRODUCT_CATEGORY.equals(item.getCategory())) {
+      throw new ResponseStatusException(
+        HttpStatus.BAD_REQUEST, "생산 오더에는 분류가 제품인 품목만 선택할 수 있습니다."
+      );
+    }
+
+    return item;
+  }
+
+  // 생산완료 시 제품 재고를 생산 수량만큼 늘리고 이력을 남깁니다.
+  private void addProducedStock(ProductionOrder order, Long memberId) {
+    stockMovementService.record(
+      order.getItem(),
+      StockMovementType.PRODUCTION,
+      order.getQuantity(),
+      order.getId(),
+      "생산 완료",
+      memberId
+    );
+  }
+
+  // 반환값: 이번 요청으로 생산완료가 되었는지 (재고 반영 필요 여부)
+  private boolean apply(
     ProductionOrder order,
     ProductionOrderRequestDto dto
   ) {
@@ -97,10 +157,15 @@ public class ProductionOrderService {
         : previous >= 100 ? 0 : previous;
     };
 
-    order.setProductName(dto.productName().strip());
+    InventoryItem item = findProduct(dto.itemId());
+
+    order.setItem(item);
+    order.setProductName(item.getName());
     order.setQuantity(dto.quantity());
     order.setStatus(dto.status());
     order.setProgress(progress);
     order.setDueDate(dto.dueDate());
+
+    return isCompleted && !wasCompleted;
   }
 }

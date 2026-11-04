@@ -113,7 +113,7 @@ export default function Inventory() {
     <PageContainer>
       <PageHeader
       title="재고관리"
-      description="품목별 현재고와 재고 상태를 확인하고 관리합니다."
+      description="품목별 현재고와 재고 상태를 확인하고, 품목 상세보기에서 입고·출고를 기록합니다."
       actions={canManageWork && (
         <Button onClick={() => handleItem()}>+ 신규 품목 등록</Button>
       )}/>
