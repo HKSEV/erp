@@ -11,11 +11,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ProductionOrderService {
+  private static final ZoneId ZONE = ZoneId.of("Asia/Seoul");
   private final ProductionOrderRepository productionOrderRepository;
   private final DocumentNumberService documentNumberService;
 
@@ -31,6 +34,7 @@ public class ProductionOrderService {
   public ProductionOrder createOrder(ProductionOrderRequestDto dto) {
     ProductionOrder order = new ProductionOrder();
     order.setId(documentNumberService.nextOrderId());
+    order.setCreatedAt(LocalDateTime.now(ZONE).withNano(0));
     apply(order, dto);
 
     // 기존 오더를 덮어쓰지 않도록 INSERT만 수행합니다.
@@ -72,6 +76,15 @@ public class ProductionOrderService {
     ProductionOrder order,
     ProductionOrderRequestDto dto
   ) {
+    boolean wasCompleted = "completed".equals(order.getStatus());
+    boolean isCompleted = "completed".equals(dto.status());
+
+    // 완료 상태로 전환되는 순간에만 기록합니다.
+    if (isCompleted && !wasCompleted)
+      order.setCompletedAt(LocalDateTime.now(ZONE).withNano(0));
+    else if (!isCompleted)
+      order.setCompletedAt(null);
+
     int previous = order.getProgress() == null
       ? 0 : Math.max(0, order.getProgress());
 

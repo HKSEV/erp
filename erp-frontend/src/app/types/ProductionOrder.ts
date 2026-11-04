@@ -5,4 +5,6 @@ export interface ProductionOrder {
   status: "planning" | "progress" | "completed";
   progress: number;
   dueDate: string;
+  createdAt: string | null;
+  completedAt: string | null;
 }

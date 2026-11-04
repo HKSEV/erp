@@ -11,11 +11,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class EmployeeService {
+  private static final ZoneId ZONE = ZoneId.of("Asia/Seoul");
   private final EmployeeRepository employeeRepository;
   private final DocumentNumberService documentNumberService;
 
@@ -31,6 +34,7 @@ public class EmployeeService {
   public Employee createEmployee(EmployeeRequestDto dto) {
     Employee employee = new Employee();
     employee.setId(documentNumberService.nextEmployeeId());
+    employee.setCreatedAt(LocalDateTime.now(ZONE).withNano(0));
     apply(employee, dto);
 
     // 기존 데이터를 덮어쓰지 않도록 INSERT만 수행합니다.

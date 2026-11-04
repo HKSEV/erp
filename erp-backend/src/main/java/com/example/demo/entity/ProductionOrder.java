@@ -1,9 +1,11 @@
 package com.example.demo.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table
@@ -31,4 +33,12 @@ public class ProductionOrder {
 
   @Column(name = "DUE_DATE")
   private LocalDate dueDate; // 2023-11-20
+
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+  @Column(updatable = false)
+  private LocalDateTime createdAt; // 한국 시간 기준 등록 시각
+
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+  @Column
+  private LocalDateTime completedAt; // 미완료 상태는 null
 }

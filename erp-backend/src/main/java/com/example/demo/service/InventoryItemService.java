@@ -11,11 +11,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class InventoryItemService {
+  private static final ZoneId ZONE = ZoneId.of("Asia/Seoul");
   private final InventoryItemRepository itemRepository;
   private final DocumentNumberService documentNumberService;
 
@@ -31,6 +34,7 @@ public class InventoryItemService {
   public InventoryItem createItem(InventoryItemRequestDto dto) {
     InventoryItem item = new InventoryItem();
     item.setId(documentNumberService.nextItemId());
+    item.setCreatedAt(LocalDateTime.now(ZONE).withNano(0));
     apply(item, dto);
 
     // 기존 데이터를 덮어쓰지 않도록 INSERT만 수행합니다.

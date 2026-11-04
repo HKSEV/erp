@@ -1,9 +1,11 @@
 package com.example.demo.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table
@@ -31,4 +33,8 @@ public class Employee {
 
   @Column(name = "JOIN_DATE", nullable = false)
   private LocalDate joinDate; // 2026-03-02
+
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+  @Column(name = "CREATED_AT", updatable = false)
+  private LocalDateTime createdAt; // 한국 시간 기준 등록 시각
 }

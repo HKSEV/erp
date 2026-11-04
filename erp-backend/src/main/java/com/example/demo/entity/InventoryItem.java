@@ -1,7 +1,10 @@
 package com.example.demo.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table
@@ -32,4 +35,8 @@ public class InventoryItem {
 
   @Column(name = "STATUS", length = 20)
   private String status; // normal, low, out (현재고·적정재고로 계산)
+
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+  @Column(name = "CREATED_AT", updatable = false)
+  private LocalDateTime createdAt; // 한국 시간 기준 등록 시각
 }

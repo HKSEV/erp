@@ -13,16 +13,29 @@ export default function Production() {
   const [isLoading, setIsLoading] = useState(true);
   const deletedOrderIdsRef = useRef(new Set<string>());
 
-  // 현황은 검색 결과가 아닌 전체 오더를 기준으로 집계
-  const progressCount = orders.filter((order) =>
+  const currentYear = Number(new Intl.DateTimeFormat("en", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+  }).format(new Date()));
+
+  // 상단 현황은 올해 등록한 오더의 현재 상태를 집계합니다.
+  const yearOrders = orders.filter((order) =>
+    order.createdAt?.startsWith(`${currentYear}-`)
+  );
+
+  const unknownDateCount = orders.filter(
+    (order) => !order.createdAt
+  ).length;
+
+  const progressCount = yearOrders.filter((order) =>
     order.status === "progress"
   ).length;
 
-  const planningCount = orders.filter((order) =>
+  const planningCount = yearOrders.filter((order) =>
     order.status === "planning"
   ).length;
 
-  const completedCount = orders.filter((order) =>
+  const completedCount = yearOrders.filter((order) =>
     order.status === "completed"
   ).length;
 
@@ -118,6 +131,24 @@ export default function Production() {
       label={`${order.id} 진행률`}/>
     )},
     {key: "dueDate", header: "납기일", align: "center", width: "120px"},
+    {
+      key: "completedAt",
+      header: "완료일",
+      align: "center",
+      width: "120px",
+      render: (order) => (
+        order.completedAt ? (
+          <time
+          dateTime={order.completedAt}
+          title={
+            order.completedAt.replace("T", " ").slice(0, 19)
+            + " (한국 시간)"
+          }>
+            {order.completedAt.slice(0, 10)}
+          </time>
+        ) : ""
+      ),
+    },
     {key: "actions", header: "관리", align: "center", width: "110px", render: (order) => (
       <Button
       variant="secondary"
@@ -132,23 +163,32 @@ export default function Production() {
     <PageContainer>
       <PageHeader
       title="생산관리"
-      description="생산 오더의 진행 상태와 납기를 관리합니다."
+      description={
+        `생산 오더의 진행 상태와 납기를 관리합니다. 현황은 ${currentYear}년 등록 오더 기준입니다.`
+        + (
+          unknownDateCount
+            ? ` 등록일 미확인 ${unknownDateCount}건은 연간 집계에서 제외됩니다.`
+            : ""
+        )
+      }
       actions={
       <Button onClick={() => handleOrder()}>+ 신규 오더 등록</Button>
       }/>
 
       <StatGrid>
         <StatCard
-        label="진행중인 오더"
+        label={`${currentYear}년 진행중인 오더`}
         value={progressCount}
         unit="건"
         tone="accent"/>
+
         <StatCard
-        label="생산 대기"
+        label={`${currentYear}년 생산 대기`}
         value={planningCount}
         unit="건"/>
+
         <StatCard
-        label="생산완료"
+        label={`${currentYear}년 생산완료`}
         value={completedCount}
         unit="건"
         tone="success"/>
