@@ -9,7 +9,6 @@ import type { Column } from "@/components/ui";
 import useModal from "@/components/contexts/ModalContext";
 import { ROLE_LABEL } from "@/app/types/Member";
 import type { MemberAccount, UserRole } from "@/app/types/Member";
-import { DEPARTMENTS, POSITIONS } from "@/app/types/Organization";
 import type { Employee } from "@/app/types/Employee";
 
 // 시스템관리 > 사용자 권한 관리 (관리자 전용, /api/admin/members)
@@ -35,33 +34,44 @@ export default function Users() {
   const [members, setMembers] = useState<MemberAccount[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEmployeeLoading, setIsEmployeeLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [employeeLoadError, setEmployeeLoadError] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<number | null>(null);
 
   // 화면이 처음 열릴 때 사용자 목록 조회
   // 응답 전에 화면을 벗어나면(abort) 상태를 바꾸지 않음
   useEffect(() => {
     const controller = new AbortController();
+    const options = {signal: controller.signal};
 
-    Promise.all([
-      api.get<MemberAccount[]>("/api/admin/members", {signal: controller.signal}),
-      api.get<Employee[]>("/api/hr/employees", {signal: controller.signal}),
-    ]).then(([memberResponse, employeeResponse]) => {
-      if (!controller.signal.aborted) {
-        setMembers(memberResponse.data);
-        setEmployees(employeeResponse.data);
-      }
-    }).catch((err: unknown) => {
-      if (controller.signal.aborted)
-        return;
-      // 403(관리자 아님)은 예상된 응답이라 안내 문구만 표시
-      if (!isAxiosError(err) || err.response?.status !== 403)
-        console.error("사용자 목록을 불러오는 중 오류 발생:", err);
-      setLoadError(getApiError(err, "사용자 목록을 불러오지 못했습니다."));
-    }).finally(() => {
-      if (!controller.signal.aborted)
-        setIsLoading(false);
-    });
+    api.get<MemberAccount[]>("/api/admin/members", options)
+      .then(({data}) => {
+        if (!controller.signal.aborted)
+          setMembers(data);
+      })
+      .catch((err: unknown) => {
+        if (!controller.signal.aborted)
+          setLoadError(getApiError(err, "사용자 목록을 불러오지 못했습니다."));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted)
+          setIsLoading(false);
+      });
+
+    api.get<Employee[]>("/api/hr/employees", options)
+      .then(({data}) => {
+        if (!controller.signal.aborted)
+          setEmployees(data);
+      })
+      .catch((err: unknown) => {
+        if (!controller.signal.aborted)
+          setEmployeeLoadError(getApiError(err, "직원 목록을 불러오지 못했습니다."));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted)
+          setIsEmployeeLoading(false);
+      });
 
     return () => controller.abort();
   }, []);
@@ -185,6 +195,7 @@ export default function Users() {
     )},
     {key: "email", header: "이메일"},
     {key: "employeeId", header: "연결 직원", width: "260px", render: (m) => (
+      isEmployeeLoading ? "직원 조회 중..." : employeeLoadError ? employeeLoadError :
       m.employeeId ? `${m.employeeName ?? ""} (${m.employeeId})` : (
         <Select
         size="sm"
