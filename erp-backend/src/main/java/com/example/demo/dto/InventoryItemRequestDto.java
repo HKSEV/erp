@@ -10,12 +10,12 @@ public record InventoryItemRequestDto(
 	// 목록을 바꾸면 프론트 app/types/InventoryItem.ts의 INVENTORY_CATEGORIES도 같이 변경
 	@NotBlank(message = "분류를 선택해 주세요.")
 	@Pattern(
-		regexp = "원자재|부품|포장재|소모품",
+		regexp = "원자재|부품|포장재|소모품|제품",
 		message = "올바른 분류를 선택해 주세요."
 	)
 	String category,
 
-	@NotNull(message = "현재고를 입력해 주세요.")
+	// 기초 재고: 등록할 때만 사용합니다. 수정 요청의 값은 무시하고, 이후 재고는 입출고로만 바꿉니다.
 	@Min(value = 0, message = "현재고는 0 이상이어야 합니다.")
 	Integer stock,
 

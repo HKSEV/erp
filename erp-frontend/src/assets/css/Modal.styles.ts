@@ -279,9 +279,11 @@ export const CloseButton = styled.button`
     outline-offset: 2px;
   }
 `;
+// 버튼 수만큼 같은 폭으로 나눔 (읽기 전용 화면처럼 버튼이 하나면 전체 폭)
 export const ModalActions = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 0.75rem;
 `;
 export const ModalFields = styled.fieldset`

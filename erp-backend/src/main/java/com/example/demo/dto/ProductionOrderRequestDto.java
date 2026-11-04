@@ -4,9 +4,10 @@ import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 
 public record ProductionOrderRequestDto(
-	@NotBlank(message = "제품명을 입력해 주세요.")
-	@Size(max = 100, message = "제품명은 100자 이내로 입력해 주세요.")
-	String productName,
+	// 재고관리의 제품 품목 코드 (제품명은 품목명을 그대로 사용)
+	@NotBlank(message = "생산할 제품을 선택해 주세요.")
+	@Size(max = 50, message = "품목 코드를 확인해 주세요.")
+	String itemId,
 
 	@NotNull(message = "수량을 입력해 주세요.")
 	@Min(value = 1, message = "수량은 1 이상이어야 합니다.")

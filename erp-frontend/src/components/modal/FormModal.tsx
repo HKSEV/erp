@@ -20,6 +20,7 @@ interface FormModalProps {
   onClose: () => void;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   noValidate?: boolean;
+  hideSubmit?: boolean;  // 읽기 전용 화면: 저장 버튼 없이 닫기만 표시
 }
 
 export default function FormModal({
@@ -36,6 +37,7 @@ export default function FormModal({
   onClose,
   onSubmit,
   noValidate = false,
+  hideSubmit = false,
 }: FormModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const id = useId();
@@ -133,11 +135,13 @@ export default function FormModal({
               {cancelText}
             </S.ModalButton>
 
-            <S.ModalButton
-            type="submit"
-            disabled={isSubmitting}>
-              {isSubmitting ? pendingText : submitText}
-            </S.ModalButton>
+            {!hideSubmit && (
+              <S.ModalButton
+              type="submit"
+              disabled={isSubmitting}>
+                {isSubmitting ? pendingText : submitText}
+              </S.ModalButton>
+            )}
           </S.ModalActions>
         </S.ModalForm>
       </S.ModalDialogBody>
