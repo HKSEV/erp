@@ -3,6 +3,7 @@
 import React, { useEffect, useId, useRef } from "react";
 import { FiEdit3, FiX } from "react-icons/fi";
 import { lockModalScroll } from "@/app/lib/modalScrollLock";
+import { useModalBackdrop } from "@/app/lib/useModalBackdrop";
 import * as S from "@/assets/css/Style.styles";
 
 interface FormModalProps {
@@ -62,37 +63,21 @@ export default function FormModal({
       onClose();
   };
 
-  const handleBackdropClick = (
-    e: React.MouseEvent<HTMLDialogElement>,
-  ) => {
-    if (e.target !== e.currentTarget)
-      return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-
-    if (
-      e.clientX < rect.left ||
-      e.clientX > rect.right ||
-      e.clientY < rect.top ||
-      e.clientY > rect.bottom
-    )
-      handleClose();
-  };
+  const backdropHandlers = useModalBackdrop(handleClose);
 
   if (!isOpen)
     return null;
 
   return (
     <S.ModalDialog
-      ref={dialogRef}
-      aria-labelledby={id + "-title"}
-      aria-describedby={description ? id + "-description" : undefined}
-      onCancel={(e) => {
-        e.preventDefault();
-        handleClose();
-      }}
-      onClick={handleBackdropClick}
-    >
+    ref={dialogRef}
+    aria-labelledby={id + "-title"}
+    aria-describedby={description ? id + "-description" : undefined}
+    onCancel={(e) => {
+      e.preventDefault();
+      handleClose();
+    }}
+    {...backdropHandlers}>
       <S.ModalDialogHeader>
         <S.ModalDialogIcon aria-hidden="true">
           {icon}

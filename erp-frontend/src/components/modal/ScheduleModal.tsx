@@ -14,6 +14,7 @@ import {
 import * as S from "@/assets/css/Style.styles";
 import useModal from "../contexts/ModalContext";
 import { lockModalScroll } from "@/app/lib/modalScrollLock";
+import { useModalBackdrop } from "@/app/lib/useModalBackdrop";
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -147,6 +148,8 @@ export default function ScheduleModal({
     if (!mutationRef.current)
       onClose();
   };
+
+  const backdropHandlers = useModalBackdrop(handleClose);
 
   const handleEdit = (schedule: Schedule) => {
     if (isLoading || mutationRef.current)
@@ -327,17 +330,7 @@ export default function ScheduleModal({
       e.preventDefault();
       handleClose();
     }}
-    onClick={(e) => {
-      if (e.target !== e.currentTarget) return;
-      const rect = e.currentTarget.getBoundingClientRect();
-      if (
-        e.clientX < rect.left ||
-        e.clientX > rect.right ||
-        e.clientY < rect.top ||
-        e.clientY > rect.bottom
-      )
-        handleClose();
-    }}>
+    {...backdropHandlers}>
       <S.ModalDialogHeader>
         <S.ModalDialogIcon aria-hidden="true">
           <FiCalendar/>
