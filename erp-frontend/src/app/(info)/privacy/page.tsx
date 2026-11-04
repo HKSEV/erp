@@ -25,7 +25,7 @@ export default function PrivacyPage() {
           </tr>
           <tr>
             <th>선택</th>
-            <td>성별, 회사명, 직급, 전화번호, 주소, 상세주소</td>
+            <td>성별, 부서, 직급, 전화번호, 주소, 상세주소</td>
           </tr>
           <tr>
             <th>업무 처리</th>

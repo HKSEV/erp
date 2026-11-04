@@ -11,7 +11,6 @@
   "dependencies": {
     "@js-temporal/polyfill": "^0.5.1",
     "@reduxjs/toolkit": "^2.13.0",
-    "@stylexjs/stylex": "^0.19.1",
     "axios": "^1.20.0",
     "korean-lunar-calendar": "^0.4.0",
     "next": "16.3.4",

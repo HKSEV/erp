@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import api from "@/app/lib/api";
 import useCurrentMember from "@/app/lib/currentMember";
+import { updateCompanyName } from "@/app/lib/company";
 import type { Company } from "@/app/types/Company";
 import { PageContainer, PageHeader, Card, TextField, FormStack, FormActions, Button } from "@/components/ui";
 import useModal from "@/components/contexts/ModalContext";
@@ -84,6 +85,8 @@ export default function CompanySettings() {
       const company = {name: data.name, businessNumber: data.businessNumber, email: data.email};
       setSaved(company);
       setForm(company);
+      // 헤더 로고의 회사명도 바로 바꿈
+      updateCompanyName(company.name);
       openAlertModal("회사 정보가 저장되었습니다.", undefined, {variant: "success"});
     } catch (err) {
       // 400·403: 백엔드가 보낸 안내 문구(예: 사업자 등록번호 형식, 관리자 전용), 그 밖의 오류는 공통 문구

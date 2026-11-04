@@ -10,7 +10,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize;
 };
 
-// 업무 화면용 버튼 (기존 S.Button은 로그인·회원가입 화면에서 사용 중이라 별도로 둠)
+// 업무 화면용 버튼 (로그인·회원가입 화면은 Member.styles.ts의 MemberButton 사용)
 // type 기본값을 "button"으로 해서 폼 안에서 실수로 제출되지 않게 함
 export default function Button({variant = "primary", size = "md", type = "button", ...rest}: ButtonProps) {
   return <StyledButton type={type} $variant={variant} $size={size} {...rest}/>;

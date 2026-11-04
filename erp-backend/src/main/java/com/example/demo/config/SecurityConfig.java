@@ -106,12 +106,8 @@ public class SecurityConfig {
         .requestMatchers(HttpMethod.PUT, "/api/company").hasRole("ADMIN")
         .requestMatchers(HttpMethod.GET, "/api/company").authenticated()
 
-        .requestMatchers(
-          "/api/members/**",
-          "/api/production/**",
-          "/api/inventory/**",
-          "/api/hr/**"
-        ).permitAll()
+        // 로그인·회원가입·비밀번호 찾기 (members/me 등은 위에서 먼저 로그인 필요로 처리)
+        .requestMatchers("/api/members/**").permitAll()
 
         .anyRequest().authenticated()
       )

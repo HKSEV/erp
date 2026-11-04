@@ -105,9 +105,6 @@ export const MemberFieldRow = styled.div`
     grid-template-columns: minmax(0, 1fr);
   }
 `;
-export const MemberCol = styled.div`
-  flex: 1;
-`;
 export const MemberInputLabel = styled.label`
   color: ${({theme}) => theme.colors.textBody};
   font-size: 0.875rem;
