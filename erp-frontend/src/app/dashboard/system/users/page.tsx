@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { FiRotateCcw } from "react-icons/fi";
 import { isAxiosError } from "axios";
 import api from "@/app/lib/api";
 import useCurrentMember from "@/app/lib/currentMember";
@@ -33,11 +34,14 @@ export default function Users() {
   const {member: me} = useCurrentMember();
   const [members, setMembers] = useState<MemberAccount[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isEmployeeLoading, setIsEmployeeLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [employeeLoadError, setEmployeeLoadError] = useState<string | null>(null);
-  const [pendingId, setPendingId] = useState<number | null>(null);
+
+  const [isUpdating, setIsUpdating] = useState(false);
+  const pendingUpdateRef = useRef(false);
 
   // 화면이 처음 열릴 때 사용자 목록 조회
   // 응답 전에 화면을 벗어나면(abort) 상태를 바꾸지 않음
@@ -106,10 +110,17 @@ export default function Users() {
   const isLastAdmin = (member: MemberAccount) => member.role === "ADMIN" && member.active && adminCount === 1;
 
   // 변경 요청: 성공하면 서버가 돌려준 값으로 목록의 해당 행을 바꿈
-  const requestUpdate = async (member: MemberAccount, action: "role" | "active" | "employee", body: object, failTitle: string) => {
-    setPendingId(member.id);
+  const requestUpdate = async (
+    request: () => Promise<{data: MemberAccount}>,
+    failTitle: string,
+  ) => {
+    if (pendingUpdateRef.current)
+      return;
+
+    pendingUpdateRef.current = true;
+    setIsUpdating(true);
     try {
-      const {data} = await api.patch<MemberAccount>(`/api/admin/members/${member.id}/${action}`, body);
+      const {data} = await request();
       setMembers((prev) => prev.map((m) => (m.id === data.id ? data : m)));
     } catch (err) {
       openAlertModal(failTitle, undefined, {
@@ -117,28 +128,52 @@ export default function Users() {
         description: getApiError(err, "잠시 후 다시 시도해 주세요."),
       });
     } finally {
-      setPendingId(null);
-    };
+      pendingUpdateRef.current = false;
+      setIsUpdating(false);
+    }
   };
 
   const linkEmployee = (member: MemberAccount, employeeId: string) => {
     const employee = availableEmployees.find((item) => item.id === employeeId);
 
-    if (!employee || member.employeeId || pendingId !== null)
+    if (!employee || member.employeeId || isUpdating)
       return;
 
     openAlertModal(
       `${member.name}님의 계정을 직원과 연결할까요?`,
       () => void requestUpdate(
-        member,
-        "employee",
-        {employeeId},
+        () => api.patch<MemberAccount>(
+          `/api/admin/members/${member.id}/employee`,
+          {employeeId}
+        ),
         "직원과 계정을 연결하지 못했습니다.",
       ),
       {
         variant: "confirm",
         description: `${member.email}\n${employee.name} (${employee.id}) · ${employee.department} ${employee.position}`,
         confirmText: "연결",
+        cancelText: "취소",
+      },
+    );
+  };
+
+  const unlinkEmployee = (member: MemberAccount) => {
+    const employeeId = member.employeeId;
+    if (!employeeId || isUpdating)
+      return;
+
+    openAlertModal(
+      `${member.name}님의 직원 연결을 해제할까요?`,
+      () => void requestUpdate(
+        () => api.delete<MemberAccount>(
+          `/api/admin/members/${member.id}/employee/${encodeURIComponent(employeeId)}`,
+        ),
+        "직원 연결을 해제하지 못했습니다.",
+      ),
+      {
+        variant: "confirm",
+        description: `${member.employeeName ?? ""} (${employeeId}) 연결을 해제합니다.`,
+        confirmText: "연결 해제",
         cancelText: "취소",
       },
     );
@@ -154,7 +189,13 @@ export default function Users() {
     }
     openAlertModal(
       `${member.name}님의 역할을 변경할까요?`,
-      () => void requestUpdate(member, "role", {role}, "역할을 변경하지 못했습니다."),
+      () => void requestUpdate(
+        () => api.patch<MemberAccount>(
+          `/api/admin/members/${member.id}/role`,
+          {role}
+        ),
+        "역할을 변경하지 못했습니다."
+      ),
       {
         variant: "confirm",
         description: `${ROLE_LABEL[member.role]} → ${ROLE_LABEL[role]}`,
@@ -175,9 +216,10 @@ export default function Users() {
     openAlertModal(
       member.active ? `${member.name}님의 계정을 정지할까요?` : `${member.name}님의 계정 정지를 해제할까요?`,
       () => void requestUpdate(
-        member,
-        "active",
-        {active: !member.active},
+        () => api.patch<MemberAccount>(
+          `/api/admin/members/${member.id}/active`,
+          {active: !member.active}
+        ),
         member.active ? "계정을 정지하지 못했습니다." : "계정 정지를 해제하지 못했습니다.",
       ),
       {
@@ -195,14 +237,29 @@ export default function Users() {
     )},
     {key: "email", header: "이메일"},
     {key: "employeeId", header: "연결 직원", width: "260px", render: (m) => (
-      isEmployeeLoading ? "직원 조회 중..." : employeeLoadError ? employeeLoadError :
-      m.employeeId ? `${m.employeeName ?? ""} (${m.employeeId})` : (
+      m.employeeId ? (
+        <span style={{display: "flex", alignItems: "center", gap: 4}}>
+          <span style={{minWidth: 0, overflow: "hidden", textOverflow: "ellipsis"}}>
+            {m.employeeName ?? ""} ({m.employeeId})
+          </span>
+          <Button
+          variant="ghost"
+          size="sm"
+          title="직원 연결 해제"
+          aria-label={`${m.name} 직원 연결 해제`}
+          disabled={isUpdating}
+          style={{padding: 4, flexShrink: 0}}
+          onClick={() => unlinkEmployee(m)}>
+            <FiRotateCcw aria-hidden="true"/>
+          </Button>
+        </span>
+      ) : isEmployeeLoading ? "직원 조회 중..." : employeeLoadError ? employeeLoadError : (
         <Select
         size="sm"
         aria-label={`${m.name} 연결 직원`}
         options={employeeOptions}
         value=""
-        disabled={pendingId !== null || availableEmployees.length === 0}
+        disabled={isUpdating || availableEmployees.length === 0}
         onChange={(e) => linkEmployee(m, e.target.value)}/>
       )
     )},
@@ -215,7 +272,7 @@ export default function Users() {
       aria-label={`${m.name} 역할`}
       options={ROLE_OPTIONS}
       value={m.role}
-      disabled={isMe(m) || pendingId === m.id}
+      disabled={isMe(m) || isUpdating}
       onChange={(e) => changeRole(m, e.target.value as UserRole)}/>
     )},
     {key: "active", header: "상태", align: "center", width: "120px", render: (m) => (
@@ -229,7 +286,7 @@ export default function Users() {
       <Button
       size="sm"
       variant={m.active ? "danger" : "secondary"}
-      disabled={isMe(m) || pendingId === m.id || m.employeeStatus === "resigned"}
+      disabled={isMe(m) || isUpdating || m.employeeStatus === "resigned"}
       onClick={() => toggleActive(m)}>
         {m.active ? "정지" : "해제"}
       </Button>

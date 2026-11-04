@@ -56,4 +56,14 @@ public class AdminMemberController {
       adminMemberService.linkEmployee(memberId, dto.employeeId())
     );
   }
+
+  @DeleteMapping("/{memberId}/employee/{employeeId}")
+  public ResponseEntity<AdminMemberResponseDto> unlinkEmployee(
+    @PathVariable("memberId") Long memberId,
+    @PathVariable("employeeId") String employeeId
+  ) {
+    return ResponseEntity.ok(
+      adminMemberService.unlinkEmployee(memberId, employeeId)
+    );
+  }
 }

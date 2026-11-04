@@ -134,6 +134,28 @@ public class AdminMemberService {
     return AdminMemberResponseDto.from(member);
   }
 
+  public AdminMemberResponseDto unlinkEmployee(Long memberId, String employeeId) {
+    // 직원 연결 및 퇴사 처리와 같은 순서로 잠급니다.
+    adminMemberRepository.findActiveByRoleForUpdate(MemberRole.ADMIN);
+    employeeRepository.findByIdForUpdate(employeeId);
+    Member member = findMember(memberId);
+    Employee employee = member.getEmployee();
+
+    if (employee == null)
+      return AdminMemberResponseDto.from(member);
+
+    if (!employeeId.equals(employee.getId())) {
+      throw new ResponseStatusException(
+        HttpStatus.CONFLICT, "연결된 직원이 변경되었습니다. 목록을 다시 확인해 주세요."
+      );
+    }
+
+    member.setEmployee(null);
+    adminMemberRepository.flush();
+
+    return AdminMemberResponseDto.from(member);
+  }
+
   private Member findMember(Long memberId) {
     return adminMemberRepository.findByIdForUpdate(memberId)
       .orElseThrow(() -> new ResponseStatusException(

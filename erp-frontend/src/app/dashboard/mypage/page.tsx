@@ -24,6 +24,7 @@ import {
   FieldWithButton,
   Button
 } from "@/components/ui";
+import { formatMobilePhone } from "@/app/lib/mobilePhone";
 import useModal from "@/components/contexts/ModalContext";
 import { ROLE_LABEL } from "@/app/types/Member";
 import type { MemberProfile } from "@/app/types/Member";
@@ -67,7 +68,9 @@ export default function MyPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadRetry, setLoadRetry] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
+
   const saveRef = useRef<AbortController | null>(null);
+  const requestRef = useRef<AbortController | null>(null);
 
   const saved: Contact = profile
     ? pickContact(profile)
@@ -197,7 +200,6 @@ export default function MyPage() {
   });
   const [isChanging, setIsChanging] = useState(false);
   const isBusy = isSaving || isChanging;
-  const requestRef = useRef<AbortController | null>(null);
 
   useEffect(() => () => {
     requestRef.current?.abort();
@@ -325,7 +327,10 @@ export default function MyPage() {
               placeholder="010-0000-0000"
               value={contact.tel}
               error={telError}
-              onChange={(e) => setContact((prev) => ({...prev, tel: e.target.value}))}/>
+              onChange={(e) => setContact((prev) => ({
+                ...prev,
+                tel: formatMobilePhone(e.target.value),
+              }))}/>
               <FieldWithButton>
                 <TextField
                 id="address"

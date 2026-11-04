@@ -22,6 +22,7 @@ import {
   getPasswordError,
 } from "@/app/lib/password";
 import { searchAddress } from "@/app/lib/postcode";
+import { formatMobilePhone } from "@/app/lib/mobilePhone";
 import useModal from "@/components/contexts/ModalContext";
 import * as S from "@/assets/css/Style.styles";
 
@@ -76,7 +77,8 @@ export default function Member() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const {name, value} = e.target;
-    setFormData((prev) => ({...prev, [name]: value}));
+    const nextValue = name === "tel" ? formatMobilePhone(value) : value;
+    setFormData((prev) => ({...prev, [name]: nextValue}));
   };
 
   const handleAddressSearch = async () => {
