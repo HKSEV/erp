@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/company")
 @RequiredArgsConstructor
@@ -29,5 +31,12 @@ public class CompanyController {
     return ResponseEntity.ok(
       companyService.updateCompany(dto)
     );
+  }
+
+  @GetMapping("/name")
+  public ResponseEntity<Map<String, String>> getCompanyName() {
+    return ResponseEntity.ok(Map.of(
+      "name", companyService.getCompany().getName()
+    ));
   }
 }

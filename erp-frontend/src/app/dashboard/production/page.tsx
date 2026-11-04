@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import api from "@/app/lib/api";
+import useCurrentMember from "@/app/lib/currentMember";
 import type { ProductionOrder } from "@/app/types/ProductionOrder";
 import useModal from "@/components/contexts/ModalContext";
 import { PageContainer, PageHeader, StatGrid, StatCard, Card, SearchBar, DataTable, StatusBadge, Button, ProgressBar } from "@/components/ui";
@@ -9,6 +10,7 @@ import type { Column, StatusTone } from "@/components/ui";
 
 export default function Production() {
   const {openProductionOrderModal} = useModal();
+  const {canManageWork} = useCurrentMember();
   const [orders, setOrders] = useState<ProductionOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const deletedOrderIdsRef = useRef(new Set<string>());
@@ -88,6 +90,9 @@ export default function Production() {
   };
 
   const handleOrder = (order?: ProductionOrder) => {
+    if (!canManageWork)
+      return;
+
     openProductionOrderModal(
       order!,
       (savedOrder) => {
@@ -171,9 +176,9 @@ export default function Production() {
             : ""
         )
       }
-      actions={
-      <Button onClick={() => handleOrder()}>+ 신규 오더 등록</Button>
-      }/>
+      actions={canManageWork && (
+        <Button onClick={() => handleOrder()}>+ 신규 오더 등록</Button>
+      )}/>
 
       <StatGrid>
         <StatCard
@@ -199,7 +204,11 @@ export default function Production() {
       actions={<SearchBar label="생산 오더 검색" placeholder="오더 번호·제품명 검색" onSearch={setKeyword}/>}
       noPadding>
         <DataTable
-        columns={columns}
+        columns={
+          canManageWork
+            ? columns
+            : columns.filter((column) => column.key !== "actions")
+        }
         rows={filteredOrders}
         rowKey={(order) => order.id}
         emptyText={

@@ -19,7 +19,7 @@ function fetchCompanyName(): Promise<string> {
     return Promise.resolve("");
 
   if (cache?.token !== token) {
-    const request = api.get<Company>("/api/company")
+    const request = api.get<Pick<Company, "name">>("/api/company/name")
       .then(({data}) => data.name.trim())
       .catch(() => {
         // 실패한 결과는 남기지 않고 다음 화면에서 다시 조회

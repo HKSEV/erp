@@ -30,6 +30,12 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+  private static final String[] WORK_PATHS = {
+    "/api/production", "/api/production/**",
+    "/api/inventory", "/api/inventory/**",
+    "/api/hr", "/api/hr/**"
+  };
+
   @Bean
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
@@ -73,7 +79,7 @@ public class SecurityConfig {
             response.setCharacterEncoding("UTF-8");
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.getWriter().write(
-              "{\"message\":\"관리자만 사용할 수 있습니다.\"}"
+              "{\"message\":\"이 작업을 수행할 권한이 없습니다.\"}"
             );
           }
         )
@@ -89,22 +95,23 @@ public class SecurityConfig {
           "/api/members/change-password",
           "/api/members/change-password/**",
           "/api/schedules",
-          "/api/schedules/**",
-          "/api/production",
-          "/api/production/**",
-          "/api/inventory",
-          "/api/inventory/**",
-          "/api/hr",
-          "/api/hr/**"
+          "/api/schedules/**"
         ).authenticated()
+
+        .requestMatchers(HttpMethod.GET, "/api/company/name").authenticated()
+        .requestMatchers(HttpMethod.HEAD, "/api/company/name").authenticated()
 
         // 시스템관리: 사용자 권한 관리와 회사 정보 수정은 관리자만
         .requestMatchers(
           "/api/admin",
-          "/api/admin/**"
+          "/api/admin/**",
+          "/api/company",
+          "/api/company/**"
         ).hasRole("ADMIN")
-        .requestMatchers(HttpMethod.PUT, "/api/company").hasRole("ADMIN")
-        .requestMatchers(HttpMethod.GET, "/api/company").authenticated()
+
+        .requestMatchers(HttpMethod.GET, WORK_PATHS).authenticated()
+        .requestMatchers(HttpMethod.HEAD, WORK_PATHS).authenticated()
+        .requestMatchers(WORK_PATHS).hasAnyRole("ADMIN", "MANAGER")
 
         // 로그인·회원가입·비밀번호 찾기 (members/me 등은 위에서 먼저 로그인 필요로 처리)
         .requestMatchers("/api/members/**").permitAll()

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import api from "@/app/lib/api";
+import useCurrentMember from "@/app/lib/currentMember";
 import type { InventoryItem } from "@/app/types/InventoryItem";
 import useModal from "@/components/contexts/ModalContext";
 import { PageContainer, PageHeader, StatGrid, StatCard, Card, SearchBar, DataTable, StatusBadge, Button } from "@/components/ui";
@@ -9,6 +10,7 @@ import type { Column, StatusTone } from "@/components/ui";
 
 export default function Inventory() {
   const {openInventoryItemModal} = useModal();
+  const {canManageWork} = useCurrentMember();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const deletedItemIdsRef = useRef(new Set<string>());
@@ -50,6 +52,9 @@ export default function Inventory() {
   }, []);
 
   const handleItem = (item?: InventoryItem) => {
+    if (!canManageWork)
+      return;
+
     openInventoryItemModal(
       item,
       (savedItem) => {
@@ -109,9 +114,9 @@ export default function Inventory() {
       <PageHeader
       title="재고관리"
       description="품목별 현재고와 재고 상태를 확인하고 관리합니다."
-      actions={
-      <Button onClick={() => handleItem()}>+ 신규 품목 등록</Button>
-      }/>
+      actions={canManageWork && (
+        <Button onClick={() => handleItem()}>+ 신규 품목 등록</Button>
+      )}/>
 
       <StatGrid>
         <StatCard label="총 등록 품목" value={items.length} unit="개" tone="accent"/>
@@ -127,7 +132,11 @@ export default function Inventory() {
       actions={<SearchBar label="품목 검색" placeholder="품목명·코드 검색" onSearch={setKeyword}/>}
       noPadding>
         <DataTable
-        columns={columns}
+        columns={
+          canManageWork
+            ? columns
+            : columns.filter((column) => column.key !== "actions")
+        }
         rows={filteredItems}
         rowKey={(item) => item.id}
         emptyText={

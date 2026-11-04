@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import api from "@/app/lib/api";
+import useCurrentMember from "@/app/lib/currentMember";
 import type { Employee } from "@/app/types/Employee";
 import useModal from "@/components/contexts/ModalContext";
 import { PageContainer, PageHeader, StatGrid, StatCard, Card, SearchBar, DataTable, StatusBadge, Button } from "@/components/ui";
@@ -9,6 +10,7 @@ import type { Column, StatusTone } from "@/components/ui";
 
 export default function Hr() {
   const {openEmployeeModal} = useModal();
+  const {canManageWork} = useCurrentMember();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const deletedEmployeeIdsRef = useRef(new Set<string>());
@@ -50,6 +52,9 @@ export default function Hr() {
   }, []);
 
   const handleEmployee = (employee?: Employee) => {
+    if (!canManageWork)
+      return;
+
     openEmployeeModal(
       employee,
       (savedEmployee) => {
@@ -113,9 +118,9 @@ export default function Hr() {
       <PageHeader
       title="인사관리"
       description="임직원 정보와 재직 상태를 관리합니다."
-      actions={
-      <Button onClick={() => handleEmployee()}>+ 신규 직원 등록</Button>
-      }/>
+      actions={canManageWork && (
+        <Button onClick={() => handleEmployee()}>+ 신규 직원 등록</Button>
+      )}/>
 
       <StatGrid>
         <StatCard label="총 임직원 수" value={employees.filter((emp) => emp.status !== "resigned").length} unit="명" tone="accent"/>
@@ -128,7 +133,11 @@ export default function Hr() {
       actions={<SearchBar label="임직원 검색" placeholder="사번·이름·부서 검색" onSearch={setKeyword}/>}
       noPadding>
         <DataTable
-        columns={columns}
+        columns={
+          canManageWork
+            ? columns
+            : columns.filter((column) => column.key !== "actions")
+        }
         rows={filteredEmployees}
         rowKey={(emp) => emp.id}
         emptyText={

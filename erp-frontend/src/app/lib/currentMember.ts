@@ -54,5 +54,7 @@ export default function useCurrentMember() {
     member,
     isLoading,
     isAdmin: member?.role === "ADMIN" && member.active,
+    canManageWork: member?.active === true
+      && (member.role === "ADMIN" || member.role === "MANAGER"),
   };
 };
