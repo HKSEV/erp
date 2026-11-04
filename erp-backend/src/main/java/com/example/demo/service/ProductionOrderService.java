@@ -11,15 +11,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.security.SecureRandom;
 import java.util.List;
-import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
 public class ProductionOrderService {
   private final ProductionOrderRepository productionOrderRepository;
-  private final SecureRandom random = new SecureRandom();
+  private final DocumentNumberService documentNumberService;
 
   @PersistenceContext
   private EntityManager entityManager;
@@ -32,7 +30,7 @@ public class ProductionOrderService {
   @Transactional
   public ProductionOrder createOrder(ProductionOrderRequestDto dto) {
     ProductionOrder order = new ProductionOrder();
-    order.setId(generateOrderId());
+    order.setId(documentNumberService.nextOrderId());
     apply(order, dto);
 
     // 기존 오더를 덮어쓰지 않도록 INSERT만 수행합니다.
@@ -68,25 +66,6 @@ public class ProductionOrderService {
         HttpStatus.NOT_FOUND,
         "생산 오더를 찾을 수 없습니다."
       ));
-  }
-
-  private String generateOrderId() {
-    for (int attempt = 0; attempt < 50; attempt++) {
-      String id = String.format(
-        Locale.ROOT,
-        "PRD-%04d-%03d",
-        random.nextInt(10000),
-        random.nextInt(1000)
-      );
-
-      if (!productionOrderRepository.existsById(id))
-        return id;
-    }
-
-    throw new ResponseStatusException(
-      HttpStatus.SERVICE_UNAVAILABLE,
-      "오더 번호를 생성하지 못했습니다. 다시 시도해 주세요."
-    );
   }
 
   private void apply(

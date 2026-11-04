@@ -11,15 +11,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.security.SecureRandom;
 import java.util.List;
-import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
 public class InventoryItemService {
   private final InventoryItemRepository itemRepository;
-  private final SecureRandom random = new SecureRandom();
+  private final DocumentNumberService documentNumberService;
 
   @PersistenceContext
   private EntityManager entityManager;
@@ -32,7 +30,7 @@ public class InventoryItemService {
   @Transactional
   public InventoryItem createItem(InventoryItemRequestDto dto) {
     InventoryItem item = new InventoryItem();
-    item.setId(generateId());
+    item.setId(documentNumberService.nextItemId());
     apply(item, dto);
 
     // 기존 데이터를 덮어쓰지 않도록 INSERT만 수행합니다.
@@ -68,24 +66,6 @@ public class InventoryItemService {
         HttpStatus.NOT_FOUND,
         "품목을 찾을 수 없습니다."
       ));
-  }
-
-  private String generateId() {
-    for (int attempt = 0; attempt < 50; attempt++) {
-      String id = String.format(
-        Locale.ROOT,
-        "INV-%04d",
-        random.nextInt(10000)
-      );
-
-      if (!itemRepository.existsById(id))
-        return id;
-    }
-
-    throw new ResponseStatusException(
-      HttpStatus.SERVICE_UNAVAILABLE,
-      "품목 코드를 생성하지 못했습니다. 다시 시도해 주세요."
-    );
   }
 
   private void apply(

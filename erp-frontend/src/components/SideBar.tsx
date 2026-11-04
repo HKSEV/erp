@@ -21,6 +21,7 @@ const MENU_GROUPS: MenuGroup[] = [
     title: "업무",
     items: [
       { label: "대시보드", href: "/dashboard" },
+      { label: "업무 캘린더", href: "/dashboard/calendar" },
       { label: "생산관리", href: "/dashboard/production" },
       { label: "재고관리", href: "/dashboard/inventory" },
       { label: "인사관리", href: "/dashboard/hr" },

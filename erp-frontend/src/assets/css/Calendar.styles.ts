@@ -16,6 +16,19 @@ const calendarLoadingSpin = keyframes`
   }
 `;
 
+export const CalendarLayout = styled.div`
+  display: flex;
+  gap: 24px;
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+  }
+`;
+export const CalendarPanel = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
 // 캘린더
 export const CalTopMargin = styled.div`
   width: 100%;
