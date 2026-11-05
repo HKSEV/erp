@@ -23,6 +23,7 @@ export default function ConditionalLayout({children}: {
     "/find-id",
     "/forgot",
     "/forgot/reset",
+    "/oauth/kakao",
     "/privacy",
     "/manual"
   ];

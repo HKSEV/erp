@@ -26,6 +26,7 @@ export const theme = {
     textSecondary: "#475569", // 메뉴, 보조 글자
     textMuted: "#64748B",     // 라벨, 설명
     textDisabled: "#94A3B8",  // 비활성, 그룹 제목
+    textKakao: "#191919",
 
     // 선
     border: "#E2E8F0",
@@ -44,6 +45,8 @@ export const theme = {
     dangerHover: "#DC2626",
     neutral: "#858796",
     neutralHover: "#717384",
+    kakao: "#FEE500",
+    kakaoHover: "#F2DA00",
 
     // 어두운 영역 (헤더, 알림창)
     dark: "#1E293B",

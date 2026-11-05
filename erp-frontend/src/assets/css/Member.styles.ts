@@ -327,7 +327,7 @@ export const MemberSocialWrapper = styled.div`
   ${C.FlexColumn}
   gap: 0.625rem;
 `;
-export const MemberSocialButton = styled.button`
+export const GoogleSocialButton = styled.button`
   ${C.ButtonBase}
   color: ${({theme}) => theme.colors.textStrong};
   background-color: ${({theme}) => theme.colors.surface};
@@ -344,9 +344,15 @@ export const MemberSocialButton = styled.button`
     border-color: ${({theme}) => theme.colors.textDisabled};
   }
 `;
-export const InstagramIcon = styled.span`
-  ${C.InlineFlexCenter}
-  color: #DF287B; // 인스타그램 브랜드 색
+export const KakaoSocialButton = styled(GoogleSocialButton)`
+  color: ${({theme}) => theme.colors.textKakao} !important;
+  background-color: ${({theme}) => theme.colors.kakao} !important;
+  border-color: ${({theme}) => theme.colors.kakao} !important;
+
+  &:not(:disabled):hover {
+    background-color: ${({theme}) => theme.colors.kakaoHover} !important;
+    border-color: ${({theme}) => theme.colors.kakaoHover} !important;
+  }
 `;
 export const MemberFooter = styled.footer`
   ${C.FlexCenter}

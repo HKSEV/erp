@@ -9,12 +9,13 @@ import {
   FiLock,
   FiEye,
   FiEyeOff,
-  FiInstagram,
 } from "react-icons/fi";
 import { FaUser } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
+import { RiKakaoTalkFill } from "react-icons/ri";
 import api from "@/app/lib/api";
 import { saveToken } from "@/app/lib/auth";
+import { startKakaoLogin } from "@/app/lib/kakao";
 import useModal from "@/components/contexts/ModalContext";
 import * as S from "@/assets/css/Style.styles";
 import { setLogin } from "@/store/authSlice";
@@ -94,6 +95,24 @@ export default function Home() {
         requestRef.current = null;
         setIsLoading(false);
       };
+    };
+  };
+
+  const handleGoogleLogin = () => {
+
+  };
+
+  const handleKakaoLogin = () => {
+    try {
+      startKakaoLogin({rememberMe});
+    } catch (err: unknown) {
+      openAlertModal(
+        err instanceof Error
+          ? err.message
+          : "카카오 로그인에 실패했습니다.",
+        undefined,
+        {variant: "error"}
+      );
     };
   };
 
@@ -182,20 +201,19 @@ export default function Home() {
         <S.MemberDivider/>
 
         <S.MemberSocialWrapper>
-          <S.MemberSocialButton
+          <S.GoogleSocialButton
           type="button"
           disabled={isLoading}>
             <FcGoogle aria-hidden="true"/>
             Google로 로그인하기
-          </S.MemberSocialButton>
-          <S.MemberSocialButton
+          </S.GoogleSocialButton>
+          <S.KakaoSocialButton
           type="button"
+          onClick={handleKakaoLogin}
           disabled={isLoading}>
-            <S.InstagramIcon aria-hidden="true">
-              <FiInstagram/>
-            </S.InstagramIcon>
-            Instargram으로 로그인하기
-          </S.MemberSocialButton>
+            <RiKakaoTalkFill aria-hidden="true"/>
+            Kakao로 로그인하기
+          </S.KakaoSocialButton>
         </S.MemberSocialWrapper>
 
         <S.MemberFooter>

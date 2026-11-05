@@ -11,10 +11,11 @@ import {
   FiEye,
   FiEyeOff,
   FiPhone,
-  FiInstagram,
 } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
+import { RiKakaoTalkFill } from "react-icons/ri";
 import api from "@/app/lib/api";
+import { startKakaoLogin } from "@/app/lib/kakao";
 import {
   PASSWORD_MIN_LENGTH,
   PASSWORD_MAX_LENGTH,
@@ -25,14 +26,6 @@ import { searchAddress } from "@/app/lib/postcode";
 import { formatMobilePhone } from "@/app/lib/mobilePhone";
 import useModal from "@/components/contexts/ModalContext";
 import * as S from "@/assets/css/Style.styles";
-
-const handleInstargramLogin = () => {
-
-};
-
-const handleKakaoLogin = () => {
-
-};
 
 interface FormData {
   firstName: string;
@@ -160,6 +153,29 @@ export default function Member() {
         setIsLoading(false);
       };
     };
+  };
+
+  const handleGoogleRegister = () => {
+
+  };
+
+  const handleKakaoRegister = () => {
+    try {
+      startKakaoLogin({
+        rememberMe: false,
+        signup: true,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+      });
+    } catch (err: unknown) {
+      openAlertModal(
+        err instanceof Error
+          ? err.message
+          : "카카오 가입에 실패했습니다.",
+        undefined,
+        {variant: "error"}
+      );
+    }
   };
 
   return (
@@ -403,22 +419,20 @@ export default function Member() {
         <S.MemberDivider/>
 
         <S.MemberSocialWrapper>
-          <S.MemberSocialButton
+          <S.GoogleSocialButton
           type="button"
-          onClick={handleKakaoLogin}
+          onClick={handleGoogleRegister}
           disabled={isLoading}>
             <FcGoogle aria-hidden="true"/>
             Google로 가입하기
-          </S.MemberSocialButton>
-          <S.MemberSocialButton
+          </S.GoogleSocialButton>
+          <S.KakaoSocialButton
           type="button"
-          onClick={handleInstargramLogin}
+          onClick={handleKakaoRegister}
           disabled={isLoading}>
-            <S.InstagramIcon aria-hidden="true">
-              <FiInstagram/>
-            </S.InstagramIcon>
-            Instagram으로 가입하기
-          </S.MemberSocialButton>
+            <RiKakaoTalkFill aria-hidden="true"/>
+            Kakao로 가입하기
+          </S.KakaoSocialButton>
         </S.MemberSocialWrapper>
 
         <S.MemberFooter style={{flexDirection: "column"}}>

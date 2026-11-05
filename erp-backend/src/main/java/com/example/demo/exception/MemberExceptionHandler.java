@@ -1,6 +1,7 @@
 package com.example.demo.exception;
 
 import com.example.demo.controller.MemberController;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -52,6 +53,16 @@ public class MemberExceptionHandler {
 			"message", exception.getReason() == null
 				? "요청을 처리할 수 없습니다."
 				: exception.getReason()
+		));
+	}
+
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	public ResponseEntity<Map<String, String>> handleDuplicateAccount(
+		DataIntegrityViolationException exception
+	) {
+		return ResponseEntity.status(409).body(Map.of(
+			"message",
+			"이미 가입된 계정입니다. 로그인 화면에서 다시 시도해 주세요."
 		));
 	}
 }

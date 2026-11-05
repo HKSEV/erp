@@ -42,9 +42,6 @@ public class Member {
   @Column(nullable = false)
   private String password; // Spring Security BCrypt 등으로 암호화되어 저장됨
 
-//  @Column(length = 100)
-//  private String companyName;
-
   @JsonIgnore
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "EMP_ID", unique = true,
@@ -69,6 +66,10 @@ public class Member {
 
   @Column(length = 20)
   private String gender; // male, female, other
+
+  @JsonIgnore
+  @Column(unique = true, length = 32)
+  private String kakaoId;
 
   @CreationTimestamp
   @Column(updatable = false)
