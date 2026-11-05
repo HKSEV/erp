@@ -134,6 +134,7 @@ public class AdminMemberService {
     return AdminMemberResponseDto.from(member);
   }
 
+  @Transactional
   public AdminMemberResponseDto unlinkEmployee(Long memberId, String employeeId) {
     // 직원 연결 및 퇴사 처리와 같은 순서로 잠급니다.
     adminMemberRepository.findActiveByRoleForUpdate(MemberRole.ADMIN);
