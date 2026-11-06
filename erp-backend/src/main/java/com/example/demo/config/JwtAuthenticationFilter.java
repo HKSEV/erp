@@ -80,6 +80,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		try {
 			// 기존 메서드가 JWT 서명과 만료를 함께 검증합니다.
 			String email = jwtProvider.getEmailFromToken(token);
+			Long tokenMemberId = jwtProvider.getMemberIdFromToken(token);
 
 			if (email == null || email.isBlank()) {
 				throw new BadCredentialsException(
@@ -91,6 +92,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				.orElseThrow(() -> new BadCredentialsException(
 					"존재하지 않는 회원입니다."
 				));
+
+			if (!tokenMemberId.equals(member.getId())) {
+				throw new BadCredentialsException(
+					"토큰의 회원 정보가 일치하지 않습니다."
+				);
+			}
 
 			if (!member.isActive()) {
 				throw new BadCredentialsException("사용이 중지된 계정입니다.");

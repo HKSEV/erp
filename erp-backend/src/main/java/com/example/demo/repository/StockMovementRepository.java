@@ -23,4 +23,8 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
   @Modifying(flushAutomatically = true)
   @Query("delete from StockMovement m where m.item.id = :itemId")
   int deleteByItemId(@Param("itemId") String itemId);
+
+  @Modifying(flushAutomatically = true)
+  @Query("update StockMovement m set m.member = null where m.member.id = :memberId")
+  int unlinkMember(@Param("memberId") Long memberId);
 }

@@ -4,9 +4,7 @@ import com.example.demo.dto.AdminMemberResponseDto;
 import com.example.demo.entity.Employee;
 import com.example.demo.entity.Member;
 import com.example.demo.entity.MemberRole;
-import com.example.demo.repository.AdminMemberRepository;
-import com.example.demo.repository.EmployeeRepository;
-import com.example.demo.repository.MemberRepository;
+import com.example.demo.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -22,6 +20,8 @@ public class AdminMemberService {
   private final AdminMemberRepository adminMemberRepository;
   private final EmployeeRepository employeeRepository;
   private final MemberRepository memberRepository;
+  private final ScheduleRepository scheduleRepository;
+  private final StockMovementRepository stockMovementRepository;
 
   @Transactional(readOnly = true)
   public List<AdminMemberResponseDto> getMembers() {
@@ -155,6 +155,45 @@ public class AdminMemberService {
     adminMemberRepository.flush();
 
     return AdminMemberResponseDto.from(member);
+  }
+
+  @Transactional
+  public void deleteMember(Long currentMemberId, Long memberId) {
+    if (Objects.equals(currentMemberId, memberId)) {
+      throw new ResponseStatusException(
+        HttpStatus.BAD_REQUEST,
+        "내 계정은 삭제할 수 없습니다."
+      );
+    }
+
+    // 기존 권한 변경·정지 처리와 동일한 순서로 잠급니다.
+    List<Member> activeAdmins = adminMemberRepository
+      .findActiveByRoleForUpdate(MemberRole.ADMIN);
+
+    // 잠금을 기다리는 동안 요청자의 권한이 바뀌었는지도 검사합니다.
+    if (activeAdmins.stream().noneMatch(
+      admin -> admin.getId().equals(currentMemberId)
+    )) {
+      throw new ResponseStatusException(
+        HttpStatus.FORBIDDEN,
+        "사용자를 삭제할 권한이 없습니다."
+      );
+    }
+
+    Member member = findMember(memberId);
+
+    if (isActiveAdmin(member) && activeAdmins.size() <= 1) {
+      throw new ResponseStatusException(
+        HttpStatus.BAD_REQUEST,
+        "관리자는 최소 1명 있어야 합니다."
+      );
+    }
+
+    scheduleRepository.deleteByMemberId(memberId);
+    stockMovementRepository.unlinkMember(memberId);
+
+    adminMemberRepository.delete(member);
+    adminMemberRepository.flush();
   }
 
   private Member findMember(Long memberId) {

@@ -231,6 +231,60 @@ export default function Users() {
     );
   };
 
+  const requestDelete = async (memberId: number) => {
+    if (pendingUpdateRef.current)
+      return;
+
+    pendingUpdateRef.current = true;
+    setIsUpdating(true);
+
+    try {
+      await api.delete<void>(`/api/admin/members/${memberId}`);
+
+      setMembers((prev) =>
+        prev.filter((member) => member.id !== memberId)
+      );
+
+      openAlertModal("사용자를 삭제했습니다.", undefined, {
+        variant: "success",
+      });
+    } catch (err: unknown) {
+      openAlertModal("사용자를 삭제하지 못했습니다.", undefined, {
+        variant: "error",
+        description: getApiError(
+          err,
+          "잠시 후 다시 시도해 주세요."
+        ),
+      });
+    } finally {
+      pendingUpdateRef.current = false;
+      setIsUpdating(false);
+    }
+  };
+
+  const deleteMember = (member: MemberAccount) => {
+    if (!me
+      || isMe(member)
+      || isLastAdmin(member)
+      || pendingUpdateRef.current) {
+      return;
+    }
+
+    openAlertModal(
+      `${member.name}님의 계정을 삭제할까요?`,
+      () => void requestDelete(member.id),
+      {
+        variant: "confirm",
+        description:
+          `${member.email}\n` +
+          "계정과 개인 일정이 삭제됩니다.\n" +
+          "직원 정보와 재고 입출고 이력은 유지됩니다.",
+        confirmText: "삭제",
+        cancelText: "취소",
+      },
+    );
+  };
+
   const columns: Column<MemberAccount>[] = [
     {key: "name", header: "이름", variant: "primary", width: "120px", render: (m) => (
       isMe(m) ? `${m.name} (나)` : m.name
@@ -282,15 +336,41 @@ export default function Users() {
       </StatusBadge>
     )},
     {key: "createdAt", header: "가입일", align: "center", width: "120px"},
-    {key: "actions", header: "관리", align: "center", width: "100px", render: (m) => (
-      <Button
-      size="sm"
-      variant={m.active ? "danger" : "secondary"}
-      disabled={isMe(m) || isUpdating || m.employeeStatus === "resigned"}
-      onClick={() => toggleActive(m)}>
-        {m.active ? "정지" : "해제"}
-      </Button>
-    )},
+    {
+      key: "actions",
+      header: "관리",
+      align: "center",
+      width: "160px",
+      render: (m) => (
+        <span style={{display: "inline-flex", gap: 6}}>
+          <Button
+          size="sm"
+          variant={m.active ? "danger" : "secondary"}
+          disabled={
+            isMe(m)
+            || isUpdating
+            || m.employeeStatus === "resigned"
+          }
+          onClick={() => toggleActive(m)}>
+            {m.active ? "정지" : "해제"}
+          </Button>
+
+          <Button
+          size="sm"
+          variant="danger"
+          aria-label={`${m.name} 사용자 삭제`}
+          disabled={
+            !me
+            || isMe(m)
+            || isLastAdmin(m)
+            || isUpdating
+          }
+          onClick={() => deleteMember(m)}>
+            삭제
+          </Button>
+        </span>
+      ),
+    },
   ];
 
   return (

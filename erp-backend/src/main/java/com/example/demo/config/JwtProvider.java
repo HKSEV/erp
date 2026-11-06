@@ -1,5 +1,6 @@
 package com.example.demo.config;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -27,13 +28,19 @@ public class JwtProvider {
     this.expirationTime = expirationTime;
   }
 
-  public String generateToken(String email) {
+  public String generateToken(String email, Long memberId) {
+    if (memberId == null)
+      throw new IllegalArgumentException("회원 번호가 없습니다.");
+
     return Jwts.builder()
-            .setSubject(email)
-            .setIssuedAt(new Date())
-            .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
-            .signWith(key, SignatureAlgorithm.HS256)
-            .compact();
+      .setSubject(email)
+      .claim("memberId", memberId.toString())
+      .setIssuedAt(new Date())
+      .setExpiration(
+        new Date(System.currentTimeMillis() + expirationTime)
+      )
+      .signWith(key, SignatureAlgorithm.HS256)
+      .compact();
   }
 
   /**
@@ -43,15 +50,26 @@ public class JwtProvider {
    * 유효하지 않은 토큰이면 JwtException이 발생합니다.
    */
   public String getEmailFromToken(String token) {
-    if (token == null || token.isBlank()) {
+    return getClaims(token).getSubject();
+  }
+
+  public Long getMemberIdFromToken(String token) {
+    String memberId = getClaims(token).get("memberId", String.class);
+
+    if (memberId == null || memberId.isBlank())
+      throw new IllegalArgumentException("토큰에 회원 번호가 없습니다.");
+
+    return Long.valueOf(memberId);
+  }
+
+  private Claims getClaims(String token) {
+    if (token == null || token.isBlank())
       throw new IllegalArgumentException("JWT 토큰이 없습니다.");
-    }
 
     return Jwts.parserBuilder()
-            .setSigningKey(key)
-            .build()
-            .parseClaimsJws(token)
-            .getBody()
-            .getSubject();
+      .setSigningKey(key)
+      .build()
+      .parseClaimsJws(token)
+      .getBody();
   }
 }

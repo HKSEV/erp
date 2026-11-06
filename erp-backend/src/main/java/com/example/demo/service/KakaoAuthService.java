@@ -89,7 +89,7 @@ public class KakaoAuthService {
 		}
 
 		return new TokenResponseDto(
-			jwtProvider.generateToken(member.getEmail())
+			jwtProvider.generateToken(member.getEmail(), member.getId())
 		);
 	}
 }

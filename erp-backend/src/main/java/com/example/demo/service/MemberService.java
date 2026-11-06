@@ -75,7 +75,7 @@ public class MemberService {
     }
 
     // 비밀번호가 일치하면 JWT 토큰 생성 및 반환
-    return jwtProvider.generateToken(member.getEmail());
+    return jwtProvider.generateToken(member.getEmail(), member.getId());
   }
 
   @Transactional(readOnly = true)

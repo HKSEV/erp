@@ -1,6 +1,7 @@
 package com.example.demo.exception;
 
 import com.example.demo.controller.AdminMemberController;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -57,5 +58,15 @@ public class AdminMemberExceptionHandler {
 
 		return ResponseEntity.status(exception.getStatusCode())
 			.body(Map.of("message", message));
+	}
+
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	public ResponseEntity<Map<String, String>> handleRelatedData(
+		DataIntegrityViolationException exception
+	) {
+		return ResponseEntity.status(409).body(Map.of(
+			"message",
+			"회원이 사용 중인 데이터가 있습니다. 잠시 후 다시 시도해 주세요."
+		));
 	}
 }

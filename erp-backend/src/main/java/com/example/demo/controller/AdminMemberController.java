@@ -66,4 +66,13 @@ public class AdminMemberController {
       adminMemberService.unlinkEmployee(memberId, employeeId)
     );
   }
+
+  @DeleteMapping("/{memberId}")
+  public ResponseEntity<Void> deleteMember(
+    @AuthenticationPrincipal Long currentMemberId,
+    @PathVariable("memberId") Long memberId
+  ) {
+    adminMemberService.deleteMember(currentMemberId, memberId);
+    return ResponseEntity.noContent().build();
+  }
 }
