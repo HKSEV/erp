@@ -415,7 +415,7 @@ export default function Dashboard() {
                 ))}
               </S.ItemList>
               <S.DashHint>
-                확인 대상 {stats.dueOrders.length}건 · 납기일순 최대 5건
+                확인 대상 {stats.dueOrders.length}건 / 납기일순 최대 5건
               </S.DashHint>
             </>
           ) : (
@@ -455,7 +455,7 @@ export default function Dashboard() {
                 ))}
               </S.ItemList>
               <S.DashHint>
-                보충 대상 {stats.riskItems.length}품목 · 품절 우선 최대 5건
+                보충 대상 {stats.riskItems.length}품목 / 품절 우선 최대 5건
               </S.DashHint>
             </>
           ) : (
@@ -491,7 +491,7 @@ export default function Dashboard() {
                 ))}
               </S.ItemList>
               <S.DashHint>
-                내 미완료 일정 {stats.agenda.length}건 · 날짜순 최대 5건
+                내 미완료 일정 {stats.agenda.length}건 / 날짜순 최대 5건
               </S.DashHint>
             </>
           ) : (

@@ -15,6 +15,7 @@ import { FcGoogle } from "react-icons/fc";
 import { RiKakaoTalkFill } from "react-icons/ri";
 import api from "@/app/lib/api";
 import { saveToken } from "@/app/lib/auth";
+import useGoogleLogin from "@/app/lib/useGoogleLogin";
 import { startKakaoLogin } from "@/app/lib/kakao";
 import useModal from "@/components/contexts/ModalContext";
 import * as S from "@/assets/css/Style.styles";
@@ -24,13 +25,14 @@ export default function Home() {
   const router = useRouter();
   const dispatch = useDispatch();
   const {openAlertModal} = useModal();
+  const requestRef = useRef<AbortController | null>(null);
+  const {startGoogle, isGoogleStarting} = useGoogleLogin();
   // 입력값 상태 관리
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const requestRef = useRef<AbortController | null>(null);
 
   useEffect(() => () => {
     requestRef.current?.abort();
@@ -39,7 +41,7 @@ export default function Home() {
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (requestRef.current)
+    if (requestRef.current || isGoogleStarting)
       return;
 
     const controller = new AbortController();
@@ -99,10 +101,14 @@ export default function Home() {
   };
 
   const handleGoogleLogin = () => {
-
+    if (!requestRef.current)
+      void startGoogle({rememberMe});
   };
 
   const handleKakaoLogin = () => {
+    if (requestRef.current || isGoogleStarting)
+      return;
+
     try {
       startKakaoLogin({rememberMe});
     } catch (err: unknown) {
@@ -193,7 +199,9 @@ export default function Home() {
             </S.MemberTextLink>
           </S.MemberOptionWrapper>
 
-          <S.MemberButton type="submit" disabled={isLoading}>
+          <S.MemberButton
+          type="submit"
+          disabled={isLoading || isGoogleStarting}>
             Login
           </S.MemberButton>
         </S.MemberForm>
@@ -203,14 +211,15 @@ export default function Home() {
         <S.MemberSocialWrapper>
           <S.GoogleSocialButton
           type="button"
-          disabled={isLoading}>
+          onClick={handleGoogleLogin}
+          disabled={isLoading || isGoogleStarting}>
             <FcGoogle aria-hidden="true"/>
             Google로 로그인하기
           </S.GoogleSocialButton>
           <S.KakaoSocialButton
           type="button"
           onClick={handleKakaoLogin}
-          disabled={isLoading}>
+          disabled={isLoading || isGoogleStarting}>
             <RiKakaoTalkFill aria-hidden="true"/>
             Kakao로 로그인하기
           </S.KakaoSocialButton>

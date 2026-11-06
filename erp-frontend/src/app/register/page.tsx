@@ -15,6 +15,7 @@ import {
 import { FcGoogle } from "react-icons/fc";
 import { RiKakaoTalkFill } from "react-icons/ri";
 import api from "@/app/lib/api";
+import useGoogleLogin from "@/app/lib/useGoogleLogin";
 import { startKakaoLogin } from "@/app/lib/kakao";
 import {
   PASSWORD_MIN_LENGTH,
@@ -44,6 +45,7 @@ export default function Member() {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const requestRef = useRef<AbortController | null>(null);
+  const {startGoogle, isGoogleStarting} = useGoogleLogin();
 
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
@@ -147,7 +149,7 @@ export default function Member() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (requestRef.current)
+    if (requestRef.current || isGoogleStarting)
       return;
 
     const currentValues = readFormValues();
@@ -213,10 +215,23 @@ export default function Member() {
   };
 
   const handleGoogleRegister = () => {
+    if (requestRef.current)
+      return;
 
+    const {firstName, lastName} = readFormValues();
+
+    void startGoogle({
+      rememberMe: false,
+      signup: true,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+    });
   };
 
   const handleKakaoRegister = () => {
+    if (requestRef.current || isGoogleStarting)
+      return;
+    
     const {firstName, lastName} = readFormValues();
 
     try {
@@ -256,10 +271,10 @@ export default function Member() {
           <S.MemberDescription>
             정보를 입력하고 계정을 만들어 보세요.
             <br/>
-            카카오 회원가입은 이름과 성만 입력한 뒤
-            {" "}"Kakao로 가입하기" 버튼을 눌러 주세요.
+            Google·카카오 회원가입은 이름과 성만 입력한 뒤
+            {" "}해당 서비스의 가입 버튼을 눌러 주세요.
             <br/>
-            카카오 계정의 인증된 이메일이 필요하며,
+            선택한 서비스의 인증된 이메일이 필요하며,
             {" "}이메일 제공에 동의해야 가입할 수 있습니다.
           </S.MemberDescription>
         </S.MemberHeader>
@@ -478,7 +493,7 @@ export default function Member() {
 
           <S.MemberButton
           type="submit"
-          disabled={isLoading}>
+          disabled={isLoading || isGoogleStarting}>
             {isLoading ? "가입 처리 중..." : "회원가입"}
           </S.MemberButton>
         </S.MemberForm>
@@ -489,14 +504,14 @@ export default function Member() {
           <S.GoogleSocialButton
           type="button"
           onClick={handleGoogleRegister}
-          disabled={isLoading}>
+          disabled={isLoading || isGoogleStarting}>
             <FcGoogle aria-hidden="true"/>
             Google로 가입하기
           </S.GoogleSocialButton>
           <S.KakaoSocialButton
           type="button"
           onClick={handleKakaoRegister}
-          disabled={isLoading}>
+          disabled={isLoading || isGoogleStarting}>
             <RiKakaoTalkFill aria-hidden="true"/>
             Kakao로 가입하기
           </S.KakaoSocialButton>

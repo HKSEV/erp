@@ -6,6 +6,8 @@ const api = axios.create();
 const PUBLIC_AUTH_PATHS = new Set([
   "/api/members/login",
   "/api/members/register",
+  "/api/members/google/authorize",
+  "/api/members/google",
   "/api/members/kakao",
   "/api/members/forgot-password",
   "/api/members/reset-password",
