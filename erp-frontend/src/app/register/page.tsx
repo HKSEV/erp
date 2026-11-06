@@ -42,6 +42,7 @@ interface FormData {
 export default function Member() {
   const {openAlertModal} = useModal();
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const requestRef = useRef<AbortController | null>(null);
 
   const [formData, setFormData] = useState<FormData>({
@@ -90,20 +91,76 @@ export default function Member() {
     };
   };
 
+  const readFormValues = (): FormData => {
+    if (!formRef.current)
+      return formData;
+
+    const values = new window.FormData(formRef.current);
+    const read = (name: keyof FormData) =>
+      String(values.get(name) ?? "");
+
+    return {
+      firstName: read("firstName"),
+      lastName: read("lastName"),
+      email: read("email"),
+      password: read("password"),
+      passwordConfirm: read("passwordConfirm"),
+      tel: formatMobilePhone(read("tel")),
+      address: read("address"),
+      detailAddress: read("detailAddress"),
+      gender: read("gender"),
+    };
+  };
+
+  const getFocusedTextInput = () => {
+    const active = document.activeElement;
+
+    return active instanceof HTMLInputElement
+      && formRef.current?.contains(active)
+      && active.type !== "radio"
+      && active.type !== "checkbox"
+      ? active
+      : null;
+  };
+
+  const handleWheelCapture = (
+    e: React.WheelEvent<HTMLDivElement>
+  ) => {
+    if (e.deltaX || e.deltaY)
+      getFocusedTextInput()?.blur();
+  };
+
+  const handleButtonPointerDown = (
+    e: React.PointerEvent<HTMLDivElement>
+  ) => {
+    if (e.pointerType !== "mouse" || e.button !== 0)
+      return;
+
+    const button = e.target instanceof Element
+      ? e.target.closest("button")
+      : null;
+
+    if (button && !button.disabled && getFocusedTextInput())
+      e.preventDefault();
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (requestRef.current)
       return;
 
-    const passwordError = getPasswordError(formData.password);
+    const currentValues = readFormValues();
+    setFormData(currentValues);
+
+    const passwordError = getPasswordError(currentValues.password);
 
     if (passwordError) {
       openAlertModal(passwordError, undefined, {variant: "error"});
       return;
     };
 
-    const {passwordConfirm, ...payload} = formData;
+    const {passwordConfirm, ...payload} = currentValues;
 
     if (payload.password !== passwordConfirm) {
       openAlertModal("비밀번호가 일치하지 않습니다.", undefined, {
@@ -160,12 +217,14 @@ export default function Member() {
   };
 
   const handleKakaoRegister = () => {
+    const {firstName, lastName} = readFormValues();
+
     try {
       startKakaoLogin({
         rememberMe: false,
         signup: true,
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
       });
     } catch (err: unknown) {
       openAlertModal(
@@ -179,7 +238,9 @@ export default function Member() {
   };
 
   return (
-    <S.MemberContainer>
+    <S.MemberContainer
+    onWheelCapture={handleWheelCapture}
+    onPointerDownCapture={handleButtonPointerDown}>
       {/* Next.js Script 컴포넌트를 사용한 비동기 로드 */}
       {/* <Script
       src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"
@@ -193,11 +254,17 @@ export default function Member() {
             Create an Account!
           </S.MemberTitle>
           <S.MemberDescription>
-            정보를 입력하고 계정을 만들어 보세요
+            정보를 입력하고 계정을 만들어 보세요.
+            <br/>
+            카카오 회원가입은 이름과 성만 입력한 뒤
+            {" "}"Kakao로 가입하기" 버튼을 눌러 주세요.
+            <br/>
+            카카오 계정의 인증된 이메일이 필요하며,
+            {" "}이메일 제공에 동의해야 가입할 수 있습니다.
           </S.MemberDescription>
         </S.MemberHeader>
 
-        <S.MemberForm onSubmit={handleSubmit}>
+        <S.MemberForm ref={formRef} onSubmit={handleSubmit}>
           <S.MemberFieldRow>
             <S.MemberField>
               <S.MemberInputLabel htmlFor="firstName">
