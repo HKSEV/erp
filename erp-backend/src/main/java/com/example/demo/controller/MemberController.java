@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.*;
+import com.example.demo.service.GoogleAuthService;
 import com.example.demo.service.KakaoAuthService;
 import com.example.demo.service.MemberService;
 import jakarta.validation.Valid;
@@ -17,6 +18,7 @@ import java.util.Map;
 @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class MemberController {
   private final MemberService memberService;
+  private final GoogleAuthService googleAuthService;
   private final KakaoAuthService kakaoAuthService;
 
   @PostMapping("/register")
@@ -41,6 +43,20 @@ public class MemberController {
     } catch (Exception e) {
       return ResponseEntity.internalServerError().body("로그인 처리 중 오류가 발생했습니다.");
     }
+  }
+
+  @PostMapping("/google/authorize")
+  public GoogleAuthorizeResponseDto googleAuthorize(
+    @Valid @RequestBody GoogleAuthorizeRequestDto dto
+  ) {
+    return googleAuthService.authorize(dto);
+  }
+
+  @PostMapping("/google")
+  public TokenResponseDto googleLogin(
+    @Valid @RequestBody GoogleLoginRequestDto dto
+  ) {
+    return googleAuthService.login(dto);
   }
 
   @PostMapping("/kakao")

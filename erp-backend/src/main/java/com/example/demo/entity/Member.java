@@ -68,6 +68,10 @@ public class Member {
   private String gender; // male, female, other
 
   @JsonIgnore
+  @Column(unique = true, length = 255)
+  private String googleId;
+
+  @JsonIgnore
   @Column(unique = true, length = 32)
   private String kakaoId;
 
