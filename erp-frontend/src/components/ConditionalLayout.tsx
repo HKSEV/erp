@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { normalizePath } from "@/app/lib/path";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { SideBar } from "./SideBar";
@@ -13,8 +14,8 @@ import * as S from "@/assets/css/Style.styles";
 export default function ConditionalLayout({children}: {
   children: React.ReactNode
 }) {
-  // 현재 URL 경로를 가져옴
-  const pathname = usePathname();
+  // 현재 URL 경로를 가져옴 (배포용 trailingSlash 설정의 끝 / 제거)
+  const pathname = normalizePath(usePathname());
   // 헤더와 푸터를 숨기고 싶은 URL 배열 작성
   // /privacy, /manual: 로그인 없이 보는 문서 페이지 (app/(info) 레이아웃 사용)
   const hiddenPaths = [

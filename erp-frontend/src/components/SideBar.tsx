@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import useCurrentMember from "@/app/lib/currentMember";
+import { normalizePath } from "@/app/lib/path";
 import * as S from "@/assets/css/Style.styles";
 
 interface MenuItem {
@@ -48,7 +49,7 @@ interface SideBarProps {
 };
 
 export const SideBar = ({onNavigate}: SideBarProps) => {
-  const pathname = usePathname();
+  const pathname = normalizePath(usePathname());
   const {isAdmin} = useCurrentMember();
 
   return (
