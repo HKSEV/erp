@@ -1,7 +1,9 @@
 import axios, { isAxiosError } from "axios";
 import { clearSession, getToken } from "@/app/lib/auth";
 
-const api = axios.create();
+const api = axios.create({
+  baseURL: "https://erp-0ia7.onrender.com",
+});
 
 const PUBLIC_AUTH_PATHS = new Set([
   "/api/members/login",
