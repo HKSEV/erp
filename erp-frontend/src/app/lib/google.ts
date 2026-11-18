@@ -2,7 +2,7 @@ import { isAxiosError } from "axios";
 import api from "./api";
 
 const FLOW_KEY = "erp:google-login";
-const CALLBACK_PATH = "/oauth/google";
+const CALLBACK_PATH = "/group/one/2/oauth/google/";
 const RANDOM_PATTERN = /^[a-f0-9]{64}$/;
 
 export interface GoogleOptions {

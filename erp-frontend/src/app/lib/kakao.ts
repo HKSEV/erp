@@ -1,7 +1,7 @@
 import api from "./api";
 
 const FLOW_KEY = "erp:kakao-login";
-const CALLBACK_PATH = "/oauth/kakao";
+const CALLBACK_PATH = "/group/one/2/oauth/kakao/";
 
 interface KakaoOptions {
   rememberMe: boolean;
