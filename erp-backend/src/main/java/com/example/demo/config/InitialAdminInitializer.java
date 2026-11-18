@@ -12,9 +12,8 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-// 가입하면 모두 USER라 관리자가 생길 방법이 없으므로,
-// 사용 중인 관리자가 한 명도 없을 때만 서버 시작 시 지정한 회원을 관리자로 바꿉니다.
-// 관리자가 이미 있으면 아무것도 하지 않습니다. (이후 권한은 사용자 권한 관리 화면에서 변경)
+// 기존 회원이 있는 DB에서 사용 중인 관리자가 없으면 지정한 이메일로 복구합니다.
+// 신규 DB의 최초 가입자는 회원가입 트랜잭션에서 ADMIN으로 배정합니다.
 @Component
 @RequiredArgsConstructor
 public class InitialAdminInitializer implements ApplicationRunner {

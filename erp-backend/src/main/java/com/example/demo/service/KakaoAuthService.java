@@ -20,6 +20,7 @@ import java.util.UUID;
 public class KakaoAuthService {
 	private final KakaoClientService kakaoClientService;
 	private final MemberRepository memberRepository;
+	private final MemberRegistrationService memberRegistrationService;
 	private final PasswordEncoder passwordEncoder;
 	private final JwtProvider jwtProvider;
 
@@ -27,6 +28,9 @@ public class KakaoAuthService {
 	public TokenResponseDto login(KakaoLoginRequestDto dto) {
 		KakaoClientService.KakaoProfile profile =
 			kakaoClientService.getProfile(dto.code(), dto.state());
+		MemberRole registrationRole = dto.signup()
+			? memberRegistrationService.claimInitialRole()
+			: MemberRole.USER;
 
 		String kakaoId = profile.id().toString();
 		Member member = memberRepository.findByKakaoId(kakaoId).orElse(null);
@@ -76,7 +80,7 @@ public class KakaoAuthService {
 				.email(email)
 				.password(passwordEncoder.encode(UUID.randomUUID().toString()))
 				.kakaoId(kakaoId)
-				.role(MemberRole.USER)
+				.role(registrationRole)
 				.active(true)
 				.build());
 		}

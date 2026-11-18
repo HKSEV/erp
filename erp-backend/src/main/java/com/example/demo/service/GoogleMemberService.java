@@ -19,6 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GoogleMemberService {
 	private final MemberRepository memberRepository;
+	private final MemberRegistrationService memberRegistrationService;
 	private final PasswordEncoder passwordEncoder;
 	private final JwtProvider jwtProvider;
 
@@ -27,6 +28,10 @@ public class GoogleMemberService {
 		GoogleIdTokenValidator.GoogleProfile profile,
 		GoogleAuthFlow flow
 	) {
+		MemberRole registrationRole = flow.isSignup()
+			? memberRegistrationService.claimInitialRole()
+			: MemberRole.USER;
+
 		Member member = memberRepository
 			.findByGoogleId(profile.id())
 			.orElse(null);
@@ -63,7 +68,7 @@ public class GoogleMemberService {
 				.email(email)
 				.password(passwordEncoder.encode(UUID.randomUUID().toString()))
 				.googleId(profile.id())
-				.role(MemberRole.USER)
+				.role(registrationRole)
 				.active(true)
 				.build());
 		}

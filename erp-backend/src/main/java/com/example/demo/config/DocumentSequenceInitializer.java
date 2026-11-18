@@ -2,12 +2,14 @@ package com.example.demo.config;
 
 import com.example.demo.entity.DocumentSequence;
 import com.example.demo.repository.DocumentSequenceRepository;
+import com.example.demo.repository.MemberRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,12 +20,14 @@ import java.time.ZoneId;
 // 서버 시작 시 빠진 행만 만듭니다. 이미 있는 행은 건드리지 않습니다.
 // 기존 데이터가 있으면 가장 큰 번호부터 이어서 발급되도록 시작값을 맞춥니다.
 @Component
+@Order(0)
 @RequiredArgsConstructor
 public class DocumentSequenceInitializer implements ApplicationRunner {
   private static final Logger log = LoggerFactory.getLogger(DocumentSequenceInitializer.class);
   private static final ZoneId ZONE = ZoneId.of("Asia/Seoul");
 
   private final DocumentSequenceRepository sequenceRepository;
+  private final MemberRepository memberRepository;
   private final EntityManager entityManager;
 
   @Override
@@ -45,6 +49,10 @@ public class DocumentSequenceInitializer implements ApplicationRunner {
       "select max(e.id) from Employee e where e.id like :pattern",
       "EMP-____"
     ));
+
+    // 기존 회원이 있으면 최초 가입 권한은 이미 사용한 것으로 기록합니다.
+    create("MEMBER_REGISTRATION", memberRepository.count() > 0 ? 1L : 0L);
+    create("EMPLOYEE_DUMMY", 0L);
   }
 
   private void create(String key, long lastValue) {

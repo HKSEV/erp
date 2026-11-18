@@ -6,6 +6,7 @@ import com.example.demo.dto.MemberLoginDto;
 import com.example.demo.dto.MemberProfileResponseDto;
 import com.example.demo.dto.MemberRegisterDto;
 import com.example.demo.entity.Member;
+import com.example.demo.entity.MemberRole;
 import com.example.demo.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +32,7 @@ import java.util.HexFormat;
 public class MemberService {
 
   private final MemberRepository memberRepository;
+  private final MemberRegistrationService memberRegistrationService;
   private final PasswordEncoder passwordEncoder;
   private final JwtProvider jwtProvider;
   private final JavaMailSender mailSender;
@@ -42,6 +44,7 @@ public class MemberService {
   @Transactional
   public void register(MemberRegisterDto dto) {
     validatePassword(dto.getPassword());
+    MemberRole role = memberRegistrationService.claimInitialRole();
     // 이메일 중복 체크
     if (memberRepository.existsByEmail(dto.getEmail())) {
       throw new IllegalArgumentException("이미 사용중인 이메일입니다.");
@@ -57,6 +60,7 @@ public class MemberService {
       .address(dto.getAddress())
       .detailAddress(dto.getDetailAddress())
       .gender(dto.getGender())
+      .role(role)
       .build();
 
     memberRepository.save(member);
