@@ -117,6 +117,7 @@ public class SecurityConfig {
         .requestMatchers("/api/members/**").permitAll()
 
         .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
+        .requestMatchers(HttpMethod.HEAD, "/api/health").permitAll()
 
         .anyRequest().authenticated()
       )
