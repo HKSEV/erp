@@ -53,6 +53,7 @@ public class DocumentSequenceInitializer implements ApplicationRunner {
     // 기존 회원이 있으면 최초 가입 권한은 이미 사용한 것으로 기록합니다.
     create("MEMBER_REGISTRATION", memberRepository.count() > 0 ? 1L : 0L);
     create("EMPLOYEE_DUMMY", 0L);
+    create(ProductionInventoryDummyDataInitializer.SEQUENCE_KEY, 0L);
   }
 
   private void create(String key, long lastValue) {
