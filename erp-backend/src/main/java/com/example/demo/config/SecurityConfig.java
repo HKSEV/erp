@@ -116,6 +116,8 @@ public class SecurityConfig {
         // 로그인·회원가입·비밀번호 찾기 (members/me 등은 위에서 먼저 로그인 필요로 처리)
         .requestMatchers("/api/members/**").permitAll()
 
+        .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
+
         .anyRequest().authenticated()
       )
 
@@ -135,7 +137,8 @@ public class SecurityConfig {
     configuration.setAllowedOrigins(List.of(
       "http://localhost:3000",
       "http://127.0.0.1:3000",
-      "http://heartbreakkid.co.kr"
+      "http://heartbreakkid.co.kr",
+      "http://www.heartbreakkid.co.kr"
     ));
 
     configuration.setAllowedMethods(List.of(
